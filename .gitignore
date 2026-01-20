@@ -1,0 +1,46 @@
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# IDE
+.vscode/
+.idea/
+*.code-workspace
+
+# Server (Backend)
+server/venv/
+server/env/
+server/.env
+server/__pycache__/
+server/*.pyc
+server/*.pyo
+server/*.pyd
+server/.Python
+server/*.so
+server/*.egg
+server/*.egg-info/
+server/dist/
+server/build/
+
+# Client (Frontend)
+client/node_modules/
+client/.env
+client/dist/
+client/build/
+client/.vite/
+client/.next/
+client/coverage/
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
