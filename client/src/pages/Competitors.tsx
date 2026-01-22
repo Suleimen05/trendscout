@@ -1,12 +1,13 @@
-import { useState } from 'react';
-import { Users, UserPlus, TrendingUp, TrendingDown, BarChart3, Eye, Video, Calendar, Minus } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Users, UserPlus, TrendingUp, TrendingDown, Eye, Video, Search, Filter, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { apiService } from '@/services/api';
 import type { Competitor, TikTokVideo } from '@/types';
+import { toast } from 'sonner';
 
 // Mock data
 const mockCompetitors: Competitor[] = [
@@ -53,267 +54,118 @@ const mockCompetitors: Competitor[] = [
 
 interface CompetitorCardProps {
   competitor: Competitor;
-  isSelected: boolean;
-  onSelect: (competitor: Competitor) => void;
-  onRemove: (id: string) => void;
+  isTracked: boolean;
+  onToggleTracking: (competitor: Competitor) => void;
+  onViewDetails: (competitor: Competitor) => void;
 }
 
-function CompetitorCard({ competitor, isSelected, onSelect, onRemove }: CompetitorCardProps) {
+function CompetitorCard({ competitor, isTracked, onToggleTracking, onViewDetails }: CompetitorCardProps) {
   const formatNumber = (num: number): string => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
     return num.toString();
   };
 
-  const growthIcon = competitor.growthTrend === 'up' ? TrendingUp : competitor.growthTrend === 'down' ? TrendingDown : Minus;
-  const GrowthIcon = growthIcon;
-  const growthColor = competitor.growthTrend === 'up' ? 'text-green-600' : competitor.growthTrend === 'down' ? 'text-red-600' : 'text-gray-600';
+  const getTrendIcon = () => {
+    if (competitor.growthTrend === 'up') return TrendingUp;
+    if (competitor.growthTrend === 'down') return TrendingDown;
+    return null;
+  };
+
+  const TrendIcon = getTrendIcon();
 
   return (
-    <Card
-      className={cn(
-        'cursor-pointer transition-all duration-300 hover:shadow-lg',
-        isSelected && 'ring-2 ring-purple-500'
-      )}
-      onClick={() => onSelect(competitor)}
-    >
-      <CardContent className="p-4">
+    <Card className="group hover:shadow-lg transition-all duration-300">
+      <CardContent className="p-6">
         <div className="flex items-start gap-4">
-          {/* Avatar */}
-          <div className="relative">
+          {/* Avatar with Platform Icon */}
+          <div className="relative flex-shrink-0">
             <img
               src={competitor.avatar}
               alt={competitor.nickname}
               className="h-16 w-16 rounded-full object-cover"
             />
-            <div className={`absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center ${
-              competitor.growthTrend === 'up' ? 'bg-green-500' : 
-              competitor.growthTrend === 'down' ? 'bg-red-500' : 'bg-gray-500'
-            }`}>
-              <GrowthIcon className="h-3 w-3 text-white" />
+            {/* Platform badge */}
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-background border-2 border-background flex items-center justify-center">
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-5.2 1.74 2.89 2.89 0 0 1 2.31-4.64 2.93 2.93 0 0 1 .88.13V9.4a6.84 6.84 0 0 0-1-.05A6.33 6.33 0 0 0 5 20.1a6.34 6.34 0 0 0 10.86-4.43v-7a8.16 8.16 0 0 0 4.77 1.52v-3.4a4.85 4.85 0 0 1-1-.1z"/>
+              </svg>
             </div>
           </div>
 
           {/* Info */}
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <h3 className="font-semibold">{competitor.nickname}</h3>
-                <p className="text-sm text-muted-foreground">@{competitor.username}</p>
+          <div className="flex-1 min-w-0">
+            {/* Header */}
+            <div className="flex items-start justify-between mb-3">
+              <div className="min-w-0 flex-1">
+                <h3 className="font-semibold text-lg truncate">@{competitor.username}</h3>
+                <p className="text-sm text-muted-foreground">{formatNumber(competitor.followerCount)} subscribers</p>
               </div>
+
+              {/* Tracking Button */}
               <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-destructive"
+                variant={isTracked ? "default" : "outline"}
+                size="sm"
+                className={cn(
+                  "flex-shrink-0 ml-2",
+                  isTracked && "bg-green-500 hover:bg-green-600"
+                )}
                 onClick={(e) => {
                   e.stopPropagation();
-                  onRemove(competitor.id);
+                  onToggleTracking(competitor);
                 }}
               >
-                ×
+                {isTracked ? (
+                  <>
+                    <Check className="h-4 w-4 mr-1" />
+                    Tracking
+                  </>
+                ) : (
+                  <>
+                    <UserPlus className="h-4 w-4 mr-1" />
+                    Track
+                  </>
+                )}
               </Button>
             </div>
 
-            <div className="grid grid-cols-3 gap-4 mb-3">
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-2 text-sm">
               <div>
-                <p className="text-lg font-bold">{formatNumber(competitor.followerCount)}</p>
-                <p className="text-xs text-muted-foreground">Followers</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold">{formatNumber(competitor.avgViews)}</p>
-                <p className="text-xs text-muted-foreground">Avg Views</p>
+                <p className="text-muted-foreground text-xs">Avg Views</p>
+                <p className="font-medium">{formatNumber(competitor.avgViews)}</p>
               </div>
               <div>
-                <p className="text-lg font-bold">{competitor.engagementRate}%</p>
-                <p className="text-xs text-muted-foreground">Engagement</p>
+                <p className="text-muted-foreground text-xs">Engagement</p>
+                <p className="font-medium">{competitor.engagementRate}%</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs">Videos</p>
+                <p className="font-medium">{competitor.videoCount}</p>
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <Badge variant="outline" className={growthColor}>
-                <GrowthIcon className="h-3 w-3 mr-1" />
-                {competitor.growthTrend}
-              </Badge>
-              <span className="text-xs text-muted-foreground">
-                Last post: {new Date(competitor.lastActivity).toLocaleDateString()}
-              </span>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+            {/* Footer */}
+            <div className="flex items-center justify-between mt-3 pt-3 border-t">
+              {TrendIcon && (
+                <Badge variant="outline" className="text-xs">
+                  <TrendIcon className={cn(
+                    "h-3 w-3 mr-1",
+                    competitor.growthTrend === 'up' && "text-green-600",
+                    competitor.growthTrend === 'down' && "text-red-600"
+                  )} />
+                  {competitor.growthTrend === 'up' ? 'Growing' : competitor.growthTrend === 'down' ? 'Declining' : 'Stable'}
+                </Badge>
+              )}
 
-interface CompetitorDetailsProps {
-  competitor: Competitor | null;
-}
-
-function CompetitorDetails({ competitor }: CompetitorDetailsProps) {
-  if (!competitor) {
-    return (
-      <Card className="sticky top-24 p-12">
-        <div className="text-center">
-          <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">
-            Select a competitor to view detailed analytics
-          </p>
-        </div>
-      </Card>
-    );
-  }
-
-  const formatNumber = (num: number): string => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
-  };
-
-  // Mock video data
-  const topVideos: TikTokVideo[] = [
-    {
-      id: 'vid1',
-      title: 'Viral video title here',
-      description: 'Description',
-      author: {
-        id: competitor.id,
-        uniqueId: competitor.username,
-        nickname: competitor.nickname,
-        avatar: competitor.avatar,
-        followerCount: competitor.followerCount,
-        followingCount: 500,
-        heartCount: competitor.followerCount * 10,
-        videoCount: competitor.videoCount,
-        verified: true,
-      },
-      stats: {
-        playCount: competitor.avgViews * 2,
-        diggCount: competitor.avgViews * 0.1,
-        shareCount: competitor.avgViews * 0.02,
-        commentCount: competitor.avgViews * 0.05,
-      },
-      video: {
-        duration: 15000,
-        ratio: '9:16',
-        cover: '/video-placeholder.svg',
-        playAddr: '',
-        downloadAddr: '',
-      },
-      music: {
-        id: 'music1',
-        title: 'Original Sound',
-        authorName: 'Artist',
-        original: true,
-        playUrl: '',
-      },
-      hashtags: [],
-      createdAt: new Date().toISOString(),
-      engagementRate: competitor.engagementRate,
-    },
-  ];
-
-  return (
-    <Card className="sticky top-24">
-      <CardHeader>
-        <div className="flex items-center gap-4">
-          <img
-            src={competitor.avatar}
-            alt={competitor.nickname}
-            className="h-16 w-16 rounded-full object-cover"
-          />
-          <div>
-            <CardTitle>{competitor.nickname}</CardTitle>
-            <p className="text-muted-foreground">@{competitor.username}</p>
-          </div>
-        </div>
-      </CardHeader>
-
-      <CardContent className="space-y-6">
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 rounded-lg bg-muted">
-            <div className="flex items-center gap-2 mb-1">
-              <Users className="h-4 w-4 text-purple-500" />
-              <p className="text-sm text-muted-foreground">Followers</p>
-            </div>
-            <p className="text-2xl font-bold">{formatNumber(competitor.followerCount)}</p>
-          </div>
-          <div className="p-4 rounded-lg bg-muted">
-            <div className="flex items-center gap-2 mb-1">
-              <Video className="h-4 w-4 text-blue-500" />
-              <p className="text-sm text-muted-foreground">Videos</p>
-            </div>
-            <p className="text-2xl font-bold">{competitor.videoCount}</p>
-          </div>
-          <div className="p-4 rounded-lg bg-muted">
-            <div className="flex items-center gap-2 mb-1">
-              <Eye className="h-4 w-4 text-green-500" />
-              <p className="text-sm text-muted-foreground">Avg Views</p>
-            </div>
-            <p className="text-2xl font-bold">{formatNumber(competitor.avgViews)}</p>
-          </div>
-          <div className="p-4 rounded-lg bg-muted">
-            <div className="flex items-center gap-2 mb-1">
-              <BarChart3 className="h-4 w-4 text-pink-500" />
-              <p className="text-sm text-muted-foreground">Engagement</p>
-            </div>
-            <p className="text-2xl font-bold">{competitor.engagementRate}%</p>
-          </div>
-        </div>
-
-        {/* Growth Chart Placeholder */}
-        <div>
-          <h4 className="font-semibold mb-3">Growth Trend</h4>
-          <div className="h-32 rounded-lg bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
-            <div className="text-center">
-              <BarChart3 className="h-8 w-8 text-purple-500 mx-auto mb-2" />
-              <p className="text-sm text-muted-foreground">Follower growth chart</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Top Videos */}
-        <div>
-          <h4 className="font-semibold mb-3">Top Performing Videos</h4>
-          <div className="space-y-3">
-            {topVideos.map((video) => (
-              <div key={video.id} className="flex gap-3 p-3 rounded-lg bg-muted">
-                <div className="w-20 h-28 rounded-lg overflow-hidden bg-gray-200 flex-shrink-0">
-                  <img
-                    src={video.video.cover}
-                    alt={video.title}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium line-clamp-2">{video.title}</p>
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
-                    <span className="flex items-center gap-1">
-                      <Eye className="h-3 w-3" />
-                      {formatNumber(video.stats.playCount)}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <BarChart3 className="h-3 w-3" />
-                      {formatNumber(video.stats.diggCount)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Activity */}
-        <div>
-          <h4 className="font-semibold mb-3">Recent Activity</h4>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <span>Last post: {new Date(competitor.lastActivity).toLocaleDateString()}</span>
-            </div>
-            <div className="flex items-center gap-2 text-sm">
-              <TrendingUp className="h-4 w-4 text-green-500" />
-              <span>Growth trend: {competitor.growthTrend}</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="ml-auto text-xs"
+                onClick={() => onViewDetails(competitor)}
+              >
+                View Details
+              </Button>
             </div>
           </div>
         </div>
@@ -323,119 +175,120 @@ function CompetitorDetails({ competitor }: CompetitorDetailsProps) {
 }
 
 export function Competitors() {
-  const [competitors, setCompetitors] = useState<Competitor[]>(mockCompetitors);
-  const [selectedCompetitor, setSelectedCompetitor] = useState<Competitor | null>(null);
+  // Load competitors from localStorage on mount
+  const loadCompetitors = (): Competitor[] => {
+    try {
+      const stored = localStorage.getItem('competitors');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (error) {
+      console.error('Error loading competitors from localStorage:', error);
+    }
+    return mockCompetitors; // Fallback to mock data
+  };
+
+  const [competitors, setCompetitors] = useState<Competitor[]>(loadCompetitors);
+  const [trackedIds, setTrackedIds] = useState<Set<string>>(new Set(['1', '2'])); // Mock: 2 are tracked
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterPlatform, setFilterPlatform] = useState<'all' | 'tiktok' | 'instagram'>('all');
+  const [filterSort, setFilterSort] = useState<'recent' | 'followers' | 'engagement'>('recent');
+
+  // Save to localStorage whenever competitors change
+  useEffect(() => {
+    try {
+      localStorage.setItem('competitors', JSON.stringify(competitors));
+    } catch (error) {
+      console.error('Error saving competitors to localStorage:', error);
+    }
+  }, [competitors]);
+
+  const handleToggleTracking = (competitor: Competitor) => {
+    setTrackedIds(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(competitor.id)) {
+        newSet.delete(competitor.id);
+        toast.info(`Stopped tracking @${competitor.username}`);
+      } else {
+        newSet.add(competitor.id);
+        toast.success(`Now tracking @${competitor.username}`);
+      }
+      return newSet;
+    });
+  };
 
   const handleAddCompetitor = async (username: string) => {
     if (!username.trim()) return;
-    
-    try {
-      // Use backend API to get competitor data
-      const spyData = await apiService.spyCompetitor(username);
-      
-      const newCompetitor: Competitor = {
-        id: Date.now().toString(),
-        username: spyData.username,
-        nickname: spyData.channel_data.nickName || spyData.username,
-        avatar: spyData.channel_data.avatarThumb || '/avatar-placeholder.svg',
-        followerCount: spyData.channel_data.fans || 0,
-        videoCount: spyData.channel_data.videos || 0,
-        avgViews: spyData.metrics.avg_views || 0,
-        engagementRate: spyData.metrics.engagement_rate || 0,
-        topVideos: spyData.top_3_hits.map((v: any) => ({
-          id: v.id,
-          title: v.title || 'No title',
-          description: v.title || '',
-          author: {
-            id: `user_${v.author.username}`,
-            uniqueId: v.author.username,
-            nickname: v.author.username,
-            avatar: v.author.avatar || '',
-            followerCount: v.author.followers || 0,
-            followingCount: 0,
-            heartCount: 0,
-            videoCount: 0,
-            verified: false,
-          },
-          stats: {
-            playCount: v.views || 0,
-            diggCount: v.stats.diggCount || 0,
-            shareCount: v.stats.shareCount || 0,
-            commentCount: v.stats.commentCount || 0,
-            saveCount: 0,
-          },
-          video: {
-            duration: 0,
-            ratio: '9:16',
-            cover: v.cover_url || '',
-            playAddr: v.url || '',
-            downloadAddr: '',
-          },
-          music: {
-            id: '',
-            title: 'Original Sound',
-            authorName: 'Unknown',
-            original: true,
-            playUrl: '',
-          },
-          hashtags: [],
-          createdAt: new Date(v.uploaded_at * 1000).toISOString(),
-          viralScore: v.uts_score,
-          uts_score: v.uts_score,
-          cover_url: v.cover_url,
-          url: v.url,
-        })),
-        growthTrend: 'stable',
-        lastActivity: new Date().toISOString(),
-      };
-      setCompetitors([...competitors, newCompetitor]);
-      setShowAddForm(false);
-      setSearchQuery('');
-    } catch (error) {
-      console.error('Failed to add competitor:', error);
-      alert('Failed to add competitor. Please check the username and try again.');
-    }
+
+    // Redirect to Account Search page with a message
+    setShowAddForm(false);
+    toast.info('Please use Account Search page to find and add accounts', {
+      duration: 4000,
+      description: 'Navigate to Account Search, search for the account, then click "Add to Competitors"',
+    });
   };
 
-  const handleRemoveCompetitor = (id: string) => {
-    setCompetitors(competitors.filter(c => c.id !== id));
-    if (selectedCompetitor?.id === id) {
-      setSelectedCompetitor(null);
-    }
+  const handleViewDetails = (competitor: Competitor) => {
+    // Navigate to details page or open modal
+    toast.info(`Viewing details for @${competitor.username}`);
   };
+
+  const filteredCompetitors = competitors.filter(c => {
+    const matchesSearch = c.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         c.nickname.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
+
+  const trackedCount = Array.from(trackedIds).filter(id =>
+    competitors.find(c => c.id === id)
+  ).length;
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Users className="h-7 w-7" />
-            Competitor Analysis
-          </h1>
+          <div className="flex items-center gap-3 mb-2">
+            <h1 className="text-3xl font-bold tracking-tight">Account Catalog</h1>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="text-sm">
+                Tracked: {trackedCount}
+              </Badge>
+              <Badge variant="outline" className="text-sm">
+                Total: {competitors.length}
+              </Badge>
+            </div>
+          </div>
           <p className="text-muted-foreground">
-            Track and analyze your competitors' performance
+            Select accounts to track or add new ones
           </p>
         </div>
-        <Button onClick={() => setShowAddForm(true)}>
+        <Button
+          onClick={() => setShowAddForm(true)}
+          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+        >
           <UserPlus className="h-4 w-4 mr-2" />
-          Add Competitor
+          Add New Account
         </Button>
       </div>
 
-      {/* Add Competitor Form */}
+      {/* Add Account Form */}
       {showAddForm && (
-        <Card className="p-6">
-          <h3 className="font-semibold mb-4">Add New Competitor</h3>
+        <Card className="p-6 border-2 border-purple-500/20">
+          <h3 className="font-semibold mb-4">Add New Account</h3>
           <div className="flex gap-3">
-            <Input
-              placeholder="Enter TikTok username..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleAddCompetitor(searchQuery)}
-            />
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Search by URL or username..."
+                className="pl-10"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddCompetitor(searchQuery)}
+              />
+            </div>
             <Button onClick={() => handleAddCompetitor(searchQuery)}>
               Add
             </Button>
@@ -452,53 +305,116 @@ export function Competitors() {
         </Card>
       )}
 
-      {/* Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Competitor List */}
-        <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold">
-              Tracked Competitors ({competitors.length})
-            </h2>
-            <Badge variant="secondary">
-              {competitors.filter(c => c.growthTrend === 'up').length} growing
-            </Badge>
-          </div>
+      {/* Search and Filters */}
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search by URL or username..."
+            className="pl-10"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
 
-          {competitors.length === 0 ? (
-            <Card className="p-12">
-              <div className="text-center">
-                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No competitors tracked</h3>
-                <p className="text-muted-foreground mb-4">
-                  Add competitors to track their performance and discover their strategies
-                </p>
-                <Button onClick={() => setShowAddForm(true)}>
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Add Your First Competitor
-                </Button>
-              </div>
-            </Card>
-          ) : (
-            <div className="space-y-3">
-              {competitors.map((competitor) => (
-                <CompetitorCard
-                  key={competitor.id}
-                  competitor={competitor}
-                  isSelected={selectedCompetitor?.id === competitor.id}
-                  onSelect={setSelectedCompetitor}
-                  onRemove={handleRemoveCompetitor}
-                />
-              ))}
-            </div>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setShowFilters(!showFilters)}
+            className={cn(showFilters && "bg-accent")}
+          >
+            <Filter className="h-4 w-4 mr-2" />
+            Filters
+          </Button>
+
+          {searchQuery && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSearchQuery('')}
+            >
+              <X className="h-4 w-4" />
+            </Button>
           )}
         </div>
-
-        {/* Competitor Details */}
-        <div className="lg:col-span-1">
-          <CompetitorDetails competitor={selectedCompetitor} />
-        </div>
       </div>
+
+      {/* Filter Options */}
+      {showFilters && (
+        <Card className="p-4">
+          <div className="flex flex-wrap gap-4">
+            <div>
+              <label className="text-sm font-medium mb-2 block">Platform</label>
+              <div className="flex gap-2">
+                {['all', 'tiktok', 'instagram'].map((platform) => (
+                  <Button
+                    key={platform}
+                    variant={filterPlatform === platform ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setFilterPlatform(platform as any)}
+                  >
+                    {platform === 'all' ? 'All Platforms' : platform.charAt(0).toUpperCase() + platform.slice(1)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <label className="text-sm font-medium mb-2 block">Sort By</label>
+              <div className="flex gap-2">
+                {[
+                  { id: 'recent', label: 'Recently Added' },
+                  { id: 'followers', label: 'Followers' },
+                  { id: 'engagement', label: 'Engagement' },
+                ].map((option) => (
+                  <Button
+                    key={option.id}
+                    variant={filterSort === option.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setFilterSort(option.id as any)}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Competitors Grid */}
+      {filteredCompetitors.length === 0 ? (
+        <Card className="p-12">
+          <div className="text-center">
+            <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+            <h3 className="text-lg font-semibold mb-2">No accounts found</h3>
+            <p className="text-muted-foreground mb-4">
+              {searchQuery
+                ? 'Try a different search term'
+                : 'Add your first account to start tracking competitors'
+              }
+            </p>
+            {!searchQuery && (
+              <Button onClick={() => setShowAddForm(true)}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add Your First Account
+              </Button>
+            )}
+          </div>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredCompetitors.map((competitor) => (
+            <CompetitorCard
+              key={competitor.id}
+              competitor={competitor}
+              isTracked={trackedIds.has(competitor.id)}
+              onToggleTracking={handleToggleTracking}
+              onViewDetails={handleViewDetails}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

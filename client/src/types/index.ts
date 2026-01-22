@@ -69,6 +69,7 @@ export interface TikTokVideo {
   cover_url?: string;
   url?: string;
   author_username?: string;
+  play_addr?: string;  // Прямая ссылка на видео файл для воспроизведения
 }
 
 export interface Hashtag {

@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { useTrendingHashtags } from '@/hooks/useTikTok';
 import { useTrendAnalysis } from '@/hooks/useTikTok';
 import type { Hashtag, TrendAnalysis } from '@/types';
+import { DevAccessGate } from '@/components/DevAccessGate';
 
 interface TrendingHashtagCardProps {
   hashtag: Hashtag;
@@ -221,7 +222,8 @@ export function Trending() {
   ];
 
   return (
-    <div className="space-y-6">
+    <DevAccessGate pageName="Trending Analysis">
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -339,6 +341,7 @@ export function Trending() {
           <TrendAnalysisCard analysis={analysis} loading={analysisLoading} />
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </DevAccessGate>
   );
 }

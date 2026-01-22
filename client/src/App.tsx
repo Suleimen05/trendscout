@@ -7,6 +7,7 @@ import { Trending } from '@/pages/Trending';
 import { Discover } from '@/pages/Discover';
 import { AIScripts } from '@/pages/AIScripts';
 import { Competitors } from '@/pages/Competitors';
+import { AccountSearch } from '@/pages/AccountSearch';
 import { SettingsPage } from '@/pages/Settings';
 import { Help } from '@/pages/Help';
 import { useAppState } from '@/hooks/useAppState';
@@ -94,6 +95,7 @@ function App() {
                 <Route path="/discover" element={<Discover />} />
                 <Route path="/discover/*" element={<Discover />} />
                 <Route path="/ai-scripts" element={<AIScripts />} />
+                <Route path="/account-search" element={<AccountSearch />} />
                 <Route path="/competitors" element={<Competitors />} />
                 <Route path="/settings" element={<SettingsPage />} />
                 <Route path="/help" element={<Help />} />

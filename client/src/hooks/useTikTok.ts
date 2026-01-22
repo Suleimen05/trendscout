@@ -161,25 +161,45 @@ export function useTrendAnalysis(hashtag: string) {
   return { analysis, loading, error, analyze };
 }
 
-export function useAIScriptGenerator(videoId: string, tone = 'engaging', niche = 'general') {
+export function useAIScriptGenerator() {
   const [script, setScript] = useState<AIScript | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const generate = useCallback(async () => {
-    if (!videoId) return;
+  const generate = useCallback(async (
+    video_description: string,
+    video_stats: {
+      playCount: number;
+      diggCount: number;
+      commentCount: number;
+      shareCount: number;
+    },
+    tone: string = 'engaging',
+    niche: string = 'general',
+    duration_seconds: number = 30
+  ) => {
+    if (!video_description.trim()) {
+      setError('Video description is required');
+      return;
+    }
 
     try {
       setLoading(true);
       setError(null);
-      const data = await apiService.generateAIScript(videoId);
+      const data = await apiService.generateAIScript(
+        video_description,
+        video_stats,
+        tone,
+        niche,
+        duration_seconds
+      );
       setScript(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to generate AI script');
     } finally {
       setLoading(false);
     }
-  }, [videoId, tone, niche]);
+  }, []);
 
   return { script, loading, error, generate };
 }
@@ -214,17 +234,23 @@ export function useSearchWithFilters(filters: SearchFilters) {
   const [error, setError] = useState<string | null>(null);
 
   const search = useCallback(async () => {
+    // Don't search if no keyword/niche provided
+    if (!filters.niche || !filters.niche.trim()) {
+      setVideos([]);
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
-      
+
       // Use backend API for search
       const result = await apiService.searchTrends({
-        target: filters.niche || undefined,
+        target: filters.niche,
         mode: 'keywords',
         is_deep: false,
       });
-      
+
       // Convert trends to TikTokVideos
       const converted = result.items.map(trend => ({
         id: trend.platform_id || String(trend.id),
@@ -302,11 +328,10 @@ export function useSearchWithFilters(filters: SearchFilters) {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters.niche, filters.sortBy, filters.dateRange, filters.minViews, filters.maxViews, filters.minDuration, filters.maxDuration]);
 
-  useEffect(() => {
-    search();
-  }, [search]);
+  // REMOVED auto-search on mount to prevent infinite loop
+  // Users must click "Search" or "Apply Filters" button
 
   return { videos, loading, error, refetch: search };
 }

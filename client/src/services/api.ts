@@ -134,14 +134,46 @@ class ApiService {
   }
 
   /**
-   * Spy competitor - GET /api/profiles/{username}/spy
-   * Matches backend: spy_competitor()
+   * Spy competitor - GET /api/profiles/{username}
+   * Uses the same profile report endpoint as Account Search
    */
   async spyCompetitor(username: string): Promise<CompetitorData> {
     try {
       const cleanUsername = username.toLowerCase().trim().replace('@', '');
-      const response = await apiClient.get(`/profiles/${cleanUsername}/spy`);
-      return response.data;
+      const report = await this.getProfileReport(cleanUsername);
+
+      // Transform ProfileReport to CompetitorData format
+      return {
+        username: report.author.username,
+        nickname: report.author.nickname,
+        avatar: report.author.avatar,
+        followers: report.author.followers,
+        metrics: {
+          avgViews: report.metrics.avg_views,
+          engagementRate: report.metrics.engagement_rate,
+          viralScore: report.metrics.efficiency_score,
+          status: report.metrics.status,
+        },
+        topVideos: report.top_3_hits.map(video => ({
+          id: video.id || '',
+          url: video.url || '',
+          title: video.title,
+          coverUrl: video.cover_url,
+          views: video.views,
+          utsScore: video.uts_score,
+          stats: video.stats,
+        })),
+        fullFeed: report.full_feed.map(video => ({
+          id: video.id || '',
+          url: video.url || '',
+          title: video.title,
+          coverUrl: video.cover_url,
+          views: video.views,
+          utsScore: video.uts_score,
+          stats: video.stats,
+          uploadedAt: video.uploaded_at,
+        })),
+      };
     } catch (error) {
       console.error('Error spying competitor:', error);
       throw error;
@@ -237,11 +269,51 @@ class ApiService {
   }
 
   /**
-   * Generate AI script (legacy - not in backend, return mock)
+   * Generate AI script - POST /api/ai-scripts/generate
+   * Uses Google Gemini Flash for viral TikTok script generation
    */
-  async generateAIScript(videoId: string): Promise<AIScript> {
-    // This endpoint doesn't exist in backend, return mock data
-    return this.getMockAIScript(videoId);
+  async generateAIScript(
+    video_description: string,
+    video_stats: {
+      playCount: number;
+      diggCount: number;
+      commentCount: number;
+      shareCount: number;
+    },
+    tone: string = 'engaging',
+    niche: string = 'general',
+    duration_seconds: number = 30
+  ): Promise<AIScript> {
+    try {
+      const response = await apiClient.post('/ai-scripts/generate', {
+        video_description,
+        video_stats,
+        tone,
+        niche,
+        duration_seconds,
+      });
+
+      // Transform backend response to match AIScript type
+      const data = response.data;
+      return {
+        id: `script_${Date.now()}`,
+        originalVideoId: '',
+        hook: data.hook,
+        body: data.body,
+        callToAction: data.cta,
+        duration: data.duration,
+        tone,
+        niche,
+        viralElements: data.viralElements,
+        tips: data.tips,
+        generatedAt: data.generatedAt,
+        fallback: data.fallback,
+      };
+    } catch (error) {
+      console.error('Error generating AI script:', error);
+      // Return fallback script if API fails
+      return this.getMockAIScript('');
+    }
   }
 
   /**

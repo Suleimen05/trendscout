@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Play, Heart, MessageCircle, Share2, Eye, Bookmark, Sparkles, TrendingUp, Music } from 'lucide-react';
+import { Play, Heart, MessageCircle, Share2, Eye, Bookmark, Sparkles, TrendingUp, Music, ExternalLink, Info, Flame, Hash, Copy, Wand2, Loader2, Check } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import type { TikTokVideo } from '@/types';
+import { useAIScriptGenerator } from '@/hooks/useTikTok';
 
 interface VideoCardProps {
   video: TikTokVideo;
@@ -30,6 +31,11 @@ export function VideoCard({
   const [isHovered, setIsHovered] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [showScriptModal, setShowScriptModal] = useState(false);
+
+  // AI Script Generator hook
+  const { script, loading: scriptLoading, error: scriptError, generate } = useAIScriptGenerator();
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) {
@@ -48,36 +54,130 @@ export function VideoCard({
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
+  const handleGenerateScript = async () => {
+    await generate(
+      video.description || video.title || 'Viral TikTok video',
+      {
+        playCount: video.stats?.playCount || 0,
+        diggCount: video.stats?.diggCount || 0,
+        commentCount: video.stats?.commentCount || 0,
+        shareCount: video.stats?.shareCount || 0,
+      },
+      'engaging',
+      'general',
+      30
+    );
+    setShowScriptModal(true);
+  };
+
   const engagementRate = video.engagementRate || 0;
-  const viralScore = video.viralScore || 0;
+  const viralScore = video.uts_score || video.viralScore || 0;
 
   const sizeClasses = {
-    small: 'w-48',
-    medium: 'w-64',
-    large: 'w-80',
+    small: 'w-32',
+    medium: 'w-full',  // Full width of grid cell
+    large: 'w-full',
   };
+
+  // Placeholder image for missing covers
+  const coverImage = video.video?.cover || video.cover_url || '/placeholder-video.svg';
+  const authorAvatar = video.author?.avatar || '/placeholder-avatar.svg';
+  const authorName = video.author?.nickname || video.author?.uniqueId || video.author_username || 'Unknown';
+
+  // Get UTS score color
+  const getScoreColor = (score: number) => {
+    if (score >= 80) return 'from-red-500 to-orange-500';
+    if (score >= 60) return 'from-yellow-500 to-orange-500';
+    if (score >= 40) return 'from-blue-500 to-purple-500';
+    return 'from-gray-400 to-gray-500';
+  };
+
+  // Get video URL for opening in TikTok
+  const videoUrl = video.url || video.video?.playAddr || '#';
+
+  // Get direct video playback URL
+  const playAddr = video.play_addr || video.video?.playAddr || '';
+
+  // Extract video ID for embedding (fallback)
+  const getVideoId = (url: string): string | null => {
+    if (!url || url === '#') return null;
+    const match = url.match(/\/video\/(\d+)/);
+    return match ? match[1] : null;
+  };
+
+  const videoId = getVideoId(videoUrl);
+
+  // Debug logging when modal opens
+  if (showDetails) {
+    console.log('🎬 Video Modal Debug:', {
+      playAddr,
+      videoId,
+      videoUrl,
+      hasVideo: !!playAddr,
+      hasEmbed: !!videoId,
+      coverImage
+    });
+  }
 
   return (
     <>
       <Card
         className={cn(
-          'group relative overflow-hidden transition-all duration-300 hover:shadow-lg cursor-pointer',
+          'group relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:scale-[1.02] cursor-pointer border-2',
+          viralScore >= 80 && 'border-red-500/30 hover:border-red-500/60',
+          viralScore >= 60 && viralScore < 80 && 'border-yellow-500/30 hover:border-yellow-500/60',
+          viralScore < 60 && 'hover:border-purple-500/40',
           sizeClasses[size]
         )}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        onClick={() => setShowDetails(true)}
+        onMouseEnter={() => {
+          setIsHovered(true);
+        }}
+        onMouseLeave={() => {
+          setIsHovered(false);
+        }}
+        onClick={(e) => {
+          e.preventDefault();
+          setIsPlaying(!isPlaying); // Toggle video playback on click
+        }}
       >
         {/* Thumbnail */}
-        <div className="relative aspect-[9/16] overflow-hidden bg-muted">
-          <img
-            src={video.video.cover}
-            alt={video.title}
-            className={cn(
-              'h-full w-full object-cover transition-transform duration-300',
-              isHovered && 'scale-110'
-            )}
-          />
+        <div className="relative aspect-[9/16] overflow-hidden bg-gradient-to-br from-gray-800 to-gray-900">
+          {isPlaying && playAddr ? (
+            <video
+              className="h-full w-full object-cover"
+              src={playAddr}
+              autoPlay
+              loop
+              muted
+              playsInline
+              controls
+            />
+          ) : isPlaying && videoId ? (
+            <iframe
+              src={`https://www.tiktok.com/embed/v2/${videoId}`}
+              className="h-full w-full"
+              allowFullScreen
+              allow="autoplay; encrypted-media;"
+              style={{ border: 'none' }}
+            />
+          ) : coverImage && coverImage !== '/placeholder-video.svg' ? (
+            <img
+              src={coverImage}
+              alt={video.title || 'Video thumbnail'}
+              className={cn(
+                'h-full w-full object-cover transition-transform duration-300',
+                isHovered && 'scale-110'
+              )}
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/placeholder-video.svg';
+              }}
+            />
+          ) : (
+            <div className="h-full w-full flex items-center justify-center text-gray-500">
+              <Play className="h-16 w-16" />
+            </div>
+          )}
 
           {/* Overlay */}
           <div className={cn(
@@ -115,19 +215,53 @@ export function VideoCard({
             )}
           </div>
 
-          {/* Viral Score Badge */}
-          {viralScore > 70 && (
-            <Badge className="absolute top-2 left-2 bg-gradient-to-r from-red-500 to-orange-500 text-white border-0">
-              <TrendingUp className="h-3 w-3 mr-1" />
-              Viral
+          {/* UTS/Viral Score Badge - Always show if available */}
+          {viralScore > 0 && (
+            <Badge
+              className={cn(
+                "absolute top-2 left-2 text-white border-0 font-bold text-sm px-3 py-1",
+                `bg-gradient-to-r ${getScoreColor(viralScore)}`
+              )}
+            >
+              <TrendingUp className="h-4 w-4 mr-1" />
+              {viralScore.toFixed(0)}
             </Badge>
           )}
+
+          {/* Open TikTok Button */}
+          {videoUrl && videoUrl !== '#' && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute bottom-2 right-2 h-8 w-8 bg-black/70 hover:bg-black/90 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              onClick={(e) => {
+                e.stopPropagation();
+                window.open(videoUrl, '_blank');
+              }}
+            >
+              <ExternalLink className="h-4 w-4" />
+            </Button>
+          )}
+
+          {/* Info Button - Opens Modal */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute top-2 right-2 h-8 w-8 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
+            onClick={(e) => {
+              e.stopPropagation();
+              setShowDetails(true);
+            }}
+            title="View Details"
+          >
+            <Info className="h-4 w-4" />
+          </Button>
 
           {/* Save Button */}
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 h-8 w-8 bg-black/50 hover:bg-black/70 text-white"
+            className="absolute top-2 right-12 h-8 w-8 bg-black/50 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={(e) => {
               e.stopPropagation();
               setIsSaved(!isSaved);
@@ -142,22 +276,36 @@ export function VideoCard({
         <CardContent className="p-3 space-y-2">
           {/* Author */}
           <div className="flex items-center gap-2">
-            <img
-              src={video.author.avatar}
-              alt={video.author.nickname}
-              className="h-6 w-6 rounded-full object-cover"
-            />
-            <span className="text-sm font-medium truncate">{video.author.nickname}</span>
-            {video.author.verified && (
-              <Badge variant="secondary" className="h-4 w-4 p-0 flex items-center justify-center bg-blue-500 text-white">
+            {authorAvatar && authorAvatar !== '/placeholder-avatar.svg' ? (
+              <img
+                src={authorAvatar}
+                alt={authorName}
+                className="h-8 w-8 rounded-full object-cover ring-2 ring-purple-500/30"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = '/placeholder-avatar.svg';
+                }}
+              />
+            ) : (
+              <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xs">
+                {authorName.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <span className="text-sm font-semibold truncate block hover:text-purple-600 cursor-pointer transition-colors">
+                @{authorName}
+              </span>
+            </div>
+            {video.author?.verified && (
+              <Badge variant="secondary" className="h-5 w-5 p-0 flex items-center justify-center bg-blue-500 text-white shrink-0">
                 ✓
               </Badge>
             )}
           </div>
 
-          {/* Title */}
-          <p className="text-sm line-clamp-2 text-muted-foreground">
-            {video.title}
+          {/* Title/Description */}
+          <p className="text-xs line-clamp-2 text-foreground leading-snug">
+            {video.description || video.title || 'No description available'}
           </p>
 
           {/* Hashtags */}
@@ -171,51 +319,54 @@ export function VideoCard({
             </div>
           )}
 
-          {/* Stats */}
+          {/* Stats - Compact */}
           {showStats && (
-            <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
-              <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1">
+            <div className="space-y-1.5 pt-1.5 border-t">
+              <div className="grid grid-cols-2 gap-1.5 text-xs">
+                <div className="flex items-center gap-1 text-purple-600 dark:text-purple-400 font-medium">
                   <Eye className="h-3 w-3" />
-                  {formatNumber(video.stats.playCount)}
-                </span>
-                <span className="flex items-center gap-1">
+                  <span>{formatNumber(video.stats?.playCount || 0)}</span>
+                </div>
+                <div className="flex items-center gap-1 text-pink-600 dark:text-pink-400 font-medium">
                   <Heart className="h-3 w-3" />
-                  {formatNumber(video.stats.diggCount)}
-                </span>
-                <span className="flex items-center gap-1">
+                  <span>{formatNumber(video.stats?.diggCount || 0)}</span>
+                </div>
+                <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-medium">
                   <MessageCircle className="h-3 w-3" />
-                  {formatNumber(video.stats.commentCount)}
-                </span>
-                <span className="flex items-center gap-1">
+                  <span>{formatNumber(video.stats?.commentCount || 0)}</span>
+                </div>
+                <div className="flex items-center gap-1 text-green-600 dark:text-green-400 font-medium">
                   <Share2 className="h-3 w-3" />
-                  {formatNumber(video.stats.shareCount)}
-                </span>
+                  <span>{formatNumber(video.stats?.shareCount || 0)}</span>
+                </div>
               </div>
-              {engagementRate > 5 && (
-                <Badge variant="secondary" className="text-xs">
-                  {engagementRate.toFixed(1)}%
+              {engagementRate > 0 && (
+                <Badge variant="secondary" className="text-xs w-full justify-center">
+                  Engagement: {engagementRate.toFixed(1)}%
                 </Badge>
               )}
             </div>
           )}
 
-          {/* Viral Score Bar */}
+          {/* UTS Viral Score Bar - More prominent */}
           {viralScore > 0 && (
-            <div className="pt-2">
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-muted-foreground">Viral Score</span>
-                <span className="text-xs font-medium">{viralScore.toFixed(0)}%</span>
+            <div className="pt-2 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                  <TrendingUp className="h-3 w-3" />
+                  UTS Score
+                </span>
+                <span className="text-base font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+                  {viralScore.toFixed(0)}
+                </span>
               </div>
-              <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+              <div className="h-2 w-full rounded-full bg-muted overflow-hidden shadow-inner">
                 <div
                   className={cn(
-                    'h-full rounded-full transition-all duration-500',
-                    viralScore > 80 ? 'bg-gradient-to-r from-red-500 to-orange-500' :
-                    viralScore > 60 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
-                    'bg-gradient-to-r from-gray-400 to-gray-500'
+                    'h-full rounded-full transition-all duration-500 shadow-lg',
+                    `bg-gradient-to-r ${getScoreColor(viralScore)}`
                   )}
-                  style={{ width: `${viralScore}%` }}
+                  style={{ width: `${Math.min(viralScore, 100)}%` }}
                 />
               </div>
             </div>
@@ -223,163 +374,357 @@ export function VideoCard({
         </CardContent>
       </Card>
 
-      {/* Video Details Dialog */}
+      {/* Video Analysis Modal - Professional Layout */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Video Analysis</DialogTitle>
-          </DialogHeader>
-          
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Video Preview */}
-            <div className="space-y-4">
-              <div className="aspect-[9/16] max-h-[600px] rounded-lg overflow-hidden bg-muted">
-                <img
-                  src={video.video.cover}
-                  alt={video.title}
-                  className="h-full w-full object-cover"
-                />
+        <DialogContent className="max-w-[1100px] max-h-[90vh] p-0">
+          <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <div className="flex items-center gap-3">
+                {authorAvatar && authorAvatar !== '/placeholder-avatar.svg' ? (
+                  <img
+                    src={authorAvatar}
+                    alt={authorName}
+                    className="w-10 h-10 rounded-full object-cover ring-2 ring-purple-500/20"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder-avatar.svg';
+                    }}
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold">
+                    {authorName.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <h3 className="font-semibold">@{authorName}</h3>
               </div>
-              
-              {onGenerateScript && (
-                <Button
-                  className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-                  onClick={() => {
-                    onGenerateScript(video);
-                    setShowDetails(false);
-                  }}
-                >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  Generate AI Script
-                </Button>
-              )}
+              <Button
+                onClick={handleGenerateScript}
+                size="sm"
+                disabled={scriptLoading}
+                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+              >
+                {scriptLoading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Wand2 className="h-4 w-4 mr-2" />
+                    Generate AI Script
+                  </>
+                )}
+              </Button>
             </div>
 
-            {/* Video Info */}
-            <div className="space-y-4">
-              {/* Author */}
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-muted">
-                <img
-                  src={video.author.avatar}
-                  alt={video.author.nickname}
-                  className="h-12 w-12 rounded-full object-cover"
-                />
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-semibold">{video.author.nickname}</span>
-                    {video.author.verified && (
-                      <Badge variant="secondary" className="bg-blue-500 text-white">
-                        Verified
-                      </Badge>
-                    )}
+            {/* Main Content: Video + Metrics */}
+            <div className="flex gap-6 p-6 overflow-y-auto">
+              {/* Left: Video Player */}
+              <div className="flex-shrink-0 w-[340px]">
+                <div className="aspect-[9/16] rounded-lg overflow-hidden bg-black relative group">
+                  {playAddr ? (
+                    <video
+                      className="h-full w-full object-contain"
+                      src={playAddr}
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
+                      controls
+                    />
+                  ) : videoId ? (
+                    <iframe
+                      src={`https://www.tiktok.com/embed/v2/${videoId}`}
+                      className="h-full w-full"
+                      allowFullScreen
+                      allow="autoplay; encrypted-media;"
+                      style={{ border: 'none' }}
+                    />
+                  ) : (
+                    <div className="relative h-full w-full">
+                      <img
+                        src={coverImage}
+                        alt={video.description}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = '/placeholder-video.svg';
+                        }}
+                      />
+                      {/* Overlay button to watch on TikTok */}
+                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                        <Button
+                          size="lg"
+                          onClick={() => window.open(videoUrl, '_blank')}
+                          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+                        >
+                          <Play className="h-5 w-5 mr-2" />
+                          Watch on TikTok
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Right: Metrics & Info */}
+              <div className="flex-1 space-y-4">
+                {/* Top Metrics Row */}
+                <div className="grid grid-cols-3 gap-3">
+                  <Card className="p-3 bg-gradient-to-br from-orange-500/10 to-red-500/10 border-orange-200/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Flame className="h-4 w-4 text-orange-500" />
+                      <span className="text-xs font-medium text-muted-foreground">Viral Score</span>
+                    </div>
+                    <div className="text-2xl font-bold text-orange-600">{viralScore.toFixed(0)}</div>
+                  </Card>
+
+                  <Card className="p-3 bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-200/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Eye className="h-4 w-4 text-blue-500" />
+                      <span className="text-xs font-medium text-muted-foreground">Views</span>
+                    </div>
+                    <div className="text-2xl font-bold text-blue-600">{formatNumber(video.stats?.playCount || 0)}</div>
+                  </Card>
+
+                  <Card className="p-3 bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-200/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <TrendingUp className="h-4 w-4 text-purple-500" />
+                      <span className="text-xs font-medium text-muted-foreground">Engagement</span>
+                    </div>
+                    <div className="text-2xl font-bold text-purple-600">{engagementRate.toFixed(1)}%</div>
+                  </Card>
+                </div>
+
+                {/* Bottom Metrics Row */}
+                <div className="grid grid-cols-3 gap-3">
+                  <Card className="p-3 bg-gradient-to-br from-pink-500/10 to-rose-500/10 border-pink-200/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Heart className="h-4 w-4 text-pink-500" />
+                      <span className="text-xs font-medium text-muted-foreground">Likes</span>
+                    </div>
+                    <div className="text-2xl font-bold text-pink-600">{formatNumber(video.stats?.diggCount || 0)}</div>
+                  </Card>
+
+                  <Card className="p-3 bg-gradient-to-br from-green-500/10 to-emerald-500/10 border-green-200/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <MessageCircle className="h-4 w-4 text-green-500" />
+                      <span className="text-xs font-medium text-muted-foreground">Comments</span>
+                    </div>
+                    <div className="text-2xl font-bold text-green-600">{formatNumber(video.stats?.commentCount || 0)}</div>
+                  </Card>
+
+                  <Card className="p-3 bg-gradient-to-br from-indigo-500/10 to-violet-500/10 border-indigo-200/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      <Share2 className="h-4 w-4 text-indigo-500" />
+                      <span className="text-xs font-medium text-muted-foreground">Shares</span>
+                    </div>
+                    <div className="text-2xl font-bold text-indigo-600">{formatNumber(video.stats?.shareCount || 0)}</div>
+                  </Card>
+                </div>
+
+                {/* Description */}
+                <Card className="p-4">
+                  <p className="text-sm leading-relaxed">{video.description}</p>
+                </Card>
+
+                {/* Music */}
+                {video.music && (
+                  <Card className="p-4">
+                    <div className="flex items-center gap-2">
+                      <Music className="h-4 w-4 text-purple-500" />
+                      <span className="text-sm font-medium">Music:</span>
+                      <span className="text-sm text-muted-foreground">{video.music.title}</span>
+                    </div>
+                  </Card>
+                )}
+
+                {/* Hashtags */}
+                {video.hashtags && video.hashtags.length > 0 && (
+                  <div>
+                    <div className="flex flex-wrap gap-2">
+                      {video.hashtags.map((hashtag) => (
+                        <Badge
+                          key={hashtag.id}
+                          variant="secondary"
+                          className="hover:bg-purple-100 dark:hover:bg-purple-900/20 cursor-pointer"
+                        >
+                          #{hashtag.name}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {formatNumber(video.author.followerCount)} followers
-                  </p>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 pt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(videoUrl);
+                    }}
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy Link
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(videoUrl, '_blank')}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Open in TikTok
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Script Modal */}
+      <Dialog open={showScriptModal} onOpenChange={setShowScriptModal}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Wand2 className="h-5 w-5 text-purple-600" />
+              Generated Viral Script
+            </DialogTitle>
+          </DialogHeader>
+
+          {scriptLoading && (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
+              <span className="ml-3 text-muted-foreground">Generating your viral script with AI...</span>
+            </div>
+          )}
+
+          {scriptError && (
+            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+              <p className="text-red-600 dark:text-red-400">{scriptError}</p>
+            </div>
+          )}
+
+          {script && !scriptLoading && (
+            <div className="space-y-6">
+              {/* Hook Section */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-gradient-to-r from-purple-600 to-pink-600">Hook (0-3s)</Badge>
+                </div>
+                <Card className="p-4 bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-purple-200">
+                  <p className="text-lg font-semibold">{script.hook}</p>
+                </Card>
+              </div>
+
+              {/* Body Section */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant="secondary">Body</Badge>
+                </div>
+                <div className="space-y-3">
+                  {script.body.map((line, index) => (
+                    <Card key={index} className="p-4">
+                      <p className="text-sm leading-relaxed">{line}</p>
+                    </Card>
+                  ))}
                 </div>
               </div>
 
-              {/* Description */}
-              <div>
-                <h4 className="font-semibold mb-2">Description</h4>
-                <p className="text-sm text-muted-foreground">{video.description}</p>
+              {/* Call to Action */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-gradient-to-r from-green-600 to-emerald-600">Call to Action</Badge>
+                </div>
+                <Card className="p-4 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200">
+                  <p className="text-lg font-semibold">{script.callToAction}</p>
+                </Card>
               </div>
 
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 rounded-lg bg-muted">
-                  <p className="text-2xl font-bold text-purple-600">
-                    {formatNumber(video.stats.playCount)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Views</p>
-                </div>
-                <div className="p-4 rounded-lg bg-muted">
-                  <p className="text-2xl font-bold text-pink-600">
-                    {formatNumber(video.stats.diggCount)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Likes</p>
-                </div>
-                <div className="p-4 rounded-lg bg-muted">
-                  <p className="text-2xl font-bold text-blue-600">
-                    {formatNumber(video.stats.commentCount)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Comments</p>
-                </div>
-                <div className="p-4 rounded-lg bg-muted">
-                  <p className="text-2xl font-bold text-green-600">
-                    {formatNumber(video.stats.shareCount)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">Shares</p>
-                </div>
-              </div>
-
-              {/* Engagement Rate */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold">Engagement Rate</span>
-                  <span className="text-2xl font-bold">{engagementRate.toFixed(1)}%</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-purple-500 to-pink-500"
-                    style={{ width: `${Math.min(engagementRate * 10, 100)}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Viral Score */}
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-semibold">Viral Score</span>
-                  <span className="text-2xl font-bold">{viralScore.toFixed(0)}%</span>
-                </div>
-                <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={cn(
-                      'h-full rounded-full',
-                      viralScore > 80 ? 'bg-gradient-to-r from-red-500 to-orange-500' :
-                      viralScore > 60 ? 'bg-gradient-to-r from-yellow-500 to-orange-500' :
-                      'bg-gradient-to-r from-gray-400 to-gray-500'
-                    )}
-                    style={{ width: `${viralScore}%` }}
-                  />
-                </div>
-              </div>
-
-              {/* Hashtags */}
-              {video.hashtags.length > 0 && (
-                <div>
-                  <h4 className="font-semibold mb-2">Hashtags</h4>
+              {/* Viral Elements */}
+              {script.viralElements && script.viralElements.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Flame className="h-4 w-4 text-orange-500" />
+                    <span className="font-semibold">Viral Elements</span>
+                  </div>
                   <div className="flex flex-wrap gap-2">
-                    {video.hashtags.map((hashtag) => (
-                      <Badge
-                        key={hashtag.id}
-                        variant="outline"
-                        className="cursor-pointer hover:bg-accent"
-                      >
-                        #{hashtag.name}
+                    {script.viralElements.map((element, index) => (
+                      <Badge key={index} variant="secondary" className="bg-orange-100 dark:bg-orange-900/20">
+                        {element}
                       </Badge>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Music */}
-              {video.music && (
-                <div className="p-4 rounded-lg bg-muted">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                      <Music className="h-5 w-5 text-white" />
-                    </div>
-                    <div>
-                      <p className="font-medium">{video.music.title}</p>
-                      <p className="text-sm text-muted-foreground">{video.music.authorName}</p>
-                    </div>
+              {/* Tips */}
+              {script.tips && script.tips.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="h-4 w-4 text-blue-500" />
+                    <span className="font-semibold">Pro Tips</span>
                   </div>
+                  <ul className="space-y-2">
+                    {script.tips.map((tip, index) => (
+                      <li key={index} className="flex items-start gap-2">
+                        <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                        <span className="text-sm text-muted-foreground">{tip}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
+
+              {/* Duration */}
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <span>Duration: ~{script.duration}s</span>
+                {script.fallback && (
+                  <Badge variant="outline" className="text-yellow-600 border-yellow-600">
+                    Fallback Mode
+                  </Badge>
+                )}
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-4 border-t">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const scriptText = `
+HOOK: ${script.hook}
+
+BODY:
+${script.body.map((line, i) => `${i + 1}. ${line}`).join('\n')}
+
+CALL TO ACTION: ${script.callToAction}
+
+VIRAL ELEMENTS: ${script.viralElements?.join(', ')}
+
+TIPS:
+${script.tips?.map((tip, i) => `${i + 1}. ${tip}`).join('\n')}
+
+Duration: ~${script.duration}s
+                    `.trim();
+                    navigator.clipboard.writeText(scriptText);
+                  }}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy Script
+                </Button>
+                <Button
+                  onClick={handleGenerateScript}
+                  variant="outline"
+                  disabled={scriptLoading}
+                >
+                  <Wand2 className="h-4 w-4 mr-2" />
+                  Regenerate
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </DialogContent>
       </Dialog>
     </>

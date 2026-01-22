@@ -20,7 +20,7 @@ from .core.database import Base, engine
 from .core.config import settings
 # 👇 ВАЖНО: Явный импорт моделей, чтобы SQLAlchemy их увидела!
 from .db import models 
-from .api import trends, profiles, competitors
+from .api import trends, profiles, competitors, ai_scripts
 
 # 👇 НОВЫЙ ИМПОРТ: Планировщик задач
 from .services.scheduler import start_scheduler
@@ -53,6 +53,7 @@ app.add_middleware(
 # Подключаем ручки (API Endpoints)
 app.include_router(trends.router, prefix="/api/trends", tags=["Trends"])
 app.include_router(profiles.router, prefix="/api/profiles", tags=["Profiles"])
+app.include_router(ai_scripts.router, prefix="/api/ai-scripts", tags=["AI Scripts"])
 
 # --- ⏰ ЗАПУСК ПЛАНИРОВЩИКА (SCHEDULER) ---
 @app.on_event("startup")

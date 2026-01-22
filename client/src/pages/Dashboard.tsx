@@ -10,6 +10,7 @@ import { useTrendingVideos } from '@/hooks/useTikTok';
 import { useDashboard } from '@/hooks/useTikTok';
 import { useAIScriptGenerator } from '@/hooks/useTikTok';
 import type { TikTokVideo } from '@/types';
+import { DevAccessGate } from '@/components/DevAccessGate';
 
 export function Dashboard() {
   const { videos: trendingVideos, loading: videosLoading } = useTrendingVideos('US', 20);
@@ -46,7 +47,8 @@ export function Dashboard() {
     .slice(0, 6);
 
   return (
-    <div className="space-y-8">
+    <DevAccessGate pageName="Analytics Dashboard">
+      <div className="space-y-8">
       {/* Welcome Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -201,6 +203,7 @@ export function Dashboard() {
           </div>
         </Card>
       </div>
-    </div>
+      </div>
+    </DevAccessGate>
   );
 }

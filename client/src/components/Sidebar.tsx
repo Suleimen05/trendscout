@@ -5,6 +5,7 @@ import {
   TrendingUp,
   Search,
   Users,
+  UserSearch,
   BarChart3,
   Settings,
   HelpCircle,
@@ -47,6 +48,11 @@ const mainNavItems = [
     href: '/ai-scripts',
     icon: Sparkles,
     badge: 'AI',
+  },
+  {
+    title: 'Account Search',
+    href: '/account-search',
+    icon: UserSearch,
   },
   {
     title: 'Competitors',
