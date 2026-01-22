@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Users, UserPlus, TrendingUp, TrendingDown, Eye, Video, Search, Filter, X, Check } from 'lucide-react';
+import { Users, UserPlus, TrendingUp, TrendingDown, Search, Filter, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { apiService } from '@/services/api';
 import type { Competitor, TikTokVideo } from '@/types';
 import { toast } from 'sonner';
 
@@ -188,7 +187,7 @@ export function Competitors() {
     return mockCompetitors; // Fallback to mock data
   };
 
-  const [competitors, setCompetitors] = useState<Competitor[]>(loadCompetitors);
+  const [competitors] = useState<Competitor[]>(loadCompetitors);
   const [trackedIds, setTrackedIds] = useState<Set<string>>(new Set(['1', '2'])); // Mock: 2 are tracked
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Play, Heart, MessageCircle, Share2, Eye, Bookmark, Sparkles, TrendingUp, Music, ExternalLink, Info, Flame, Hash, Copy, Wand2, Loader2, Check } from 'lucide-react';
+import { Play, Heart, MessageCircle, Share2, Eye, Bookmark, Sparkles, TrendingUp, Music, ExternalLink, Info, Flame, Copy, Wand2, Loader2, Check } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -681,11 +681,6 @@ export function VideoCard({
               {/* Duration */}
               <div className="flex items-center gap-4 text-sm text-muted-foreground">
                 <span>Duration: ~{script.duration}s</span>
-                {script.fallback && (
-                  <Badge variant="outline" className="text-yellow-600 border-yellow-600">
-                    Fallback Mode
-                  </Badge>
-                )}
               </div>
 
               {/* Action Buttons */}

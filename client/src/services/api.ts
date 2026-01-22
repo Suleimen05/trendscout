@@ -145,33 +145,56 @@ class ApiService {
       // Transform ProfileReport to CompetitorData format
       return {
         username: report.author.username,
-        nickname: report.author.nickname,
-        avatar: report.author.avatar,
-        followers: report.author.followers,
-        metrics: {
-          avgViews: report.metrics.avg_views,
-          engagementRate: report.metrics.engagement_rate,
-          viralScore: report.metrics.efficiency_score,
-          status: report.metrics.status,
+        channel_data: {
+          nickName: report.author.nickname,
+          uniqueId: report.author.username,
+          avatarThumb: report.author.avatar,
+          fans: report.author.followers,
+          videos: 0,
         },
-        topVideos: report.top_3_hits.map(video => ({
+        metrics: {
+          avg_views: report.metrics.avg_views,
+          engagement_rate: report.metrics.engagement_rate,
+        },
+        top_3_hits: report.top_3_hits.map(video => ({
           id: video.id || '',
           url: video.url || '',
           title: video.title,
-          coverUrl: video.cover_url,
+          cover_url: video.cover_url,
           views: video.views,
-          utsScore: video.uts_score,
-          stats: video.stats,
+          uts_score: video.uts_score,
+          stats: {
+            playCount: video.stats.likes,
+            diggCount: video.stats.likes,
+            commentCount: video.stats.comments,
+            shareCount: video.stats.shares,
+          },
+          author: {
+            username: report.author.username,
+            avatar: report.author.avatar,
+            followers: report.author.followers,
+          },
+          uploaded_at: video.uploaded_at,
         })),
-        fullFeed: report.full_feed.map(video => ({
+        latest_feed: report.full_feed.map(video => ({
           id: video.id || '',
           url: video.url || '',
           title: video.title,
-          coverUrl: video.cover_url,
+          cover_url: video.cover_url,
           views: video.views,
-          utsScore: video.uts_score,
-          stats: video.stats,
-          uploadedAt: video.uploaded_at,
+          uts_score: video.uts_score,
+          stats: {
+            playCount: video.stats.likes,
+            diggCount: video.stats.likes,
+            commentCount: video.stats.comments,
+            shareCount: video.stats.shares,
+          },
+          author: {
+            username: report.author.username,
+            avatar: report.author.avatar,
+            followers: report.author.followers,
+          },
+          uploaded_at: video.uploaded_at,
         })),
       };
     } catch (error) {
@@ -307,7 +330,6 @@ class ApiService {
         viralElements: data.viralElements,
         tips: data.tips,
         generatedAt: data.generatedAt,
-        fallback: data.fallback,
       };
     } catch (error) {
       console.error('Error generating AI script:', error);

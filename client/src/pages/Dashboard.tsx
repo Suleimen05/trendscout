@@ -22,17 +22,39 @@ export function Dashboard() {
     script,
     loading: scriptLoading,
     generate,
-  } = useAIScriptGenerator(selectedVideo?.id || '', 'engaging', 'general');
+  } = useAIScriptGenerator();
 
   const handleGenerateScript = async (video: TikTokVideo) => {
     setSelectedVideo(video);
     setShowAIScript(true);
-    await generate();
+    await generate(
+      video.description || video.title || '',
+      {
+        playCount: video.stats.playCount,
+        diggCount: video.stats.diggCount,
+        commentCount: video.stats.commentCount,
+        shareCount: video.stats.shareCount,
+      },
+      'engaging',
+      'general',
+      Math.floor((video.video?.duration || 30000) / 1000)
+    );
   };
 
   const handleRegenerateScript = async () => {
     if (selectedVideo) {
-      await generate();
+      await generate(
+        selectedVideo.description || selectedVideo.title || '',
+        {
+          playCount: selectedVideo.stats.playCount,
+          diggCount: selectedVideo.stats.diggCount,
+          commentCount: selectedVideo.stats.commentCount,
+          shareCount: selectedVideo.stats.shareCount,
+        },
+        'engaging',
+        'general',
+        Math.floor((selectedVideo.video?.duration || 30000) / 1000)
+      );
     }
   };
 
