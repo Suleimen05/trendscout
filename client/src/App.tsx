@@ -29,28 +29,61 @@ const mockUser: User = {
   },
 };
 
+function AppContent() {
+  const {
+    sidebarOpen,
+    toggleSidebar,
+  } = useAppState();
+
+  return (
+    <div className="flex h-screen overflow-hidden">
+      {/* Sidebar */}
+      <Sidebar open={sidebarOpen} onToggle={toggleSidebar} />
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Header - Mobile only */}
+        <Header onToggleSidebar={toggleSidebar} />
+
+        {/* Page Content */}
+        <main className="flex-1 overflow-y-auto bg-muted/30">
+          <div className="container mx-auto px-4 md:px-6 py-6 md:pt-8 max-w-7xl">
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/trending" element={<Trending />} />
+              <Route path="/discover" element={<Discover />} />
+              <Route path="/discover/*" element={<Discover />} />
+              <Route path="/ai-scripts" element={<AIScripts />} />
+              <Route path="/account-search" element={<AccountSearch />} />
+              <Route path="/competitors" element={<Competitors />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/help" element={<Help />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </div>
+        </main>
+      </div>
+
+      {/* Toast Notifications */}
+      <Toaster />
+    </div>
+  );
+}
+
 function App() {
   const {
     user,
     login,
-    logout,
-    notifications,
-    unreadCount,
     addNotification,
-    markNotificationAsRead,
-    sidebarOpen,
-    toggleSidebar,
-    searchQuery,
-    updateSearchQuery,
   } = useAppState();
 
   // Simulate login for demo
   const [authChecked, setAuthChecked] = useState(false);
-  
+
   if (!authChecked) {
     login(mockUser);
     setAuthChecked(true);
-    
+
     // Add some mock notifications
     addNotification({
       type: 'trend',
@@ -58,7 +91,7 @@ function App() {
       message: '#fyp is trending with 2.4M new videos',
       actionUrl: '/trending',
     });
-    
+
     addNotification({
       type: 'competitor',
       title: 'Competitor Activity',
@@ -68,46 +101,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <div className="flex h-screen overflow-hidden">
-        {/* Sidebar */}
-        <Sidebar open={sidebarOpen} onToggle={toggleSidebar} />
-
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          {/* Header */}
-          <Header
-            onToggleSidebar={toggleSidebar}
-            user={user}
-            notifications={notifications}
-            unreadCount={unreadCount}
-            searchQuery={searchQuery}
-            onSearchChange={updateSearchQuery}
-            onMarkNotificationRead={markNotificationAsRead}
-            onLogout={logout}
-          />
-
-          {/* Page Content */}
-          <main className="flex-1 overflow-y-auto bg-muted/30">
-            <div className="container mx-auto px-4 py-6 max-w-7xl">
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/trending" element={<Trending />} />
-                <Route path="/discover" element={<Discover />} />
-                <Route path="/discover/*" element={<Discover />} />
-                <Route path="/ai-scripts" element={<AIScripts />} />
-                <Route path="/account-search" element={<AccountSearch />} />
-                <Route path="/competitors" element={<Competitors />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route path="/help" element={<Help />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </div>
-          </main>
-        </div>
-
-        {/* Toast Notifications */}
-        <Toaster />
-      </div>
+      <AppContent />
     </BrowserRouter>
   );
 }

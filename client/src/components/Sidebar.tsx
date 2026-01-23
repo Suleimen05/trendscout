@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -12,6 +13,8 @@ import {
   Sparkles,
   Crown,
   ArrowUpRight,
+  ChevronDown,
+  LogOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -72,6 +75,7 @@ const bottomNavItems = [
 
 export function Sidebar({ open, onToggle }: SidebarProps) {
   const location = useLocation();
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   // Mock user data - replace with real data from auth context
   const user = {
@@ -156,31 +160,6 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
 
       {/* Bottom Section */}
       <div className="border-t">
-        {/* Settings & Help */}
-        <div className="p-3 space-y-1">
-          {bottomNavItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = location.pathname === item.href;
-
-            return (
-              <NavLink
-                key={item.href}
-                to={item.href}
-                className={cn(
-                  'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all',
-                  isActive
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent',
-                  !open && 'justify-center'
-                )}
-              >
-                <Icon className="h-5 w-5 flex-shrink-0" />
-                {open && <span>{item.title}</span>}
-              </NavLink>
-            );
-          })}
-        </div>
-
         {/* Upgrade Card */}
         {open && (
           <div className="p-3 pt-0">
@@ -215,10 +194,13 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
           </div>
         )}
 
-        {/* User Profile */}
+        {/* User Profile with Dropdown */}
         {open && (
-          <div className="p-3 pt-0 border-t">
-            <button className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm hover:bg-accent transition-all">
+          <div className="p-3 pt-0 border-t relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm hover:bg-accent transition-all"
+            >
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-pink-600 text-white font-medium text-xs">
                 {user.name.split(' ').map(n => n[0]).join('')}
               </div>
@@ -226,7 +208,40 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
                 <p className="font-medium text-foreground truncate">{user.name}</p>
                 <p className="text-xs text-muted-foreground truncate">{user.email}</p>
               </div>
+              <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition-transform', showUserMenu && 'rotate-180')} />
             </button>
+
+            {/* Dropdown Menu */}
+            {showUserMenu && (
+              <div className="absolute bottom-full left-3 right-3 mb-2 bg-popover border rounded-lg shadow-lg py-1 z-50">
+                <NavLink
+                  to="/settings"
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-accent transition-all"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  <Settings className="h-4 w-4" />
+                  <span>Settings</span>
+                </NavLink>
+                <NavLink
+                  to="/help"
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-accent transition-all"
+                  onClick={() => setShowUserMenu(false)}
+                >
+                  <HelpCircle className="h-4 w-4" />
+                  <span>Help & Support</span>
+                </NavLink>
+                <button
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-accent transition-all text-red-600 dark:text-red-400"
+                  onClick={() => {
+                    setShowUserMenu(false);
+                    // Handle logout
+                  }}
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span>Logout</span>
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
