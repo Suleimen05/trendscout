@@ -74,3 +74,44 @@ class ProfileData(Base):
     engagement_rate = Column(Float, default=0.0) # Добавлено для аналитики
     
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class Competitor(Base):
+    """
+    Таблица для отслеживания конкурентов.
+    Сюда добавляются TikTok профили конкурентов для анализа.
+    """
+    __tablename__ = "competitors"
+
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)  # TikTok username
+
+    # Основная информация
+    display_name = Column(String)                       # Отображаемое имя
+    avatar_url = Column(String)                         # Аватар профиля
+    bio = Column(Text)                                  # Описание профиля
+
+    # Метрики профиля
+    followers_count = Column(Integer, default=0)
+    following_count = Column(Integer, default=0)
+    total_likes = Column(Integer, default=0)
+    total_videos = Column(Integer, default=0)
+
+    # Аналитика
+    avg_views = Column(Float, default=0.0)              # Средние просмотры
+    engagement_rate = Column(Float, default=0.0)        # % вовлеченности
+    posting_frequency = Column(Float, default=0.0)      # Видео в неделю
+
+    # Данные для анализа
+    recent_videos = Column(JSONB, default=[])           # Последние видео
+    top_hashtags = Column(JSONB, default=[])            # Популярные хэштеги
+    content_categories = Column(JSONB, default={})      # Категории контента
+
+    # Статус отслеживания
+    is_active = Column(Boolean, default=True)           # Активен ли мониторинг
+    last_analyzed_at = Column(DateTime, nullable=True)  # Последний анализ
+
+    # Метаданные
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    notes = Column(Text)                                # Заметки о конкуренте

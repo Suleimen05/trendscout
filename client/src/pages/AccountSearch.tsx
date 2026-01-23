@@ -266,12 +266,14 @@ interface SearchResultCardProps {
 }
 
 function SearchResultCard({ result, onAddAsCompetitor, onRemove, formatNumber }: SearchResultCardProps) {
+  const [showAllVideos, setShowAllVideos] = useState(false);
+
   if (result.loading) {
     return (
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center gap-4">
-            <div className="h-16 w-16 rounded-full bg-muted animate-pulse" />
+            <div className="h-20 w-20 rounded-full bg-muted animate-pulse" />
             <div className="flex-1 space-y-2">
               <div className="h-5 w-32 bg-muted animate-pulse rounded" />
               <div className="h-4 w-24 bg-muted animate-pulse rounded" />
@@ -289,11 +291,11 @@ function SearchResultCard({ result, onAddAsCompetitor, onRemove, formatNumber }:
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="h-16 w-16 rounded-full bg-muted flex items-center justify-center">
-                <Users className="h-8 w-8 text-muted-foreground" />
+              <div className="h-20 w-20 rounded-full bg-muted flex items-center justify-center">
+                <Users className="h-10 w-10 text-muted-foreground" />
               </div>
               <div>
-                <h3 className="font-semibold">@{result.username}</h3>
+                <h3 className="font-semibold text-lg">@{result.username}</h3>
                 <p className="text-sm text-destructive">{result.error}</p>
               </div>
             </div>
@@ -313,50 +315,51 @@ function SearchResultCard({ result, onAddAsCompetitor, onRemove, formatNumber }:
 
   const report = result.report;
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'rising':
-        return 'text-green-600';
-      case 'falling':
-        return 'text-red-600';
-      default:
-        return 'text-gray-600';
-    }
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes('rising')) return 'bg-green-100 text-green-700 border-green-300';
+    if (statusLower.includes('falling')) return 'bg-red-100 text-red-700 border-red-300';
+    return 'bg-gray-100 text-gray-700 border-gray-300';
   };
 
   const getStatusIcon = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'rising':
-        return TrendingUp;
-      default:
-        return BarChart3;
-    }
+    const statusLower = status.toLowerCase();
+    if (statusLower.includes('rising')) return TrendingUp;
+    return BarChart3;
   };
 
   const StatusIcon = getStatusIcon(report.metrics.status);
+  const videosToShow = showAllVideos ? report.full_feed : report.full_feed.slice(0, 6);
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
-      <CardHeader>
-        <div className="flex items-start gap-4">
+    <Card className="hover:shadow-xl transition-all duration-300 border-2">
+      <CardContent className="p-6">
+        {/* Header Section */}
+        <div className="flex items-start gap-6 mb-6">
           {/* Avatar */}
-          <img
-            src={report.author.avatar || '/avatar-placeholder.svg'}
-            alt={report.author.nickname}
-            className="h-16 w-16 rounded-full object-cover"
-          />
+          <div className="relative flex-shrink-0">
+            <img
+              src={report.author.avatar || '/avatar-placeholder.svg'}
+              alt={report.author.nickname}
+              className="h-24 w-24 rounded-full object-cover ring-4 ring-purple-100"
+            />
+            <div className="absolute -bottom-2 -right-2 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full p-2">
+              <Video className="h-4 w-4 text-white" />
+            </div>
+          </div>
 
           {/* Info */}
-          <div className="flex-1">
-            <div className="flex items-center justify-between mb-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between mb-3">
               <div>
-                <CardTitle className="text-xl">{report.author.nickname}</CardTitle>
-                <p className="text-sm text-muted-foreground">@{report.author.username}</p>
+                <h3 className="text-2xl font-bold">{report.author.nickname}</h3>
+                <p className="text-muted-foreground">@{report.author.username}</p>
               </div>
               <div className="flex items-center gap-2">
                 <Button
-                  variant="outline"
+                  variant="default"
                   size="sm"
                   onClick={() => onAddAsCompetitor(result.username)}
+                  className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
                   Add to Competitors
@@ -364,7 +367,7 @@ function SearchResultCard({ result, onAddAsCompetitor, onRemove, formatNumber }:
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-destructive"
+                  className="h-8 w-8"
                   onClick={() => onRemove(result.username)}
                 >
                   ×
@@ -372,95 +375,120 @@ function SearchResultCard({ result, onAddAsCompetitor, onRemove, formatNumber }:
               </div>
             </div>
 
-            {/* Metrics Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-              <div className="p-3 rounded-lg bg-muted">
-                <div className="flex items-center gap-2 mb-1">
-                  <Users className="h-4 w-4 text-purple-500" />
-                  <p className="text-xs text-muted-foreground">Followers</p>
-                </div>
-                <p className="text-lg font-bold">{formatNumber(report.author.followers)}</p>
-              </div>
-
-              <div className="p-3 rounded-lg bg-muted">
-                <div className="flex items-center gap-2 mb-1">
-                  <Eye className="h-4 w-4 text-blue-500" />
-                  <p className="text-xs text-muted-foreground">Avg Views</p>
-                </div>
-                <p className="text-lg font-bold">{formatNumber(report.metrics.avg_views)}</p>
-              </div>
-
-              <div className="p-3 rounded-lg bg-muted">
-                <div className="flex items-center gap-2 mb-1">
-                  <BarChart3 className="h-4 w-4 text-green-500" />
-                  <p className="text-xs text-muted-foreground">Engagement</p>
-                </div>
-                <p className="text-lg font-bold">{report.metrics.engagement_rate.toFixed(1)}%</p>
-              </div>
-
-              <div className="p-3 rounded-lg bg-muted">
-                <div className="flex items-center gap-2 mb-1">
-                  <Video className="h-4 w-4 text-pink-500" />
-                  <p className="text-xs text-muted-foreground">Videos</p>
-                </div>
-                <p className="text-lg font-bold">{report.full_feed.length}</p>
-              </div>
-            </div>
-
             {/* Status Badge */}
-            <div className="mt-4 flex items-center gap-4">
-              <Badge
-                variant="outline"
-                className={cn('flex items-center gap-1', getStatusColor(report.metrics.status))}
-              >
-                <StatusIcon className="h-3 w-3" />
+            <div className="flex items-center gap-3 mb-4">
+              <Badge className={cn('flex items-center gap-1.5 px-3 py-1', getStatusColor(report.metrics.status))}>
+                <StatusIcon className="h-4 w-4" />
                 {report.metrics.status}
               </Badge>
               <span className="text-sm text-muted-foreground">
-                Efficiency Score: {report.metrics.efficiency_score.toFixed(1)}
+                Efficiency: {report.metrics.efficiency_score.toFixed(1)}
               </span>
               <span className="text-sm text-muted-foreground">
-                Avg Viral Lift: {report.metrics.avg_viral_lift.toFixed(1)}x
+                Viral Lift: {report.metrics.avg_viral_lift.toFixed(1)}x
               </span>
+            </div>
+
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-4 gap-4">
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 p-4 rounded-xl border border-purple-200 dark:border-purple-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  <p className="text-xs font-medium text-purple-600 dark:text-purple-400">Followers</p>
+                </div>
+                <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
+                  {formatNumber(report.author.followers)}
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <Eye className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  <p className="text-xs font-medium text-blue-600 dark:text-blue-400">Avg Views</p>
+                </div>
+                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                  {formatNumber(report.metrics.avg_views)}
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 p-4 rounded-xl border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <BarChart3 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  <p className="text-xs font-medium text-green-600 dark:text-green-400">Engagement</p>
+                </div>
+                <p className="text-2xl font-bold text-green-900 dark:text-green-100">
+                  {report.metrics.engagement_rate.toFixed(1)}%
+                </p>
+              </div>
+
+              <div className="bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-950 dark:to-pink-900 p-4 rounded-xl border border-pink-200 dark:border-pink-800">
+                <div className="flex items-center gap-2 mb-2">
+                  <Video className="h-5 w-5 text-pink-600 dark:text-pink-400" />
+                  <p className="text-xs font-medium text-pink-600 dark:text-pink-400">Videos</p>
+                </div>
+                <p className="text-2xl font-bold text-pink-900 dark:text-pink-100">
+                  {report.full_feed.length}
+                </p>
+              </div>
             </div>
           </div>
         </div>
-      </CardHeader>
 
-      {/* Top Videos Preview */}
-      {report.top_3_hits.length > 0 && (
-        <CardContent>
-          <h4 className="font-semibold mb-3 text-sm">Top Performing Videos</h4>
-          <div className="grid grid-cols-3 gap-3">
-            {report.top_3_hits.map((video) => (
-              <a
-                key={video.id}
-                href={video.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group relative aspect-[9/16] rounded-lg overflow-hidden bg-muted hover:ring-2 hover:ring-purple-500 transition-all"
-              >
-                <img
-                  src={video.cover_url || '/video-placeholder.svg'}
-                  alt={video.title}
-                  className="h-full w-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                  <div className="absolute bottom-0 left-0 right-0 p-2">
-                    <div className="flex items-center gap-2 text-white text-xs">
-                      <Eye className="h-3 w-3" />
-                      {formatNumber(video.views)}
-                    </div>
-                    <div className="text-white text-xs mt-1">
-                      UTS: {video.uts_score.toFixed(1)}
+        {/* Videos Section */}
+        {report.full_feed.length > 0 && (
+          <div className="mt-6 pt-6 border-t">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="font-semibold text-lg">
+                Recent Videos ({report.full_feed.length})
+              </h4>
+              {report.full_feed.length > 6 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowAllVideos(!showAllVideos)}
+                >
+                  {showAllVideos ? 'Show Less' : `Show All ${report.full_feed.length}`}
+                </Button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              {videosToShow.map((video) => (
+                <a
+                  key={video.id}
+                  href={video.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group relative aspect-[9/16] rounded-lg overflow-hidden bg-muted hover:ring-2 hover:ring-purple-500 transition-all shadow-md hover:shadow-xl"
+                >
+                  <img
+                    src={video.cover_url || '/video-placeholder.svg'}
+                    alt={video.title}
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute bottom-0 left-0 right-0 p-3 space-y-1">
+                      <div className="flex items-center gap-2 text-white text-xs font-semibold">
+                        <Eye className="h-3 w-3" />
+                        {formatNumber(video.views)}
+                      </div>
+                      <div className="text-white text-xs font-medium bg-purple-600/90 px-2 py-0.5 rounded inline-block">
+                        UTS: {video.uts_score.toFixed(1)}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </a>
-            ))}
+                  {/* Top corner badge for top 3 */}
+                  {report.top_3_hits.some(top => top.id === video.id) && (
+                    <div className="absolute top-2 right-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                      TOP
+                    </div>
+                  )}
+                </a>
+              ))}
+            </div>
           </div>
-        </CardContent>
-      )}
+        )}
+      </CardContent>
     </Card>
   );
 }

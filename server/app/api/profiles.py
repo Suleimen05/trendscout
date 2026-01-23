@@ -44,7 +44,15 @@ async def get_unified_profile_report(username: str):
     # 2. Получение данных об авторе из первого видео
     first_item = raw_videos[0]
     channel = first_item.get("channel") or first_item.get("authorMeta") or {}
-    followers = int(get_universal_val(first_item, ["followers", "fans", "followerCount"], default=1))
+
+    # Followers находятся в channel/authorMeta, не в корне видео
+    followers = (
+        channel.get("followers") or
+        channel.get("fans") or
+        channel.get("followerCount") or
+        get_universal_val(first_item, ["followers", "fans", "followerCount"], default=0)
+    )
+    followers = int(followers) if followers else 0
     
     full_feed = []
     for v in raw_videos:
