@@ -19,8 +19,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from .core.database import Base, engine
 from .core.config import settings
 # 👇 ВАЖНО: Явный импорт моделей, чтобы SQLAlchemy их увидела!
-from .db import models 
+from .db import models
 from .api import trends, profiles, competitors, ai_scripts, proxy
+from .api.routes import auth
 
 # 👇 НОВЫЙ ИМПОРТ: Планировщик задач
 from .services.scheduler import start_scheduler
@@ -51,6 +52,7 @@ app.add_middleware(
 )
 
 # Подключаем ручки (API Endpoints)
+app.include_router(auth.router, prefix="/api")  # Auth routes
 app.include_router(trends.router, prefix="/api/trends", tags=["Trends"])
 app.include_router(profiles.router, prefix="/api/profiles", tags=["Profiles"])
 app.include_router(competitors.router, prefix="/api/competitors", tags=["Competitors"])

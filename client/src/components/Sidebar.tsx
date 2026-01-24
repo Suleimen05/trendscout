@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   TrendingUp,
@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface SidebarProps {
   open: boolean;
@@ -29,60 +30,68 @@ interface SidebarProps {
 const mainNavItems = [
   {
     title: 'Dashboard',
-    href: '/',
+    href: '/dashboard',
     icon: LayoutDashboard,
   },
   {
     title: 'Trending Now',
-    href: '/trending',
+    href: '/dashboard/trending',
     icon: TrendingUp,
     badge: 'NEW',
     badgeVariant: 'default' as const,
   },
   {
     title: 'Discover Videos',
-    href: '/discover',
+    href: '/dashboard/discover',
     icon: Search,
   },
   {
     title: 'Account Audit',
-    href: '/account-search',
+    href: '/dashboard/account-search',
     icon: UserSearch,
   },
   {
     title: 'Competitors',
-    href: '/competitors',
+    href: '/dashboard/competitors',
     icon: Users,
   },
   {
     title: 'AI Scripts',
-    href: '/ai-scripts',
+    href: '/dashboard/ai-scripts',
     icon: Sparkles,
     badge: 'PRO',
     badgeVariant: 'secondary' as const,
   },
   {
     title: 'Analytics',
-    href: '/analytics',
+    href: '/dashboard/analytics',
     icon: BarChart3,
   },
 ];
 
 export function Sidebar({ open, onToggle }: SidebarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user: authUser, logout } = useAuth();
   const [showUserMenu, setShowUserMenu] = useState(false);
 
-  // Mock user data - replace with real data from auth context
+  // Use auth user data or fallback to demo
   const user = {
-    name: 'Demo User',
-    email: 'demo@viraltrend.ai',
-    avatar: null,
-    plan: 'Free',
+    name: authUser?.name || 'Demo User',
+    email: authUser?.email || 'demo@trendscout.ai',
+    avatar: authUser?.avatar || null,
+    plan: authUser?.subscription || 'Free',
     usage: {
       current: 8,
       limit: 10,
       percentage: 80,
     },
+  };
+
+  const handleLogout = () => {
+    logout();
+    setShowUserMenu(false);
+    navigate('/');
   };
 
   return (
@@ -96,10 +105,10 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
       <div className="flex h-16 items-center justify-between px-4 border-b">
         {open && (
           <div className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 text-white font-bold text-sm shadow-lg">
-              VT
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-sm shadow-lg">
+              TS
             </div>
-            <span className="font-semibold text-foreground">ViralTrend AI</span>
+            <span className="font-semibold text-foreground">TrendScout AI</span>
           </div>
         )}
         <Button
@@ -196,7 +205,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm hover:bg-accent transition-all"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-pink-600 text-white font-medium text-xs">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white font-medium text-xs">
                 {user.name.split(' ').map(n => n[0]).join('')}
               </div>
               <div className="flex-1 text-left overflow-hidden">
@@ -210,7 +219,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
             {showUserMenu && (
               <div className="absolute bottom-full left-3 right-3 mb-2 bg-popover border rounded-lg shadow-lg py-1 z-50">
                 <NavLink
-                  to="/settings"
+                  to="/dashboard/settings"
                   className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-accent transition-all"
                   onClick={() => setShowUserMenu(false)}
                 >
@@ -218,7 +227,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
                   <span>Settings</span>
                 </NavLink>
                 <NavLink
-                  to="/help"
+                  to="/dashboard/help"
                   className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-accent transition-all"
                   onClick={() => setShowUserMenu(false)}
                 >
@@ -227,10 +236,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
                 </NavLink>
                 <button
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-accent transition-all text-red-600 dark:text-red-400"
-                  onClick={() => {
-                    setShowUserMenu(false);
-                    // Handle logout
-                  }}
+                  onClick={handleLogout}
                 >
                   <LogOut className="h-4 w-4" />
                   <span>Logout</span>

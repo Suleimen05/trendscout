@@ -6,8 +6,11 @@ import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useTheme } from '@/contexts/ThemeContext';
 
 export function SettingsPage() {
+  const { theme, toggleTheme } = useTheme();
+
   const [notifications, setNotifications] = useState({
     trends: true,
     competitors: true,
@@ -17,7 +20,6 @@ export function SettingsPage() {
 
   const [preferences, setPreferences] = useState({
     autoGenerateScripts: true,
-    darkMode: false,
     language: 'en',
     region: 'US',
   });
@@ -88,10 +90,8 @@ export function SettingsPage() {
                   <p className="text-sm text-muted-foreground">Enable dark theme</p>
                 </div>
                 <Switch
-                  checked={preferences.darkMode}
-                  onCheckedChange={(checked) =>
-                    setPreferences({ ...preferences, darkMode: checked })
-                  }
+                  checked={theme === 'dark'}
+                  onCheckedChange={toggleTheme}
                 />
               </div>
               <div className="flex items-center justify-between">

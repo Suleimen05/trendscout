@@ -1,9 +1,141 @@
 # backend/app/db/models.py
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Float, Text, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, Float, Text, DateTime, Boolean, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.dialects.postgresql import JSONB
 from pgvector.sqlalchemy import Vector
 from ..core.database import Base
+
+class User(Base):
+    """
+    User authentication and profile table.
+    Stores user credentials and basic profile information.
+    """
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    full_name = Column(String, nullable=True)
+
+    # Account status
+    is_active = Column(Boolean, default=True)
+    is_verified = Column(Boolean, default=False)
+
+    # OAuth fields (for future Google OAuth)
+    oauth_provider = Column(String, nullable=True)  # 'google', 'github', etc.
+    oauth_id = Column(String, nullable=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_login_at = Column(DateTime, nullable=True)
+
+    # Relationships
+    settings = relationship("UserSettings", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    favorites = relationship("UserFavorite", back_populates="user", cascade="all, delete-orphan")
+    searches = relationship("UserSearch", back_populates="user", cascade="all, delete-orphan")
+    scripts = relationship("UserScript", back_populates="user", cascade="all, delete-orphan")
+
+
+class UserSettings(Base):
+    """
+    User-specific settings and preferences.
+    One-to-one relationship with User.
+    """
+    __tablename__ = "user_settings"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+
+    # Preferences
+    dark_mode = Column(Boolean, default=False)
+    language = Column(String, default="en")
+    region = Column(String, default="US")
+    auto_generate_scripts = Column(Boolean, default=True)
+
+    # Notifications
+    notifications_trends = Column(Boolean, default=True)
+    notifications_competitors = Column(Boolean, default=True)
+    notifications_new_videos = Column(Boolean, default=False)
+    notifications_weekly_report = Column(Boolean, default=True)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship
+    user = relationship("User", back_populates="settings")
+
+
+class UserFavorite(Base):
+    """
+    User's favorite trends/videos.
+    Allows users to bookmark interesting content.
+    """
+    __tablename__ = "user_favorites"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    trend_id = Column(Integer, ForeignKey("trends.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Metadata
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    user = relationship("User", back_populates="favorites")
+
+
+class UserSearch(Base):
+    """
+    User's search history.
+    Track what users are searching for analytics.
+    """
+    __tablename__ = "user_searches"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Search data
+    query = Column(String, nullable=False)
+    filters = Column(JSONB, default={})
+    results_count = Column(Integer, default=0)
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationship
+    user = relationship("User", back_populates="searches")
+
+
+class UserScript(Base):
+    """
+    AI-generated scripts saved by users.
+    Stores custom scripts created from trending content.
+    """
+    __tablename__ = "user_scripts"
+
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Script data
+    title = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+    trend_id = Column(Integer, ForeignKey("trends.id", ondelete="SET NULL"), nullable=True)
+
+    # Metadata
+    language = Column(String, default="en")
+    tone = Column(String, nullable=True)  # 'casual', 'professional', etc.
+    tags = Column(JSONB, default=[])
+
+    # Timestamps
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationship
+    user = relationship("User", back_populates="scripts")
+
 
 class Trend(Base):
     """

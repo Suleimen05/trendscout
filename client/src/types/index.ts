@@ -281,3 +281,47 @@ export interface Notification {
   read: boolean;
   actionUrl?: string;
 }
+
+// AI Chat Types
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+  attachments?: ChatAttachment[];
+  isStreaming?: boolean;
+}
+
+export interface ChatAttachment {
+  type: 'trend' | 'script' | 'competitor';
+  id: string;
+  title: string;
+  preview?: string;
+}
+
+export interface ChatConversation {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  createdAt: string;
+  updatedAt: string;
+  model: 'claude' | 'gemini';
+}
+
+export interface QuickAction {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  prompt: string;
+  category: 'script' | 'ideas' | 'analysis' | 'improvement';
+}
+
+export interface PromptTemplate {
+  id: string;
+  title: string;
+  description: string;
+  prompt: string;
+  category: string;
+  variables: string[];
+}

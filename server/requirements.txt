@@ -12,3 +12,6 @@ numpy
 scikit-learn
 apscheduler
 google-genai
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
