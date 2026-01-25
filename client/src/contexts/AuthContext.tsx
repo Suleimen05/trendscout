@@ -9,6 +9,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, fullName?: string) => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
   logout: () => void;
   checkAuth: () => void;
   updateUserSettings: (settings: Partial<User['preferences']>) => void;
@@ -127,6 +128,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Sign in with Google
+  const signInWithGoogle = async (): Promise<void> => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
+      });
+      if (error) throw error;
+    } catch (error: any) {
+      console.error('Google sign-in error:', error);
+      throw new Error(error.message || 'Failed to sign in with Google');
+    }
+  };
+
   // Update user settings (placeholder - you can extend with Supabase tables)
   const updateUserSettings = (settings: Partial<User['preferences']>) => {
     if (!user) return;
@@ -169,6 +186,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         isLoading,
         login,
         register,
+        signInWithGoogle,
         logout,
         checkAuth,
         updateUserSettings,
