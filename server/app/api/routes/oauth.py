@@ -1,9 +1,16 @@
 """
 OAuth routes for connecting social media accounts.
 Supports TikTok, Instagram (Meta), and YouTube (Google).
+
+TikTok OAuth 2.0 with PKCE (required since 2023):
+- code_verifier: Random string 43-128 chars
+- code_challenge: SHA256 hash of verifier, base64url encoded
+- code_challenge_method: Always "S256"
 """
 import os
 import secrets
+import hashlib
+import base64
 import httpx
 from datetime import datetime, timedelta
 from urllib.parse import urlencode
@@ -44,16 +51,35 @@ oauth_states: dict = {}
 
 
 # =============================================================================
+# PKCE HELPERS (Required for TikTok OAuth)
+# =============================================================================
+
+def generate_code_verifier() -> str:
+    """Generate a random code verifier for PKCE (43-128 characters)."""
+    # Generate 64 random bytes and encode to base64url (gives ~86 chars)
+    return secrets.token_urlsafe(64)
+
+
+def generate_code_challenge(code_verifier: str) -> str:
+    """Generate code challenge from verifier using SHA256."""
+    # SHA256 hash of the verifier
+    digest = hashlib.sha256(code_verifier.encode('utf-8')).digest()
+    # Base64url encode (no padding)
+    return base64.urlsafe_b64encode(digest).rstrip(b'=').decode('utf-8')
+
+
+# =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
 
-def generate_state(user_id: int, platform: str) -> str:
+def generate_state(user_id: int, platform: str, code_verifier: str = None) -> str:
     """Generate secure state parameter for OAuth."""
     state = secrets.token_urlsafe(32)
     oauth_states[state] = {
         "user_id": user_id,
         "platform": platform,
-        "created_at": datetime.utcnow()
+        "created_at": datetime.utcnow(),
+        "code_verifier": code_verifier  # Store for PKCE verification
     }
     return state
 
@@ -70,7 +96,7 @@ def verify_state(state: str) -> dict | None:
 
 
 # =============================================================================
-# TIKTOK OAUTH
+# TIKTOK OAUTH (with PKCE - required since 2023)
 # =============================================================================
 
 @router.get("/tiktok")
@@ -78,8 +104,14 @@ async def tiktok_auth(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Initiate TikTok OAuth flow.
+    Initiate TikTok OAuth flow with PKCE.
     Redirects user to TikTok login page.
+
+    PKCE Flow:
+    1. Generate code_verifier (random string)
+    2. Create code_challenge = SHA256(code_verifier) base64url encoded
+    3. Send code_challenge to TikTok
+    4. On callback, send code_verifier to exchange for token
     """
     if not TIKTOK_CLIENT_KEY:
         raise HTTPException(
@@ -87,15 +119,22 @@ async def tiktok_auth(
             detail="TikTok OAuth not configured"
         )
 
-    state = generate_state(current_user.id, "tiktok")
+    # Generate PKCE code verifier and challenge
+    code_verifier = generate_code_verifier()
+    code_challenge = generate_code_challenge(code_verifier)
 
-    # TikTok OAuth URL
+    # Store code_verifier with state for later use in callback
+    state = generate_state(current_user.id, "tiktok", code_verifier)
+
+    # TikTok OAuth URL with PKCE
     params = {
         "client_key": TIKTOK_CLIENT_KEY,
         "scope": "user.info.basic,video.list",
         "response_type": "code",
         "redirect_uri": TIKTOK_REDIRECT_URI,
-        "state": state
+        "state": state,
+        "code_challenge": code_challenge,
+        "code_challenge_method": "S256"
     }
     auth_url = f"https://www.tiktok.com/v2/auth/authorize/?{urlencode(params)}"
 
@@ -107,12 +146,14 @@ async def tiktok_callback(
     code: str = Query(None),
     state: str = Query(None),
     error: str = Query(None),
+    error_description: str = Query(None),
     db: Session = Depends(get_db)
 ):
-    """Handle TikTok OAuth callback."""
+    """Handle TikTok OAuth callback with PKCE verification."""
     if error:
+        error_msg = error_description or error
         return RedirectResponse(
-            url=f"{FRONTEND_URL}/dashboard/connect-accounts?error={error}"
+            url=f"{FRONTEND_URL}/dashboard/connect-accounts?error={error_msg}"
         )
 
     state_data = verify_state(state)
@@ -122,18 +163,24 @@ async def tiktok_callback(
         )
 
     user_id = state_data["user_id"]
+    code_verifier = state_data.get("code_verifier")  # Get stored code_verifier for PKCE
 
-    # Exchange code for access token
+    # Exchange code for access token (with PKCE code_verifier)
     async with httpx.AsyncClient() as client:
+        token_data = {
+            "client_key": TIKTOK_CLIENT_KEY,
+            "client_secret": TIKTOK_CLIENT_SECRET,
+            "code": code,
+            "grant_type": "authorization_code",
+            "redirect_uri": TIKTOK_REDIRECT_URI
+        }
+        # Add code_verifier for PKCE (required!)
+        if code_verifier:
+            token_data["code_verifier"] = code_verifier
+
         token_response = await client.post(
             "https://open.tiktokapis.com/v2/oauth/token/",
-            data={
-                "client_key": TIKTOK_CLIENT_KEY,
-                "client_secret": TIKTOK_CLIENT_SECRET,
-                "code": code,
-                "grant_type": "authorization_code",
-                "redirect_uri": TIKTOK_REDIRECT_URI
-            }
+            data=token_data
         )
 
     if token_response.status_code != 200:
