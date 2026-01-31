@@ -49,7 +49,7 @@ const DEEP_ANALYZE_FEATURES = [
   },
 ];
 
-export function UpgradeModal({ isOpen, onClose, feature }: UpgradeModalProps) {
+export function UpgradeModal({ isOpen, onClose, feature: _feature }: UpgradeModalProps) {
   const navigate = useNavigate();
 
   const handleUpgrade = () => {
