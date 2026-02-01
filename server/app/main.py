@@ -45,7 +45,7 @@ from .services.scheduler import start_scheduler
 # =============================================================================
 
 app = FastAPI(
-    title="Risko.ai API",
+    title="Rizko.ai API",
     version=settings.VERSION,
     description="""
 ## TikTok Trend Analysis Platform
@@ -84,6 +84,10 @@ API_SECRET_KEY = os.getenv("API_SECRET_KEY", "")  # Set in .env for protection
 @app.middleware("http")
 async def api_key_middleware(request: Request, call_next):
     """Protect API with secret key in production."""
+    # Skip CORS preflight requests (OPTIONS)
+    if request.method == "OPTIONS":
+        return await call_next(request)
+
     # Skip protection if no key is set (development) or for public endpoints
     public_paths = ["/", "/health", "/docs", "/redoc", "/openapi.json", "/api/auth/login", "/api/auth/register", "/api/auth/oauth/sync"]
 
@@ -121,9 +125,9 @@ ALLOWED_ORIGINS = [
     "http://localhost:5173",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
-    "https://risko.ai",
-    "https://www.risko.ai",
-    "https://app.risko.ai",
+    "https://rizko.ai",
+    "https://www.rizko.ai",
+    "https://app.rizko.ai",
     # Add Cloudflare Pages domains
     "https://*.pages.dev",
 ]
@@ -253,7 +257,7 @@ app.include_router(
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup."""
-    logger.info("🚀 Starting Risko.ai Backend...")
+    logger.info("🚀 Starting Rizko.ai Backend...")
 
     # Start background scheduler for auto-rescan
     try:
@@ -264,13 +268,13 @@ async def startup_event():
         logger.warning(f"⚠️  Scheduler initialization failed: {e}")
         logger.warning("⚠️  Continuing without scheduler - auto-rescan will be disabled")
 
-    logger.info("✅ Risko.ai Backend started successfully!")
+    logger.info("✅ Rizko.ai Backend started successfully!")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown."""
-    logger.info("🛑 Shutting down Risko.ai Backend...")
+    logger.info("🛑 Shutting down Rizko.ai Backend...")
 
 
 # =============================================================================
@@ -281,7 +285,7 @@ async def shutdown_event():
 def root():
     """Root endpoint - returns API info."""
     return {
-        "name": "Risko.ai API",
+        "name": "Rizko.ai API",
         "version": settings.VERSION,
         "status": "running",
         "docs": "/docs"
@@ -320,7 +324,7 @@ def health_check():
 def api_info():
     """Get API information and available endpoints."""
     return {
-        "name": "Risko.ai API",
+        "name": "Rizko.ai API",
         "version": settings.VERSION,
         "description": "TikTok Trend Analysis Platform with User Isolation",
         "endpoints": {
@@ -374,5 +378,5 @@ def api_info():
 if __name__ == "__main__":
     import uvicorn
 
-    logger.info("🔥 Starting Risko.ai Backend on http://0.0.0.0:8000")
+    logger.info("🔥 Starting Rizko.ai Backend on http://0.0.0.0:8000")
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
