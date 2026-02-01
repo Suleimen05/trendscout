@@ -309,60 +309,72 @@ async def sync_oauth_user(data: OAuthSyncRequest, db: Session = Depends(get_db))
     Returns:
         AuthResponse: Our JWT tokens and user data
     """
-    # Try to find existing user by email
-    user = db.query(User).filter(User.email == data.email).first()
+    import logging
+    logger = logging.getLogger(__name__)
 
-    if user is None:
-        # Create new user from OAuth data
-        user = User(
-            email=data.email,
-            full_name=data.full_name or data.email.split("@")[0],
-            avatar_url=data.avatar_url,
-            hashed_password="",  # No password for OAuth users
-            is_active=True,
-            is_verified=True,  # OAuth users are verified
-            oauth_provider=data.provider,
-            oauth_id=data.supabase_id,
-            last_login_at=datetime.utcnow()
+    try:
+        # Try to find existing user by email
+        user = db.query(User).filter(User.email == data.email).first()
+
+        if user is None:
+            # Create new user from OAuth data
+            user = User(
+                email=data.email,
+                full_name=data.full_name or data.email.split("@")[0],
+                avatar_url=data.avatar_url,
+                hashed_password="",  # No password for OAuth users
+                is_active=True,
+                is_verified=True,  # OAuth users are verified
+                oauth_provider=data.provider,
+                oauth_id=data.supabase_id,
+                last_login_at=datetime.utcnow()
+            )
+            db.add(user)
+            db.flush()
+
+            # Create default settings
+            user_settings = UserSettings(
+                user_id=user.id,
+                dark_mode=False,
+                language="en",
+                region="US",
+                auto_generate_scripts=True,
+                notifications_trends=True,
+                notifications_competitors=True,
+                notifications_new_videos=False,
+                notifications_weekly_report=True
+            )
+            db.add(user_settings)
+            db.commit()
+            db.refresh(user)
+        else:
+            # Update existing user
+            user.last_login_at = datetime.utcnow()
+            if data.avatar_url and not user.avatar_url:
+                user.avatar_url = data.avatar_url
+            if data.full_name and user.full_name == user.email.split("@")[0]:
+                user.full_name = data.full_name
+            db.commit()
+            db.refresh(user)
+
+        # Generate our JWT tokens
+        access_token = create_access_token(data={"sub": str(user.id)})
+        refresh_token = create_refresh_token(data={"sub": str(user.id)})
+
+        return AuthResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer",
+            user=UserResponse.model_validate(user)
         )
-        db.add(user)
-        db.flush()
 
-        # Create default settings
-        user_settings = UserSettings(
-            user_id=user.id,
-            dark_mode=False,
-            language="en",
-            region="US",
-            auto_generate_scripts=True,
-            notifications_trends=True,
-            notifications_competitors=True,
-            notifications_new_videos=False,
-            notifications_weekly_report=True
+    except Exception as e:
+        logger.error(f"OAuth sync error: {str(e)}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"OAuth sync failed: {str(e)}"
         )
-        db.add(user_settings)
-        db.commit()
-        db.refresh(user)
-    else:
-        # Update existing user
-        user.last_login_at = datetime.utcnow()
-        if data.avatar_url and not user.avatar_url:
-            user.avatar_url = data.avatar_url
-        if data.full_name and user.full_name == user.email.split("@")[0]:
-            user.full_name = data.full_name
-        db.commit()
-        db.refresh(user)
-
-    # Generate our JWT tokens
-    access_token = create_access_token(data={"sub": str(user.id)})
-    refresh_token = create_refresh_token(data={"sub": str(user.id)})
-
-    return AuthResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        token_type="bearer",
-        user=UserResponse.model_validate(user)
-    )
 
 
 # =============================================================================
