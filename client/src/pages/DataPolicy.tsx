@@ -1,4 +1,4 @@
-import { Database, ExternalLink, Shield, Clock, Trash2, Download, Lock } from 'lucide-react';
+import { Database, ExternalLink, Shield, Clock, Download, Lock } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
 

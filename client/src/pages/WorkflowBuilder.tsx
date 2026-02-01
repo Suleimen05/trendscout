@@ -708,7 +708,7 @@ export function WorkflowBuilder() {
     : savedVideos.filter(v => v.platform === platformFilter);
 
   return (
-    <DevAccessGate pageName="Workflow Builder">
+    <DevAccessGate>
       <div className="flex h-full bg-background">
         {/* Left Sidebar - Nodes/Saved */}
         <div className="w-60 bg-card border-r border-border flex flex-col flex-shrink-0">
