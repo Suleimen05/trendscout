@@ -151,9 +151,11 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
           <SheetHeader className="p-4 border-b">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-sm shadow-lg">
-                  TS
-                </div>
+                <img
+                  src="/logo192.png?v=2"
+                  alt="Rizko.ai"
+                  className="h-9 w-9 object-contain"
+                />
                 <SheetTitle className="font-semibold">Rizko.ai</SheetTitle>
               </div>
             </div>

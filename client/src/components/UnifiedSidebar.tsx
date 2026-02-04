@@ -177,9 +177,11 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
       {/* Header with Logo */}
       <div className="flex h-16 items-center justify-between px-4 border-b">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-sm shadow-lg">
-            TS
-          </div>
+          <img
+            src="/logo192.png?v=2"
+            alt="Rizko.ai"
+            className="h-9 w-9 object-contain"
+          />
           <span className="font-semibold text-foreground">Rizko.ai</span>
         </div>
       </div>

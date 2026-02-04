@@ -213,9 +213,11 @@ export function LandingPage() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-white" />
-              </div>
+              <img
+                src="/logo192.png?v=2"
+                alt="Rizko.ai"
+                className="w-8 h-8 object-contain"
+              />
               <span className="font-bold text-lg text-gray-900 dark:text-white">Rizko.ai</span>
             </Link>
 
@@ -634,9 +636,11 @@ export function LandingPage() {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
-                  <TrendingUp className="w-5 h-5 text-white" />
-                </div>
+                <img
+                  src="/logo192.png?v=2"
+                  alt="Rizko.ai"
+                  className="w-8 h-8 object-contain"
+                />
                 <span className="font-bold text-lg text-gray-900 dark:text-white">Rizko.ai</span>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
