@@ -23,6 +23,9 @@ DISCORD_FEEDBACK_WEBHOOK = os.getenv("DISCORD_FEEDBACK_WEBHOOK", "")
 
 async def send_discord_notification(feedback: Feedback, user_email: Optional[str] = None):
     """Send feedback notification to Discord channel."""
+    # TEMPORARY: Log exactly what's received
+    logger.info(f"🔔 [TROUBLESHOOT] send_discord_notification - feedback.id: {feedback.id}, user_email param: '{user_email}', feedback.user_email: '{feedback.user_email}'")
+
     if not DISCORD_FEEDBACK_WEBHOOK:
         logger.warning("Discord webhook not configured, skipping notification")
         return
@@ -120,6 +123,9 @@ async def submit_feedback(
     """
     Submit feedback. Works for both authenticated and anonymous users.
     """
+    # TEMPORARY: Log current_user for debugging
+    logger.info(f"📝 [TROUBLESHOOT] submit_feedback called - current_user: {current_user}, email: {current_user.email if current_user else 'None'}")
+
     # Validate rating
     if data.rating is not None and not (1 <= data.rating <= 5):
         raise HTTPException(status_code=400, detail="Rating must be between 1 and 5")
@@ -145,11 +151,17 @@ async def submit_feedback(
     db.commit()
     db.refresh(feedback)
 
+    # TEMPORARY: Log saved feedback
+    logger.info(f"💾 [TROUBLESHOOT] Feedback saved - ID: {feedback.id}, user_id: {feedback.user_id}, user_email: '{feedback.user_email}'")
+
     # Send Discord notification (non-blocking)
     try:
+        user_email_for_discord = current_user.email if current_user else None
+        logger.info(f"🔔 [TROUBLESHOOT] Calling send_discord_notification - user_email param: '{user_email_for_discord}'")
+
         await send_discord_notification(
             feedback=feedback,
-            user_email=current_user.email if current_user else None
+            user_email=user_email_for_discord
         )
     except Exception as e:
         logger.error(f"Discord notification error: {e}")

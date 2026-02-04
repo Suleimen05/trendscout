@@ -15,6 +15,7 @@ Security Standards:
 """
 import time
 import hashlib
+import logging
 from datetime import datetime
 from typing import Optional, Dict, Any
 from collections import defaultdict
@@ -26,6 +27,9 @@ from sqlalchemy.orm import Session
 from ..core.database import get_db
 from ..core.security import decode_token
 from ..db.models import User, UserSettings, SubscriptionTier
+
+# TEMPORARY: Debug logging for troubleshooting feedback authentication
+logger = logging.getLogger(__name__)
 
 
 # =============================================================================
@@ -287,6 +291,7 @@ async def get_current_user(
 
 
 async def get_current_user_optional(
+    request: Request,
     credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
     db: Session = Depends(get_db)
 ) -> Optional[User]:
@@ -295,13 +300,29 @@ async def get_current_user_optional(
     Useful for endpoints that work differently for authenticated users.
     """
     if credentials is None:
+        logger.info("🔍 [TROUBLESHOOT] get_current_user_optional: No credentials provided")
         return None
 
     try:
-        return await get_current_user(credentials, db)
-    except (HTTPException, Exception):
-        # Return None for any auth error - this endpoint works for both
-        # authenticated and anonymous users
+        # TEMPORARY: Log token info for debugging
+        token_preview = credentials.credentials[:20] + "..." if len(credentials.credentials) > 20 else credentials.credentials
+        logger.info(f"🔍 [TROUBLESHOOT] get_current_user_optional: Token received (preview): {token_preview}")
+
+        user = await get_current_user(request, credentials, db)
+
+        logger.info(f"✅ [TROUBLESHOOT] get_current_user_optional: User authenticated successfully - ID: {user.id}, Email: {user.email}")
+        return user
+
+    except HTTPException as http_exc:
+        # TEMPORARY: Log HTTP exceptions for debugging
+        logger.warning(f"⚠️ [TROUBLESHOOT] get_current_user_optional: HTTPException caught - Status: {http_exc.status_code}, Detail: {http_exc.detail}")
+        return None
+
+    except Exception as exc:
+        # TEMPORARY: Log all other exceptions for debugging
+        logger.error(f"❌ [TROUBLESHOOT] get_current_user_optional: Unexpected exception - Type: {type(exc).__name__}, Message: {str(exc)}")
+        import traceback
+        logger.error(f"❌ [TROUBLESHOOT] Full traceback:\n{traceback.format_exc()}")
         return None
 
 
