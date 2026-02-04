@@ -123,7 +123,7 @@ export function Sidebar({ open, onToggle }: SidebarProps) {
         {open && (
           <div className="flex items-center gap-2">
             <img
-              src="/logo192.png?v=2"
+              src="/logo192.png?v=3"
               alt="Rizko.ai"
               className="h-9 w-9 object-contain"
             />

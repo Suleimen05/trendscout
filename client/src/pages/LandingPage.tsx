@@ -214,7 +214,7 @@ export function LandingPage() {
             {/* Logo */}
             <Link to="/" className="flex items-center gap-2">
               <img
-                src="/logo192.png?v=2"
+                src="/logo192.png?v=3"
                 alt="Rizko.ai"
                 className="w-8 h-8 object-contain"
               />
@@ -637,7 +637,7 @@ export function LandingPage() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <img
-                  src="/logo192.png?v=2"
+                  src="/logo192.png?v=3"
                   alt="Rizko.ai"
                   className="w-8 h-8 object-contain"
                 />

@@ -178,7 +178,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
       <div className="flex h-16 items-center justify-between px-4 border-b">
         <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/dashboard')}>
           <img
-            src="/logo192.png?v=2"
+            src="/logo192.png?v=3"
             alt="Rizko.ai"
             className="h-9 w-9 object-contain"
           />
