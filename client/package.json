@@ -1,9 +1,9 @@
 {
-  "name": "risko-ai",
+  "name": "rizko-ai",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Risko.ai - TikTok trend analysis and AI script generation platform",
+  "description": "Rizko.ai - TikTok trend analysis and AI script generation platform",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

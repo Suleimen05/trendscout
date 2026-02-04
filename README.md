@@ -1,4 +1,4 @@
-# Risko.ai - TikTok Trend Analysis Platform
+# Rizko.ai - TikTok Trend Analysis Platform
 
 > **Fullstack SaaS приложение для анализа трендов социальных сетей с AI-генерацией скриптов, машинным обучением и отслеживанием конкурентов.**
 
@@ -33,7 +33,7 @@
 ## 🏗️ Архитектура проекта
 
 ```
-risko-ai/
+rizko-ai/
 ├── client/                    # Frontend (React + Vite)
 │   ├── src/
 │   │   ├── components/        # UI компоненты
@@ -265,7 +265,7 @@ DEV_UPGRADE_CODE = "888"  # Измените на свой код
 
 ```env
 # Database
-DATABASE_URL=postgresql://user:password@localhost:5432/risko_db
+DATABASE_URL=postgresql://user:password@localhost:5432/rizko_db
 
 # Security
 SECRET_KEY=your-super-secret-key-min-32-chars
@@ -436,7 +436,7 @@ startCommand = "uvicorn app.main:app --host 0.0.0.0 --port $PORT"
 ## 📞 Поддержка
 
 - **Issues**: GitHub Issues
-- **Email**: support@risko.ai
+- **Email**: support@rizko.ai
 
 ---
 

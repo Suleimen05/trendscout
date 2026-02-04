@@ -366,9 +366,14 @@ export function WorkflowBuilder() {
 
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+      const authData = localStorage.getItem('rizko_auth') ? JSON.parse(localStorage.getItem('rizko_auth') || '{}') : null;
+      const token = authData?.tokens?.accessToken || null;
       const response = await fetch(`${API_URL}/ai-scripts/chat`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { 'Authorization': `Bearer ${token}` })
+        },
         body: JSON.stringify({
           message: currentInput,
           model: selectedModel.id,

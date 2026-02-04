@@ -3,7 +3,7 @@
 def adapt_apidojo_to_standard(item: dict) -> dict:
     """
     Универсальный адаптер для данных Apify (Apidojo scraper).
-    Превращает сырой JSON в чистую структуру для Risko.ai.
+    Превращает сырой JSON в чистую структуру для Rizko.ai.
     """
     try:
         # --- ВАРИАНТ 0: ПЛОСКИЙ ФОРМАТ (Flattened JSON) ---
