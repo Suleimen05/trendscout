@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { motion } from 'framer-motion';
+import { Download, RefreshCw, WifiOff, Wifi } from 'lucide-react';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { LandingPage } from '@/pages/LandingPage';
@@ -35,7 +38,12 @@ import { ConnectAccountsPage } from '@/pages/ConnectAccounts';
 import { OAuthCallback } from '@/pages/OAuthCallback';
 import { useAppState } from '@/hooks/useAppState';
 import { Toaster } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { DevAccessGate } from '@/components/DevAccessGate';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Button } from '@/components/ui/button';
+import { usePWA, useHaptic, useNetworkStatus } from '@/hooks/usePWA';
+import { useSwipe } from '@/hooks/useMobile';
 
 // Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -62,6 +70,88 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
+// PWA Install Banner Component
+function PWAInstallBanner() {
+  const { isInstallable, isInstalled, install, isOffline, updateAvailable, updateServiceWorker } = usePWA();
+  const network = useNetworkStatus();
+  const haptic = useHaptic();
+
+  // Show offline toast
+  useEffect(() => {
+    if (isOffline) {
+      toast.warning('Вы офлайн', {
+        description: 'Некоторые функции могут быть недоступны',
+        icon: <WifiOff className="h-4 w-4" />,
+        duration: 5000,
+      });
+    } else if (!isOffline && network.type !== 'unknown') {
+      toast.success('Соединение восстановлено', {
+        description: `Подключено через ${network.type}`,
+        icon: <Wifi className="h-4 w-4" />,
+        duration: 3000,
+      });
+    }
+  }, [isOffline, network.type]);
+
+  // Handle install click with haptic
+  const handleInstall = () => {
+    haptic.medium();
+    install();
+  };
+
+  // Handle update click with haptic
+  const handleUpdate = () => {
+    haptic.success();
+    updateServiceWorker();
+  };
+
+  // Show update banner
+  if (updateAvailable) {
+    return (
+      <div className="fixed top-0 left-0 right-0 z-[100] bg-primary text-primary-foreground px-4 py-2 flex items-center justify-between shadow-lg">
+        <div className="flex items-center gap-2 text-sm">
+          <RefreshCw className="h-4 w-4 animate-spin" />
+          <span>Доступно обновление</span>
+        </div>
+        <Button size="sm" variant="secondary" onClick={handleUpdate} className="text-xs">
+          Обновить сейчас
+        </Button>
+      </div>
+    );
+  }
+
+  // Show install banner
+  if (isInstallable && !isInstalled) {
+    return (
+      <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 z-[100] bg-card border rounded-xl shadow-2xl p-4">
+        <div className="flex items-start gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-sm shrink-0">
+            R
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-sm">Установить Rizko.ai</h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Добавьте на главный экран для быстрого доступа
+            </p>
+          </div>
+        </div>
+        <div className="flex gap-2 mt-3">
+          <Button
+            size="sm"
+            className="flex-1"
+            onClick={handleInstall}
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Установить
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 // Dashboard Layout
 function DashboardLayout() {
   const {
@@ -71,6 +161,7 @@ function DashboardLayout() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const haptic = useHaptic();
 
   // Toggle between old sidebar and new unified sidebar
   // Change to 'A' or 'B' to test variants, or 'old' for original
@@ -79,6 +170,15 @@ function DashboardLayout() {
 
   // Full-width pages without padding (like workflow builder)
   const isFullWidthPage = location.pathname.includes('/ai-scripts') || location.pathname.includes('/ai-workspace');
+
+  // Swipe gestures for mobile sidebar
+  const swipeHandlers = useSwipe(
+    undefined, // swipe left - close sidebar
+    () => {
+      haptic.light();
+      setMobileMenuOpen(true); // swipe right - open sidebar
+    }
+  );
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -93,10 +193,10 @@ function DashboardLayout() {
       <MobileSidebar open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-hidden" {...swipeHandlers}>
         {/* Header - Mobile only (hidden for full-width pages) */}
         {!isFullWidthPage && (
-          <Header onToggleSidebar={() => setMobileMenuOpen(true)} />
+          <Header onToggleSidebar={() => { haptic.light(); setMobileMenuOpen(true); }} />
         )}
 
         {/* Page Content */}
@@ -141,18 +241,36 @@ function DashboardLayout() {
   );
 }
 
+// Create QueryClient instance with default options
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 2 * 60 * 1000, // 2 minutes - данные свежие
+      gcTime: 5 * 60 * 1000, // 5 minutes - хранить в памяти
+      retry: 1, // Повторить 1 раз при ошибке
+      refetchOnWindowFocus: true, // Обновить при возврате на вкладку
+      refetchOnReconnect: true, // Обновить при восстановлении интернета
+    },
+  },
+});
+
 function App() {
   return (
-    <DevAccessGate>
-      <BrowserRouter>
-        <ThemeProvider>
-          <AuthProvider>
-            <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/oauth/callback" element={<OAuthCallback />} />
+    <ErrorBoundary>
+      <DevAccessGate>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <ThemeProvider>
+              <AuthProvider>
+                {/* PWA Install Banner */}
+                <PWAInstallBanner />
+
+              <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/register" element={<RegisterPage />} />
+              <Route path="/oauth/callback" element={<OAuthCallback />} />
 
             {/* Public legal & support pages */}
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
@@ -173,10 +291,15 @@ function App() {
             {/* 404 catch all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </AuthProvider>
-      </ThemeProvider>
-    </BrowserRouter>
-  </DevAccessGate>
+          </AuthProvider>
+        </ThemeProvider>
+      </BrowserRouter>
+
+      {/* React Query DevTools - только в development */}
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
+    </DevAccessGate>
+  </ErrorBoundary>
   );
 }
 

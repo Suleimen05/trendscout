@@ -504,6 +504,50 @@ class ApiService {
   }
 
   // ===========================================================================
+  // USAGE API
+  // ===========================================================================
+
+  /**
+   * Get usage statistics
+   * GET /api/usage
+   */
+  async getUsageStats(): Promise<{
+    plan: string;
+    reset_date: string;
+    credits: {
+      monthly_used: number;
+      monthly_limit: number;
+      bonus: number;
+      rollover: number;
+      total_available: number;
+    };
+    stats: {
+      scripts_generated: number;
+      chat_messages: number;
+      deep_analyze: number;
+    };
+    auto_mode: {
+      enabled: boolean;
+      savings: number;
+    };
+  }> {
+    const response = await apiClient.get('/usage');
+    return response.data;
+  }
+
+  /**
+   * Toggle Auto Mode
+   * POST /api/usage/auto-mode
+   */
+  async toggleAutoMode(enabled: boolean): Promise<{
+    enabled: boolean;
+    message: string;
+  }> {
+    const response = await apiClient.post('/usage/auto-mode', { enabled });
+    return response.data;
+  }
+
+  // ===========================================================================
   // AI SCRIPTS API
   // ===========================================================================
 
