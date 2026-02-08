@@ -29,47 +29,46 @@ def upgrade() -> None:
     - rollover_credits: Credits rolled over from previous month
     - ai_auto_mode: Toggle for automatic AI model selection
     """
-    # Add new fields to users table
-    op.add_column('users', sa.Column('monthly_credits_limit', sa.Integer(), nullable=False, server_default='100'))
-    op.add_column('users', sa.Column('monthly_credits_used', sa.Integer(), nullable=False, server_default='0'))
-    op.add_column('users', sa.Column('bonus_credits', sa.Integer(), nullable=False, server_default='0'))
-    op.add_column('users', sa.Column('rollover_credits', sa.Integer(), nullable=False, server_default='0'))
+    # Add new fields to users table (IF NOT EXISTS for production safety)
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS monthly_credits_limit INTEGER NOT NULL DEFAULT 100")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS monthly_credits_used INTEGER NOT NULL DEFAULT 0")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS bonus_credits INTEGER NOT NULL DEFAULT 0")
+    op.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS rollover_credits INTEGER NOT NULL DEFAULT 0")
 
     # Add ai_auto_mode to user_settings table
-    op.add_column('user_settings', sa.Column('ai_auto_mode', sa.Boolean(), nullable=False, server_default='true'))
+    op.execute("ALTER TABLE user_settings ADD COLUMN IF NOT EXISTS ai_auto_mode BOOLEAN NOT NULL DEFAULT true")
 
     # Update existing users based on their subscription tier
     # Free: 100, Creator: 500, Pro: 2000, Agency: 10000
     op.execute("""
         UPDATE users
-        SET monthly_credits_limit = CASE subscription_tier
+        SET monthly_credits_limit = CASE subscription_tier::text
             WHEN 'FREE' THEN 100
             WHEN 'CREATOR' THEN 500
             WHEN 'PRO' THEN 2000
             WHEN 'AGENCY' THEN 10000
             ELSE 100
         END
+        WHERE monthly_credits_limit = 100
     """)
 
     # Give bonus credits to Creator+ users as a welcome gift
     op.execute("""
         UPDATE users
-        SET bonus_credits = CASE subscription_tier
+        SET bonus_credits = CASE subscription_tier::text
             WHEN 'CREATOR' THEN 150
             WHEN 'PRO' THEN 300
             WHEN 'AGENCY' THEN 500
             ELSE 0
         END
+        WHERE bonus_credits = 0
     """)
 
 
 def downgrade() -> None:
     """Remove AI credits tracking fields."""
-    # Remove fields from user_settings
-    op.drop_column('user_settings', 'ai_auto_mode')
-
-    # Remove fields from users
-    op.drop_column('users', 'rollover_credits')
-    op.drop_column('users', 'bonus_credits')
-    op.drop_column('users', 'monthly_credits_used')
-    op.drop_column('users', 'monthly_credits_limit')
+    op.execute("ALTER TABLE user_settings DROP COLUMN IF EXISTS ai_auto_mode")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS rollover_credits")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS bonus_credits")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS monthly_credits_used")
+    op.execute("ALTER TABLE users DROP COLUMN IF EXISTS monthly_credits_limit")

@@ -17,12 +17,11 @@ depends_on = None
 
 
 def upgrade():
-    # Add platform column with default 'tiktok' for existing records
-    op.add_column('competitors', sa.Column('platform', sa.String(20), nullable=False, server_default='tiktok'))
-
+    # Add platform column with default 'tiktok' for existing records (IF NOT EXISTS)
+    op.execute("ALTER TABLE competitors ADD COLUMN IF NOT EXISTS platform VARCHAR(20) NOT NULL DEFAULT 'tiktok'")
     # Remove server_default after adding (best practice)
-    op.alter_column('competitors', 'platform', server_default=None)
+    op.execute("ALTER TABLE competitors ALTER COLUMN platform DROP DEFAULT")
 
 
 def downgrade():
-    op.drop_column('competitors', 'platform')
+    op.execute("ALTER TABLE competitors DROP COLUMN IF EXISTS platform")

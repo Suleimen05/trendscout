@@ -18,12 +18,9 @@ depends_on = None
 
 def upgrade():
     # Increase avatar_url from 500 to 1000 characters for Instagram URLs
-    op.alter_column('competitors', 'avatar_url',
-                    type_=sa.String(1000),
-                    existing_type=sa.String(500))
+    # Use raw SQL for safety — column may already be TEXT or different size
+    op.execute("ALTER TABLE competitors ALTER COLUMN avatar_url TYPE VARCHAR(1000)")
 
 
 def downgrade():
-    op.alter_column('competitors', 'avatar_url',
-                    type_=sa.String(500),
-                    existing_type=sa.String(1000))
+    op.execute("ALTER TABLE competitors ALTER COLUMN avatar_url TYPE VARCHAR(500)")
