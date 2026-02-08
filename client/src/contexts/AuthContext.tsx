@@ -68,7 +68,7 @@ const getApiBaseUrl = (): string => {
   if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     return 'http://localhost:8000/api';
   }
-  return 'https://xtrend-app.onrender.com/api';
+  return 'https://api.rizko.ai/api';
 };
 const API_BASE_URL = getApiBaseUrl();
 
