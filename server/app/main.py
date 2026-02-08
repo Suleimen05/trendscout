@@ -130,6 +130,7 @@ ALLOWED_ORIGINS = [
     "https://rizko.ai",
     "https://www.rizko.ai",
     "https://app.rizko.ai",
+    "https://beta.rizko.ai",
     # Add Cloudflare Pages domains
     "https://*.pages.dev",
 ]
