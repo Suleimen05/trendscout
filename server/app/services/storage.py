@@ -19,14 +19,23 @@ load_dotenv()
 
 logger = logging.getLogger(__name__)
 
-# Initialize Supabase client
+# Initialize Supabase client lazily (don't crash at import if env vars missing)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
-if not SUPABASE_URL or not SUPABASE_KEY:
-    raise ValueError("Missing SUPABASE_URL or SUPABASE_KEY environment variables")
+_supabase_client: Optional[Client] = None
 
-supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+def _get_supabase() -> Optional[Client]:
+    """Lazy init Supabase client — only connect when actually needed."""
+    global _supabase_client
+    if _supabase_client is None:
+        url = SUPABASE_URL or os.getenv("SUPABASE_URL")
+        key = SUPABASE_KEY or os.getenv("SUPABASE_KEY")
+        if not url or not key:
+            logger.warning("⚠️  SUPABASE_URL or SUPABASE_KEY not set — storage disabled")
+            return None
+        _supabase_client = create_client(url, key)
+    return _supabase_client
 
 # Storage bucket name
 IMAGES_BUCKET = "rizko-images"
@@ -83,8 +92,13 @@ class SupabaseStorage:
             # Generate filename
             filename = SupabaseStorage._generate_filename(image_url, folder)
 
+            client = _get_supabase()
+            if not client:
+                logger.warning("Supabase not configured — skipping upload")
+                return None
+
             # Upload to Supabase Storage
-            result = supabase.storage.from_(IMAGES_BUCKET).upload(
+            result = client.storage.from_(IMAGES_BUCKET).upload(
                 path=filename,
                 file=image_data.getvalue(),
                 file_options={
@@ -95,7 +109,7 @@ class SupabaseStorage:
             )
 
             # Get public URL
-            public_url = supabase.storage.from_(IMAGES_BUCKET).get_public_url(filename)
+            public_url = client.storage.from_(IMAGES_BUCKET).get_public_url(filename)
 
             logger.info(f"✅ Uploaded image to Supabase: {filename}")
             return public_url
@@ -121,7 +135,10 @@ class SupabaseStorage:
     def delete_image(file_path: str) -> bool:
         """Delete image from Supabase Storage"""
         try:
-            supabase.storage.from_(IMAGES_BUCKET).remove([file_path])
+            client = _get_supabase()
+            if not client:
+                return False
+            client.storage.from_(IMAGES_BUCKET).remove([file_path])
             logger.info(f"🗑️ Deleted image from Supabase: {file_path}")
             return True
         except Exception as e:
@@ -129,37 +146,31 @@ class SupabaseStorage:
             return False
 
 
-# Initialize bucket on import (create if doesn't exist)
+# Check bucket on first use, not at import time
 def _ensure_bucket_exists():
     """
     Create bucket if it doesn't exist.
-
-    Note: If you get RLS policy errors, you need to manually create the bucket
-    in Supabase Dashboard with public access enabled.
+    Called lazily, not at import time.
     """
+    client = _get_supabase()
+    if not client:
+        return
+
     try:
-        # Try to get bucket info
-        buckets = supabase.storage.list_buckets()
+        buckets = client.storage.list_buckets()
         bucket_names = [b.get("name") or b.get("id") for b in buckets]
 
         if IMAGES_BUCKET in bucket_names:
             logger.info(f"✅ Bucket '{IMAGES_BUCKET}' exists")
         else:
-            # Try alternative check - attempt to use bucket
             try:
-                supabase.storage.from_(IMAGES_BUCKET).list()
+                client.storage.from_(IMAGES_BUCKET).list()
                 logger.info(f"✅ Bucket '{IMAGES_BUCKET}' exists (verified via list)")
             except:
-                logger.warning(f"⚠️ Bucket '{IMAGES_BUCKET}' not found. Please create it manually in Supabase Dashboard with public access.")
+                logger.warning(f"⚠️ Bucket '{IMAGES_BUCKET}' not found.")
     except Exception as e:
-        # Bucket might exist but list_buckets failed, try to use it anyway
         try:
-            supabase.storage.from_(IMAGES_BUCKET).list()
+            client.storage.from_(IMAGES_BUCKET).list()
             logger.info(f"✅ Bucket '{IMAGES_BUCKET}' accessible")
         except:
-            logger.warning(f"⚠️ Could not verify bucket existence: {e}")
-            logger.warning(f"⚠️ Please ensure bucket '{IMAGES_BUCKET}' exists in Supabase Dashboard")
-
-
-# Run on import
-_ensure_bucket_exists()
+            logger.warning(f"⚠️ Could not verify bucket: {e}")
