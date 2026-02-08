@@ -18,8 +18,14 @@ from ..api.dependencies import get_current_user
 logger = logging.getLogger(__name__)
 router = APIRouter()  # Prefix and tags defined in main.py
 
-# Initialize Gemini generator
-script_generator = GeminiScriptGenerator()
+# Lazy init Gemini generator (avoid import-time crash)
+_script_generator = None
+
+def _get_generator() -> GeminiScriptGenerator:
+    global _script_generator
+    if _script_generator is None:
+        _script_generator = GeminiScriptGenerator()
+    return _script_generator
 
 # AI Model costs (in credits)
 MODEL_COSTS = {
@@ -246,7 +252,7 @@ async def generate_script(
             )
 
         # Generate script
-        script = script_generator.generate_script(
+        script = _get_generator().generate_script(
             video_description=request.video_description,
             video_stats=request.video_stats,
             tone=request.tone,
@@ -357,7 +363,7 @@ Respond in a helpful, structured way. Use markdown formatting (bold, bullets, he
 Keep the response focused and actionable. Language: respond in the same language as the user's message."""
 
         # Generate response
-        response = script_generator.client.models.generate_content(
+        response = _get_generator().client.models.generate_content(
             model="gemini-2.0-flash" if model_name == "gemini-flash" else "gemini-2.0-pro",
             contents=prompt
         )
@@ -428,5 +434,5 @@ def health_check():
             "gemini-flash": f"{MODEL_COSTS['gemini-flash']} credits",
             "gemini-pro": f"{MODEL_COSTS['gemini-pro']} credits"
         },
-        "available": script_generator.client is not None
+        "available": _get_generator().client is not None
     }

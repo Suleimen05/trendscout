@@ -3,7 +3,6 @@ AI Script Generator using Google Gemini Flash
 Fast and cost-effective script generation for TikTok videos
 """
 import os
-from google import genai
 from typing import Dict, Any, Optional
 
 class GeminiScriptGenerator:
@@ -15,8 +14,13 @@ class GeminiScriptGenerator:
             print("⚠️  GEMINI API KEY не настроен!")
             self.client = None
         else:
-            self.client = genai.Client(api_key=api_key)
-            print("✅ Gemini Flash initialized")
+            try:
+                from google import genai
+                self.client = genai.Client(api_key=api_key)
+                print("✅ Gemini Flash initialized")
+            except Exception as e:
+                print(f"⚠️  Failed to initialize Gemini: {e}")
+                self.client = None
 
     def generate_script(
         self,

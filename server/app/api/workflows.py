@@ -23,8 +23,14 @@ from ..api.chat_sessions import get_gemini_client, get_anthropic_client, get_ope
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-# Initialize Gemini (fallback for backward compat)
-script_generator = GeminiScriptGenerator()
+# Lazy init Gemini (avoid import-time crash if GEMINI_API_KEY missing)
+_script_generator = None
+
+def get_script_generator() -> GeminiScriptGenerator:
+    global _script_generator
+    if _script_generator is None:
+        _script_generator = GeminiScriptGenerator()
+    return _script_generator
 
 
 def generate_with_model(model: str, prompt: str) -> str:
@@ -418,7 +424,7 @@ def health_check():
     return {
         "status": "ok",
         "service": "Workflow Execution",
-        "ai_available": script_generator.client is not None
+        "ai_available": get_script_generator().client is not None
     }
 
 
