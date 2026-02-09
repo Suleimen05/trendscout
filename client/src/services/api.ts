@@ -418,6 +418,26 @@ class ApiService {
   }
 
   /**
+   * Save video directly to favorites (creates trend + favorite in one step)
+   * POST /api/favorites/save-video
+   */
+  async saveVideo(data: {
+    platform_id: string;
+    url: string;
+    description?: string;
+    cover_url?: string;
+    play_addr?: string;
+    author_username?: string;
+    stats?: Record<string, number>;
+    viral_score?: number;
+    notes?: string;
+    tags?: string[];
+  }): Promise<{ id: number; trend_id: number; message: string }> {
+    const response = await apiClient.post('/favorites/save-video', data);
+    return response.data;
+  }
+
+  /**
    * Get all user's tags
    * GET /api/favorites/tags/all
    */

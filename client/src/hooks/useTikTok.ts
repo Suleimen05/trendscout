@@ -314,6 +314,7 @@ export function useSearchWithFilters(filters: SearchFilters & {
         cover_url: trend.cover_url,
         url: trend.url,
         author_username: trend.author_username,
+        play_addr: trend.play_addr || '',
         // ✅ DEEP ANALYZE FIELDS (only present in deep mode)
         uts_breakdown: trend.uts_breakdown || null,
         saturation_score: trend.saturation_score,

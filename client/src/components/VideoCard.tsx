@@ -92,13 +92,6 @@ export function VideoCard({
 
     if (savingInProgress) return;
 
-    // Get database trend_id - available in Deep mode or from cached results
-    const trendId = video.trend_id || (typeof video.id === 'number' ? video.id : null);
-    if (!trendId) {
-      toast.error('Save is only available for Deep Analyze results. Enable Deep Analyze to save videos.');
-      return;
-    }
-
     setSavingInProgress(true);
 
     try {
@@ -109,10 +102,30 @@ export function VideoCard({
         setFavoriteId(null);
         toast.success('Removed from saved videos');
       } else {
-        // Add to favorites
-        const result = await apiService.addFavorite({ trend_id: trendId });
-        setIsSaved(true);
-        setFavoriteId(result.id);
+        // Check if video has trend_id (Deep Analyze or cached)
+        const trendId = video.trend_id || (typeof video.id === 'number' ? video.id : null);
+
+        if (trendId) {
+          // Already in DB — just add to favorites
+          const result = await apiService.addFavorite({ trend_id: trendId });
+          setIsSaved(true);
+          setFavoriteId(result.id);
+        } else {
+          // Light Analyze — save video to DB + favorites in one step
+          const finalPlayAddr = video.play_addr || video.video?.playAddr || video.video?.downloadAddr || playAddr || '';
+          const result = await apiService.saveVideo({
+            platform_id: String(video.id),
+            url: videoUrl !== '#' ? videoUrl : `https://www.tiktok.com/@${video.author_username || video.author?.uniqueId || 'user'}/video/${video.id}`,
+            description: video.description || '',
+            cover_url: video.cover_url || video.video?.cover || '',
+            play_addr: finalPlayAddr,
+            author_username: video.author_username || video.author?.uniqueId || 'unknown',
+            stats: video.stats || {},
+            viral_score: video.viralScore || video.uts_score || 0,
+          });
+          setIsSaved(true);
+          setFavoriteId(result.id);
+        }
         toast.success('Video saved!');
       }
 

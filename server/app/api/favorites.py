@@ -12,7 +12,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
 from ..core.database import get_db
-from ..db.models import User, Trend, UserFavorite
+from pydantic import BaseModel
+from ..db.models import User, Trend, UserFavorite, SearchMode as DBSearchMode
 from .dependencies import get_current_user, check_rate_limit
 from .schemas.favorites import (
     FavoriteCreate,
@@ -439,4 +440,101 @@ def check_if_favorited(
     return {
         "is_favorited": favorite is not None,
         "favorite_id": favorite.id if favorite else None
+    }
+
+
+# =============================================================================
+# SAVE VIDEO (Light Analyze → DB + Favorite in one step)
+# =============================================================================
+
+class SaveVideoRequest(BaseModel):
+    """Save a video from Light Analyze results directly to favorites."""
+    platform_id: str
+    url: str
+    description: str = ""
+    cover_url: str = ""
+    play_addr: Optional[str] = None
+    author_username: str = "unknown"
+    stats: dict = {}
+    viral_score: float = 0.0
+    notes: Optional[str] = None
+    tags: Optional[List[str]] = None
+
+
+@router.post("/save-video", status_code=status.HTTP_201_CREATED)
+def save_video_to_favorites(
+    data: SaveVideoRequest,
+    current_user: User = Depends(check_rate_limit),
+    db: Session = Depends(get_db)
+):
+    """
+    Save a video to DB + favorites in one step.
+    Used for Light Analyze videos that don't have a trend_id yet.
+    Creates the Trend record if needed, then adds to favorites.
+    """
+    logger.info(f"📥 save-video request: platform_id={data.platform_id}, play_addr_len={len(data.play_addr or '')}, play_addr_preview={repr((data.play_addr or '')[:80])}")
+
+    # Check if trend already exists for this user
+    existing_trend = db.query(Trend).filter(
+        Trend.platform_id == data.platform_id,
+        Trend.user_id == current_user.id
+    ).first()
+
+    if existing_trend:
+        trend = existing_trend
+        # Update stats
+        trend.stats = data.stats
+        trend.cover_url = data.cover_url
+        trend.play_addr = data.play_addr
+    else:
+        # Create new trend
+        trend = Trend(
+            user_id=current_user.id,
+            platform_id=data.platform_id,
+            url=data.url,
+            play_addr=data.play_addr,
+            cover_url=data.cover_url,
+            description=data.description,
+            stats=data.stats,
+            initial_stats=data.stats,
+            author_username=data.author_username,
+            author_followers=0,
+            uts_score=data.viral_score,
+            vertical="saved",
+            search_mode=DBSearchMode.KEYWORDS,
+            is_deep_scan=False,
+        )
+        db.add(trend)
+        db.flush()
+
+    # Check if already favorited
+    existing_fav = db.query(UserFavorite).filter(
+        UserFavorite.user_id == current_user.id,
+        UserFavorite.trend_id == trend.id
+    ).first()
+
+    if existing_fav:
+        db.commit()
+        return {
+            "id": existing_fav.id,
+            "trend_id": trend.id,
+            "message": "Already saved"
+        }
+
+    # Create favorite
+    favorite = UserFavorite(
+        user_id=current_user.id,
+        trend_id=trend.id,
+        notes=data.notes,
+        tags=data.tags or []
+    )
+    db.add(favorite)
+    db.commit()
+
+    logger.info(f"⭐ User {current_user.id} saved video {data.platform_id} to favorites")
+
+    return {
+        "id": favorite.id,
+        "trend_id": trend.id,
+        "message": "Video saved!"
     }

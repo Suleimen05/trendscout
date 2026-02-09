@@ -17,6 +17,11 @@ async def proxy_image(url: str):
         raise HTTPException(status_code=400, detail="Invalid URL")
 
     try:
+        # Generate a realistic tt_webid_v2 cookie (TikTok requires this)
+        import random
+        import time
+        tt_webid = f"{int(time.time() * 1000)}{random.randint(100000000, 999999999)}"
+
         # Extended headers to bypass TikTok CDN restrictions
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -25,6 +30,7 @@ async def proxy_image(url: str):
             "Accept-Encoding": "gzip, deflate, br",
             "Referer": "https://www.tiktok.com/",
             "Origin": "https://www.tiktok.com",
+            "Cookie": f"tt_webid_v2={tt_webid}; tt_csrf_token=abc123",
             "Sec-Fetch-Dest": "image",
             "Sec-Fetch-Mode": "no-cors",
             "Sec-Fetch-Site": "cross-site",

@@ -562,7 +562,7 @@ def search_trends(
         log_search(db, current_user.id, search_targets[0], req.mode.value, False, len(live_results), execution_time)
 
         if live_results:
-            logger.info(f"✅ [LIGHT] Parsed {len(live_results)} items")
+            logger.info(f"✅ [LIGHT] Parsed {len(live_results)} items (saved to DB for bookmarks)")
 
         return {
             "status": "ok",
