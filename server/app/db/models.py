@@ -269,12 +269,12 @@ class Trend(Base):
 
     # TikTok Video Identification
     platform_id = Column(String(100), index=True)  # TikTok video ID
-    url = Column(String(500), index=True)  # Video URL
-    play_addr = Column(String(500), nullable=True)  # Direct CDN video playback URL
+    url = Column(Text, index=True)  # Video URL
+    play_addr = Column(Text, nullable=True)  # Direct CDN video playback URL (can be 700+ chars)
 
     # Content
     description = Column(Text)
-    cover_url = Column(String(500))
+    cover_url = Column(Text)  # Supabase or TikTok CDN URL
     vertical = Column(String(100), index=True)  # Search keyword/category
 
     # Music/Sound Data (for sound cascade analysis)

@@ -29,8 +29,8 @@ export function proxyImageUrl(url: string | null | undefined): string {
     return '/placeholder-avatar.svg';
   }
 
-  // If already a local/relative URL, return as is
-  if (url.startsWith('/') || url.startsWith('data:') || url.includes('localhost')) {
+  // If already a local/relative URL or permanent storage, return as is
+  if (url.startsWith('/') || url.startsWith('data:') || url.includes('localhost') || url.includes('supabase.co')) {
     return url;
   }
 

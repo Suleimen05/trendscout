@@ -3,10 +3,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, Bell, Loader2, TrendingUp, Users, Eye, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { CompetitorVideoCard } from '@/components/CompetitorVideoCard';
-// import { AIScriptGenerator } from '@/components/AIScriptGenerator'; // TODO: wire up
+import { VideoCard } from '@/components/VideoCard';
 import { toast } from 'sonner';
 import { apiClient } from '@/services/api';
+import type { TikTokVideo } from '@/types';
 
 interface CompetitorProfile {
   username: string;
@@ -21,34 +21,14 @@ interface CompetitorProfile {
   last_checked: string;
 }
 
-interface CompetitorVideo {
-  id: string;
-  title: string;
-  description: string;
-  thumbnail_url: string;
-  video_url: string;
-  stats: {
-    playCount: number;
-    diggCount: number;
-    commentCount: number;
-    shareCount: number;
-    saveCount?: number;
-  };
-  posted_at: string;
-  uts_score?: number;
-  is_new?: boolean;
-}
-
 export function CompetitorFeed() {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState<CompetitorProfile | null>(null);
-  const [videos, setVideos] = useState<CompetitorVideo[]>([]);
+  const [videos, setVideos] = useState<TikTokVideo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  // const [selectedVideo, setSelectedVideo] = useState<CompetitorVideo | null>(null); // TODO: wire up AI script
-  // const [showAIScript, setShowAIScript] = useState(false);
   const [filter, setFilter] = useState<'all' | 'new' | 'trending'>('all');
   const [autoRefreshed, setAutoRefreshed] = useState(false);
 
@@ -61,8 +41,8 @@ export function CompetitorFeed() {
   // Auto-refresh if data is stale (no images loading)
   useEffect(() => {
     if (videos.length > 0 && !autoRefreshed) {
-      // Check if any videos have thumbnail_url
-      const hasValidThumbnails = videos.some(v => v.thumbnail_url);
+      // Check if any videos have a cover image
+      const hasValidThumbnails = videos.some(v => v.video?.cover || v.cover_url);
 
       if (!hasValidThumbnails) {
         console.log('⚠️ No valid thumbnails detected - auto-refreshing competitor data...');
@@ -95,24 +75,24 @@ export function CompetitorFeed() {
         last_checked: response.data.profile.last_checked_at || new Date().toISOString(),
       });
 
-      // Videos data
+      // Videos data — map to TikTokVideo format for VideoCard
       const videosList = response.data.videos || [];
 
-      // DEBUG: Check what API returned
-      console.log('🔍 API Response videos count:', videosList.length);
-      if (videosList.length > 0) {
-        console.log('🔍 First video from API:', videosList[0]);
-        console.log('🔍 First video thumbnail_url:', videosList[0].thumbnail_url);
-        console.log('🔍 First video cover_url:', videosList[0].cover_url);
-        console.log('🔍 Full API response:', response.data);
-      }
-
-      const mappedVideos = videosList.map((v: any) => ({
-        id: v.id,
-        title: v.title || v.description,
+      const mappedVideos: TikTokVideo[] = videosList.map((v: any) => ({
+        id: v.id?.toString() || '',
+        title: v.title || v.description || '',
         description: v.description || '',
-        thumbnail_url: v.thumbnail_url || v.cover_url,
-        video_url: v.video_url || v.url,  // CDN video URL for playback (fallback to TikTok page)
+        author: {
+          id: response.data.profile.username || '',
+          uniqueId: response.data.profile.username || '',
+          nickname: response.data.profile.nickname || response.data.profile.username || '',
+          avatar: response.data.profile.avatar_url || '',
+          followerCount: response.data.profile.followers_count || 0,
+          followingCount: 0,
+          heartCount: 0,
+          videoCount: response.data.profile.total_videos || 0,
+          verified: false,
+        },
         stats: {
           playCount: v.stats?.playCount || v.stats?.views || 0,
           diggCount: v.stats?.diggCount || v.stats?.likes || 0,
@@ -120,16 +100,30 @@ export function CompetitorFeed() {
           shareCount: v.stats?.shareCount || v.stats?.shares || 0,
           saveCount: v.stats?.saveCount || v.stats?.bookmarks || 0,
         },
-        posted_at: v.posted_at || v.created_at,
-        uts_score: v.uts_score,
-        is_new: v.is_new || false,
+        video: {
+          duration: v.duration || 0,
+          ratio: '720p',
+          cover: v.thumbnail_url || v.cover_url || '',
+          playAddr: v.play_addr || v.video_url || '',
+          downloadAddr: '',
+        },
+        music: {
+          id: '',
+          title: '',
+          authorName: '',
+          original: false,
+          playUrl: '',
+        },
+        hashtags: [],
+        createdAt: v.posted_at || v.created_at || '',
+        viralScore: v.uts_score || 0,
+        engagementRate: 0,
+        trend_id: typeof v.id === 'number' ? v.id : undefined,
+        uts_score: v.uts_score || 0,
+        cover_url: v.thumbnail_url || v.cover_url || '',
+        url: v.url || v.video_url || '',
+        play_addr: v.play_addr || v.video_url || '',
       }));
-
-      // DEBUG: Check mapped videos
-      if (mappedVideos.length > 0) {
-        console.log('🔍 First mapped video:', mappedVideos[0]);
-        console.log('🔍 First mapped thumbnail_url:', mappedVideos[0].thumbnail_url);
-      }
 
       setVideos(mappedVideos);
     } catch (error: any) {
@@ -165,29 +159,6 @@ export function CompetitorFeed() {
     }
   };
 
-  const handleSaveVideo = async (video: CompetitorVideo) => {
-    try {
-      // Save to favorites (reuse existing favorites API)
-      await apiClient.post('/favorites/', {
-        trend_id: parseInt(video.id),
-        notes: `From competitor @${username}`,
-        tags: ['competitor', username],
-      });
-      toast.success('Video saved to favorites!');
-    } catch (error: any) {
-      if (error.response?.status === 400) {
-        toast.info('Video already in favorites');
-      } else {
-        toast.error('Failed to save video');
-      }
-    }
-  };
-
-  const handleGenerateScript = (_video: CompetitorVideo) => {
-    // TODO: wire up with AI script generator
-    toast.info('AI Script generation coming soon!');
-  };
-
   const formatNumber = (num: number): string => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
@@ -199,16 +170,18 @@ export function CompetitorFeed() {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  // Don't use proxy - direct image loading works fine
-  const getProxiedImageUrl = (url: string | undefined): string => {
-    if (!url) return '';
-    return url;
+  // Check if video is new (posted within last 24 hours)
+  const isNewVideo = (video: TikTokVideo): boolean => {
+    if (!video.createdAt) return false;
+    const posted = new Date(video.createdAt).getTime();
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
+    return posted > oneDayAgo;
   };
 
   // Filter videos
   const filteredVideos = videos.filter((video) => {
-    if (filter === 'new') return video.is_new;
-    if (filter === 'trending') return (video.uts_score || 0) >= 7;
+    if (filter === 'new') return isNewVideo(video);
+    if (filter === 'trending') return (video.uts_score || video.viralScore || 0) >= 7;
     return true;
   });
 
@@ -251,7 +224,7 @@ export function CompetitorFeed() {
             {/* Avatar */}
             <div className="flex-shrink-0">
               <img
-                src={profile.avatar ? getProxiedImageUrl(profile.avatar) : '/placeholder-avatar.svg'}
+                src={profile.avatar || '/placeholder-avatar.svg'}
                 alt={profile.username}
                 className="h-24 w-24 md:h-32 md:w-32 rounded-full object-cover ring-4 ring-purple-600/20"
                 onError={(e) => {
@@ -343,7 +316,7 @@ export function CompetitorFeed() {
       </Card>
 
       {/* Quick Stats */}
-      {videos.filter((v) => v.is_new).length > 0 && (
+      {videos.filter((v) => isNewVideo(v)).length > 0 && (
         <Card className="bg-gradient-to-r from-purple-600/10 to-pink-600/10 border-purple-600/20">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -354,7 +327,7 @@ export function CompetitorFeed() {
                 <div>
                   <p className="font-semibold">New Activity!</p>
                   <p className="text-sm text-muted-foreground">
-                    {videos.filter((v) => v.is_new).length} new videos in the last 24 hours
+                    {videos.filter((v) => isNewVideo(v)).length} new videos in the last 24 hours
                   </p>
                 </div>
               </div>
@@ -419,17 +392,15 @@ export function CompetitorFeed() {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {filteredVideos.map((video) => (
-            <CompetitorVideoCard
+            <VideoCard
               key={video.id}
               video={video}
-              onSave={handleSaveVideo}
-              onGenerateScript={handleGenerateScript}
+              mode="light"
+              size="medium"
             />
           ))}
         </div>
       )}
-
-      {/* AI Script Generator Modal - TODO: wire up with useAIScriptGenerator hook */}
     </div>
   );
 }

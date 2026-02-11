@@ -86,8 +86,8 @@ def normalize_video_data(item: dict) -> dict:
     avatar = fix_tt_url(channel.get("avatar") or channel.get("avatarThumb"))
 
     video_obj = item.get("video") or item.get("videoMeta") or {}
-    # Try multiple fallbacks for cover image
-    cover = fix_tt_url(
+    # Get ORIGINAL cover URL (with signature!) - DO NOT fix_tt_url yet
+    cover_raw = (
         video_obj.get("cover") or
         video_obj.get("coverUrl") or
         video_obj.get("dynamicCover") or
@@ -95,7 +95,8 @@ def normalize_video_data(item: dict) -> dict:
         item.get("cover_url") or
         item.get("coverUrl") or
         item.get("videoCover") or
-        item.get("cover")
+        item.get("cover") or
+        ""
     )
 
     # Extract video URL for playback (video.url is the main field)
@@ -107,22 +108,17 @@ def normalize_video_data(item: dict) -> dict:
         item.get("videoUrl")
     )
 
-    # DEBUG: Log cover extraction issues
-    if not cover:
-        logger.debug(f"No cover found for video {item.get('id')}")
-        logger.debug(f"video_obj keys: {list(video_obj.keys())[:10] if video_obj else 'empty'}")
-        logger.debug(f"video.cover: {video_obj.get('cover', 'missing')[:50] if video_obj.get('cover') else 'null'}")
-
-    # Upload thumbnail to Supabase Storage (permanent, no expiration)
-    # Fallback: if Supabase fails, use fix_tiktok_url (works ~1-3 days)
-    cover_url_final = cover
-    if cover:
-        uploaded_cover = SupabaseStorage.upload_thumbnail(cover)
+    # Upload thumbnail to Supabase Storage using ORIGINAL signed URL
+    # The signature is needed to download from TikTok CDN!
+    cover_url_final = fix_tt_url(cover_raw) or cover_raw  # fallback default
+    if cover_raw:
+        # Try with original signed URL first (best chance of success)
+        uploaded_cover = SupabaseStorage.upload_thumbnail(cover_raw)
         if uploaded_cover:
             cover_url_final = uploaded_cover
         else:
-            # Fallback: remove TikTok signatures (temporary fix)
-            cover_url_final = ApifyStorage.fix_tiktok_url(cover)
+            # Fallback: try with fixed URL (remove signatures, works ~1-3 days)
+            cover_url_final = ApifyStorage.fix_tiktok_url(cover_raw)
 
     return {
         "id": str(item.get("id")),
@@ -393,9 +389,10 @@ async def add_competitor(
     first_vid = clean_videos[0]
     author_info = first_vid["author"]
 
-    # Upload avatar to Apify Storage
+    # Upload avatar to Supabase Storage (permanent)
     avatar_cdn_url = author_info["avatar"]
-    avatar_url = ApifyStorage.upload_avatar(avatar_cdn_url, clean_username, data.platform)
+    uploaded_avatar = SupabaseStorage.upload_avatar(avatar_cdn_url)
+    avatar_url = uploaded_avatar if uploaded_avatar else avatar_cdn_url
 
     # Create competitor record
     competitor = Competitor(
@@ -526,6 +523,14 @@ def delete_competitor(
         )
 
     if hard_delete:
+        # Clean up images from Supabase Storage before deleting DB record
+        deleted_count = SupabaseStorage.cleanup_competitor(
+            avatar_url=competitor.avatar_url or "",
+            recent_videos=competitor.recent_videos or []
+        )
+        if deleted_count:
+            logger.info(f"🗑️ Cleaned {deleted_count} images from Supabase for @{clean_username}")
+
         db.delete(competitor)
         logger.info(f"🗑️ User {current_user.id} permanently deleted competitor @{clean_username}")
     else:
@@ -601,9 +606,10 @@ def refresh_competitor_data(
     first_vid = clean_videos[0]
     competitor.followers_count = first_vid["author"]["followers"]
 
-    # Upload new avatar to Apify Storage
+    # Upload new avatar to Supabase Storage (permanent)
     avatar_cdn_url = first_vid["author"]["avatar"]
-    competitor.avatar_url = ApifyStorage.upload_avatar(avatar_cdn_url, clean_username, competitor.platform)
+    uploaded_avatar = SupabaseStorage.upload_avatar(avatar_cdn_url)
+    competitor.avatar_url = uploaded_avatar if uploaded_avatar else avatar_cdn_url
     competitor.total_videos = len(clean_videos)
     competitor.avg_views = avg_views
     competitor.engagement_rate = round(engagement_rate, 2)

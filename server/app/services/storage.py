@@ -7,17 +7,26 @@ Videos use direct URLs from TikTok/Instagram CDN (no storage needed).
 import os
 import logging
 import requests
-from typing import Optional
+from typing import Optional, Tuple
 from io import BytesIO
 from supabase import create_client, Client
 from datetime import datetime
 import hashlib
 from dotenv import load_dotenv
+from PIL import Image
 
 # Load environment variables
 load_dotenv()
 
 logger = logging.getLogger(__name__)
+
+# Register HEIC/HEIF support for Pillow (TikTok CDN sometimes returns HEIC)
+try:
+    from pillow_heif import register_heif_opener
+    register_heif_opener()
+    logger.info("✅ HEIC/HEIF support registered via pillow-heif")
+except ImportError:
+    logger.warning("⚠️ pillow-heif not installed — HEIC images won't be converted")
 
 # Initialize Supabase client lazily (don't crash at import if env vars missing)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -44,6 +53,11 @@ IMAGES_BUCKET = "rizko-images"
 class SupabaseStorage:
     """Helper for uploading images to Supabase Storage"""
 
+    # Formats that browsers can't display — must convert to JPEG
+    UNSUPPORTED_FORMATS = {'image/heic', 'image/heif', 'image/tiff', 'image/bmp'}
+    # Formats browsers support natively — keep as-is
+    SUPPORTED_FORMATS = {'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/svg+xml'}
+
     @staticmethod
     def _generate_filename(url: str, prefix: str = "image") -> str:
         """Generate unique filename from URL hash"""
@@ -54,6 +68,36 @@ class SupabaseStorage:
         return f"{prefix}/{timestamp}_{url_hash}.{extension}"
 
     @staticmethod
+    def _convert_to_jpeg(image_data: bytes, content_type: str) -> Tuple[bytes, str]:
+        """
+        Convert unsupported image formats (HEIC, HEIF, TIFF, etc.) to JPEG.
+        Returns (image_bytes, content_type).
+        """
+        ct = content_type.lower().strip()
+
+        # If format is browser-supported, return as-is
+        if ct in SupabaseStorage.SUPPORTED_FORMATS:
+            return image_data, ct
+
+        # Convert unsupported formats to JPEG via Pillow
+        try:
+            img = Image.open(BytesIO(image_data))
+            # Convert RGBA/P modes to RGB (JPEG doesn't support alpha)
+            if img.mode in ('RGBA', 'P', 'LA'):
+                img = img.convert('RGB')
+            elif img.mode != 'RGB':
+                img = img.convert('RGB')
+
+            output = BytesIO()
+            img.save(output, format='JPEG', quality=85, optimize=True)
+            converted = output.getvalue()
+            logger.info(f"🔄 Converted {ct} → image/jpeg ({len(image_data)} → {len(converted)} bytes)")
+            return converted, 'image/jpeg'
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to convert {ct} to JPEG: {e} — uploading as-is")
+            return image_data, ct
+
+    @staticmethod
     def upload_from_url(
         image_url: str,
         folder: str = "avatars",
@@ -61,6 +105,7 @@ class SupabaseStorage:
     ) -> Optional[str]:
         """
         Download image from URL and upload to Supabase Storage.
+        Automatically converts HEIC/HEIF/TIFF to JPEG for browser compatibility.
 
         Args:
             image_url: URL of the image to download
@@ -86,8 +131,11 @@ class SupabaseStorage:
                 logger.warning(f"Image too large: {content_length / 1024 / 1024:.2f}MB")
                 return None
 
-            # Read image data
-            image_data = BytesIO(response.content)
+            # Convert unsupported formats (HEIC, HEIF, etc.) to JPEG
+            raw_content_type = response.headers.get("content-type", "image/jpeg")
+            image_bytes, final_content_type = SupabaseStorage._convert_to_jpeg(
+                response.content, raw_content_type
+            )
 
             # Generate filename
             filename = SupabaseStorage._generate_filename(image_url, folder)
@@ -100,9 +148,9 @@ class SupabaseStorage:
             # Upload to Supabase Storage
             result = client.storage.from_(IMAGES_BUCKET).upload(
                 path=filename,
-                file=image_data.getvalue(),
+                file=image_bytes,
                 file_options={
-                    "content-type": response.headers.get("content-type", "image/jpeg"),
+                    "content-type": final_content_type,
                     "cache-control": "3600",
                     "upsert": "true"  # Overwrite if exists
                 }
@@ -111,7 +159,7 @@ class SupabaseStorage:
             # Get public URL
             public_url = client.storage.from_(IMAGES_BUCKET).get_public_url(filename)
 
-            logger.info(f"✅ Uploaded image to Supabase: {filename}")
+            logger.info(f"✅ Uploaded image to Supabase: {filename} ({final_content_type})")
             return public_url
 
         except requests.exceptions.RequestException as e:
@@ -144,6 +192,59 @@ class SupabaseStorage:
         except Exception as e:
             logger.error(f"Failed to delete image: {e}")
             return False
+
+    @staticmethod
+    def extract_path_from_url(public_url: str) -> Optional[str]:
+        """
+        Extract storage path from Supabase public URL.
+        Example: https://xxx.supabase.co/storage/v1/object/public/rizko-images/thumbnails/20260210_abc123.jpg
+        Returns: thumbnails/20260210_abc123.jpg
+        """
+        if not public_url or "supabase" not in public_url:
+            return None
+        try:
+            marker = f"{IMAGES_BUCKET}/"
+            idx = public_url.index(marker)
+            return public_url[idx + len(marker):]
+        except (ValueError, IndexError):
+            return None
+
+    @staticmethod
+    def cleanup_competitor(avatar_url: str, recent_videos: list) -> int:
+        """
+        Delete all Supabase images for a competitor (avatar + video thumbnails).
+        Returns count of deleted files.
+        """
+        deleted = 0
+        paths_to_delete = []
+
+        # Avatar
+        avatar_path = SupabaseStorage.extract_path_from_url(avatar_url)
+        if avatar_path:
+            paths_to_delete.append(avatar_path)
+
+        # Video thumbnails from recent_videos JSON
+        for video in (recent_videos or []):
+            for field in ["cover_url", "thumbnail_url"]:
+                url = video.get(field, "")
+                path = SupabaseStorage.extract_path_from_url(url)
+                if path and path not in paths_to_delete:
+                    paths_to_delete.append(path)
+
+        if not paths_to_delete:
+            return 0
+
+        try:
+            client = _get_supabase()
+            if not client:
+                return 0
+            client.storage.from_(IMAGES_BUCKET).remove(paths_to_delete)
+            deleted = len(paths_to_delete)
+            logger.info(f"🗑️ Cleaned up {deleted} images from Supabase Storage")
+        except Exception as e:
+            logger.error(f"Failed to cleanup competitor images: {e}")
+
+        return deleted
 
 
 # Check bucket on first use, not at import time

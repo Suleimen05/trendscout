@@ -37,7 +37,6 @@ from .api import trends, profiles, competitors, ai_scripts, proxy, favorites
 from .api.routes import auth, oauth, feedback, usage
 from .api import chat_sessions as chat_sessions_router
 from .api import workflows as workflows_router
-# Note: image_proxy removed - functionality merged into proxy.py
 
 # Background Scheduler
 from .services.scheduler import start_scheduler

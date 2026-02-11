@@ -4,7 +4,6 @@ import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-// Alert component available if needed
 import {
   Dialog,
   DialogContent,
@@ -23,7 +22,6 @@ import { useAIScriptGenerator } from '@/hooks/useTikTok';
 interface VideoCardProps {
   video: TikTokVideo | TikTokVideoDeep;
   mode?: AnalysisMode;
-  showUpgradePrompt?: boolean;
   onGenerateScript?: (video: TikTokVideo) => void;
   onSave?: (video: TikTokVideo) => void;
   showStats?: boolean;
@@ -33,7 +31,6 @@ interface VideoCardProps {
 export function VideoCard({
   video,
   mode = 'light',
-  showUpgradePrompt: _showUpgradePrompt = false,
   onGenerateScript,
   onSave,
   showStats = true,
@@ -47,8 +44,7 @@ export function VideoCard({
   const [isPlaying, setIsPlaying] = useState(false);
   const [showScriptModal, setShowScriptModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [_showDeepMetrics, _setShowDeepMetrics] = useState(false);
-  
+
   // AI Chat state
   const [showAIChat, setShowAIChat] = useState(false);
   const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
