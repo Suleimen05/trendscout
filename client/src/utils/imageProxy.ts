@@ -8,13 +8,6 @@
 const BACKEND_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 /**
- * Check if URL is from geo-restricted TikTok CDN (EU/Asia)
- */
-function isGeoRestrictedUrl(url: string): boolean {
-  return url.includes('tiktokcdn-eu.com') || url.includes('tos-alisg');
-}
-
-/**
  * Wrap an image URL with our backend proxy to bypass CORS/geo-restrictions
  *
  * For geo-restricted URLs (EU/Asia CDN), uses our backend proxy with Apify residential IPs.
