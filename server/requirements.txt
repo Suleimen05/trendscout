@@ -24,3 +24,5 @@ yt-dlp
 anthropic
 openai
 supabase
+Pillow
+pillow-heif
