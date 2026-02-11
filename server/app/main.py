@@ -291,6 +291,16 @@ async def startup_event():
     """Initialize services on startup."""
     logger.info("🚀 Starting Rizko.ai Backend...")
 
+    # Fix play_addr column type: VARCHAR(500) → TEXT (TikTok CDN URLs can be 700+ chars)
+    try:
+        from sqlalchemy import text
+        with engine.connect() as conn:
+            conn.execute(text("ALTER TABLE trends ALTER COLUMN play_addr TYPE TEXT"))
+            conn.commit()
+            logger.info("✅ Fixed play_addr column type to TEXT")
+    except Exception as e:
+        logger.info(f"ℹ️  play_addr column fix skipped: {e}")
+
     # Start background scheduler for auto-rescan
     try:
         logger.info("⏳ Initializing Background Scheduler...")

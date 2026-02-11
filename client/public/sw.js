@@ -1,14 +1,14 @@
 // Service Worker for Rizko.ai PWA
-const CACHE_NAME = 'rizko-ai-v1';
+// v2: Network-first for assets, no caching of API calls
+const CACHE_NAME = 'rizko-ai-v2';
 const urlsToCache = [
   '/',
-  '/index.html',
   '/manifest.json',
 ];
 
 // Install event - cache essential files
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing service worker...');
+  console.log('[SW] Installing service worker v2...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
       console.log('[SW] Caching app shell');
@@ -20,7 +20,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating service worker...');
+  console.log('[SW] Activating service worker v2...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
@@ -36,31 +36,36 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - network-first strategy, skip API and CDN requests
 self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+
+  // Never cache API requests, external resources, or non-GET requests
+  if (
+    event.request.method !== 'GET' ||
+    url.pathname.startsWith('/api/') ||
+    url.origin !== self.location.origin
+  ) {
+    return; // Let browser handle normally without SW interference
+  }
+
+  // For app assets: network-first, fallback to cache
   event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Cache hit - return response
-      if (response) {
-        return response;
-      }
-
-      return fetch(event.request).then((response) => {
-        // Check if valid response
-        if (!response || response.status !== 200 || response.type !== 'basic') {
-          return response;
+    fetch(event.request)
+      .then((response) => {
+        // Cache successful responses for offline fallback
+        if (response && response.status === 200) {
+          const responseToCache = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, responseToCache);
+          });
         }
-
-        // Clone the response
-        const responseToCache = response.clone();
-
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
-        });
-
         return response;
-      });
-    })
+      })
+      .catch(() => {
+        // Network failed, try cache
+        return caches.match(event.request);
+      })
   );
 });
 

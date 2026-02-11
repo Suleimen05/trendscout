@@ -19,7 +19,10 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    op.execute("ALTER TABLE trends ADD COLUMN IF NOT EXISTS play_addr VARCHAR(500)")
+    # Originally VARCHAR(500), but TikTok CDN URLs can be 700+ chars
+    op.execute("ALTER TABLE trends ADD COLUMN IF NOT EXISTS play_addr TEXT")
+    # Fix existing column if it was created as VARCHAR(500)
+    op.execute("ALTER TABLE trends ALTER COLUMN play_addr TYPE TEXT")
 
 
 def downgrade() -> None:
