@@ -1,8 +1,17 @@
 # 1. --- ВАЖНО: ГРУЗИМ ПЕРЕМЕННЫЕ СРАЗУ ---
 from dotenv import load_dotenv
 import os
+import sys
 
 load_dotenv()
+
+# --- Fix encoding for Windows console (emoji support) ---
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
 
 # --- БЛОК ПРОВЕРКИ ---
 import logging
@@ -15,16 +24,18 @@ logger = logging.getLogger(__name__)
 
 logger.info("=" * 60)
 token = os.getenv("APIFY_API_TOKEN")
-logger.info(f"📂 Working Directory: {os.getcwd()}")
-logger.info(f"🔑 APIFY TOKEN: {'✅ FOUND' if token else '❌ MISSING (Check .env)'}")
-logger.info("🚀 MODE: Enterprise Multi-Tenant with User Isolation")
+logger.info(f"Working Directory: {os.getcwd()}")
+logger.info(f"APIFY TOKEN: {'FOUND' if token else 'MISSING (Check .env)'}")
+logger.info("MODE: Enterprise Multi-Tenant with User Isolation")
 logger.info("=" * 60)
 
 # 2. --- ТЕПЕРЬ ОСТАЛЬНОЙ КОД ---
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 import time
+from pathlib import Path
 
 from .core.database import Base, engine
 from .core.config import settings
@@ -94,6 +105,10 @@ async def api_key_middleware(request: Request, call_next):
     # Skip protection if no key is set (development) or for public endpoints
     public_paths = ["/", "/health", "/docs", "/redoc", "/openapi.json", "/api/auth/login", "/api/auth/register", "/api/auth/oauth/sync", "/api/proxy/image"]
 
+    # Allow access to uploaded files (generated images)
+    if request.url.path.startswith("/uploads/"):
+        return await call_next(request)
+
     if API_SECRET_KEY and request.url.path not in public_paths:
         # Check for API key in header
         api_key = request.headers.get("X-API-Key")
@@ -159,7 +174,7 @@ async def log_requests(request: Request, call_next):
 
     # Skip logging for health check and docs
     if request.url.path not in ["/", "/health", "/docs", "/redoc", "/openapi.json"]:
-        logger.info(f"➡️  {request.method} {request.url.path}")
+        logger.info(f"--> {request.method} {request.url.path}")
 
     response = await call_next(request)
 
@@ -167,7 +182,7 @@ async def log_requests(request: Request, call_next):
 
     if request.url.path not in ["/", "/health", "/docs", "/redoc", "/openapi.json"]:
         logger.info(
-            f"⬅️  {request.method} {request.url.path} "
+            f"<-- {request.method} {request.url.path} "
             f"| Status: {response.status_code} "
             f"| Time: {process_time:.2f}ms"
         )
@@ -283,40 +298,51 @@ app.include_router(
 
 
 # =============================================================================
+# STATIC FILES (generated images)
+# =============================================================================
+
+UPLOADS_DIR = Path(__file__).parent.parent / "uploads" / "generated"
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=str(UPLOADS_DIR.parent)), name="uploads")
+
+
+# =============================================================================
 # LIFECYCLE EVENTS
 # =============================================================================
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup."""
-    logger.info("🚀 Starting Rizko.ai Backend...")
+    logger.info("Starting Rizko.ai Backend...")
 
-    # Fix play_addr column type: VARCHAR(500) → TEXT (TikTok CDN URLs can be 700+ chars)
+    # Fix VARCHAR(500) -> TEXT for columns that store TikTok CDN URLs (can be 700+ chars)
     try:
         from sqlalchemy import text
         with engine.connect() as conn:
             conn.execute(text("ALTER TABLE trends ALTER COLUMN play_addr TYPE TEXT"))
+            conn.execute(text("ALTER TABLE trends ALTER COLUMN cover_url TYPE TEXT"))
+            conn.execute(text("ALTER TABLE trends ALTER COLUMN url TYPE TEXT"))
             conn.commit()
-            logger.info("✅ Fixed play_addr column type to TEXT")
+            logger.info("Fixed play_addr, cover_url, url column types to TEXT")
     except Exception as e:
-        logger.info(f"ℹ️  play_addr column fix skipped: {e}")
+        logger.info(f"Column type fix skipped: {e}")
 
     # Start background scheduler for auto-rescan
     try:
-        logger.info("⏳ Initializing Background Scheduler...")
+        logger.info("Initializing Background Scheduler...")
         start_scheduler()
-        logger.info("✅ Scheduler is running and waiting for tasks.")
+        logger.info("Scheduler is running and waiting for tasks.")
     except Exception as e:
-        logger.warning(f"⚠️  Scheduler initialization failed: {e}")
-        logger.warning("⚠️  Continuing without scheduler - auto-rescan will be disabled")
+        logger.warning(f"Scheduler initialization failed: {e}")
+        logger.warning("Continuing without scheduler - auto-rescan will be disabled")
 
-    logger.info("✅ Rizko.ai Backend started successfully!")
+    logger.info("Rizko.ai Backend started successfully!")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown."""
-    logger.info("🛑 Shutting down Rizko.ai Backend...")
+    logger.info("Shutting down Rizko.ai Backend...")
 
 
 # =============================================================================
@@ -423,7 +449,7 @@ if __name__ == "__main__":
     port = int(os.getenv("PORT", 8000))
     is_dev = os.getenv("ENVIRONMENT", "development") == "development"
 
-    logger.info(f"🔥 Starting Rizko.ai Backend on http://0.0.0.0:{port}")
+    logger.info(f"Starting Rizko.ai Backend on http://0.0.0.0:{port}")
     uvicorn.run(
         "app.main:app",
         host="0.0.0.0",

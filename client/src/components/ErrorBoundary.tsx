@@ -1,6 +1,7 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { AlertTriangle, Home, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import i18n from '@/lib/i18n';
 
 interface Props {
   children: ReactNode;
@@ -64,9 +65,9 @@ export class ErrorBoundary extends Component<Props, State> {
               </div>
             </div>
 
-            <h1 className="text-2xl font-bold mb-2">Что-то пошло не так</h1>
+            <h1 className="text-2xl font-bold mb-2">{i18n.t('common:error.somethingWentWrong')}</h1>
             <p className="text-muted-foreground mb-6">
-              Произошла непредвиденная ошибка. Попробуйте обновить страницу или вернуться на главную.
+              {i18n.t('common:error.appCrashed')}
             </p>
 
             {import.meta.env.DEV && this.state.error && (
@@ -94,14 +95,14 @@ export class ErrorBoundary extends Component<Props, State> {
                 className="flex-1"
               >
                 <RefreshCw className="h-4 w-4 mr-2" />
-                Попробовать снова
+                {i18n.t('common:error.tryAgain')}
               </Button>
               <Button
                 onClick={this.handleGoHome}
                 className="flex-1"
               >
                 <Home className="h-4 w-4 mr-2" />
-                На главную
+                {i18n.t('common:error.goHome')}
               </Button>
             </div>
           </div>

@@ -28,7 +28,7 @@ class MLServiceClient:
             response.raise_for_status()
             return response.json()
         except requests.exceptions.RequestException as e:
-            print(f"⚠️ ML Service request failed: {e}")
+            print(f"[WARNING] ML Service request failed: {e}")
             return None
 
     def get_text_embedding(self, text: str) -> Optional[List[float]]:

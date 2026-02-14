@@ -1,0 +1,150 @@
+{
+  "page": {
+    "title": "Настройки",
+    "subtitle": "Управляйте предпочтениями аккаунта и уведомлениями"
+  },
+
+  "tabs": {
+    "general": "Основные",
+    "accounts": "Аккаунты",
+    "usage": "Использование",
+    "billing": "Оплата"
+  },
+
+  "general": {
+    "profile": {
+      "heading": "Профиль",
+      "fullName": "Полное имя",
+      "email": "Электронная почта",
+      "saveChanges": "Сохранить изменения"
+    },
+    "preferences": {
+      "heading": "Предпочтения",
+      "darkMode": "Тёмная тема",
+      "darkModeDescription": "Включить тёмное оформление",
+      "language": "Язык",
+      "region": "Регион"
+    },
+    "notifications": {
+      "heading": "Уведомления",
+      "emailNotifications": "Уведомления по почте",
+      "emailNotificationsDescription": "Получать письма о трендах и обновлениях",
+      "weeklySummary": "Еженедельная сводка",
+      "weeklySummaryDescription": "Получать еженедельные отчёты об использовании"
+    },
+    "about": {
+      "heading": "О приложении",
+      "version": "Версия",
+      "platform": "Платформа",
+      "installedPWA": "Установлено (PWA)",
+      "webBrowser": "Веб-браузер",
+      "installApp": "Установить приложение",
+      "iosInstruction": "Нажмите «Поделиться» > «На экран Домой»",
+      "otherInstruction": "Добавьте на главный экран для быстрого доступа",
+      "install": "Установить",
+      "appInstalled": "Приложение установлено"
+    }
+  },
+
+  "accounts": {
+    "loading": "Загрузка подключённых аккаунтов...",
+    "connectedAccounts": "Подключённые аккаунты",
+    "countOfTotal": "{{count}} из {{total}}",
+
+    "platforms": {
+      "tiktok": "Аналитика видео и показатели эффективности.",
+      "instagram": "Отслеживание постов, Reels и историй.",
+      "youtube": "Анализ видео и Shorts.",
+      "twitter": "Отслеживание твитов и метрик вовлечённости.",
+      "reddit": "Мониторинг трендов и постов в сабреддитах.",
+      "discord": "Отслеживание активности и роста сервера.",
+      "telegram": "Анализ метрик каналов и групп."
+    },
+
+    "actions": {
+      "sync": "Синхронизировать",
+      "disconnect": "Отключить",
+      "connect": "Подключить",
+      "connecting": "Подключение..."
+    },
+
+    "security": {
+      "heading": "Ваши данные в безопасности",
+      "description": "Мы получаем доступ только к публичной информации профиля и статистике видео. Мы никогда не публикуем от вашего имени и не читаем личные сообщения. Вы можете отключить аккаунт в любое время."
+    },
+
+    "accountSecurity": {
+      "heading": "Безопасность аккаунта",
+      "password": "Пароль",
+      "changePassword": "Изменить пароль"
+    },
+
+    "dangerZone": {
+      "heading": "Опасная зона",
+      "description": "После удаления аккаунта восстановить его будет невозможно. Пожалуйста, убедитесь в своём решении.",
+      "deleteAccount": "Удалить аккаунт"
+    }
+  },
+
+  "usage": {
+    "loading": "Загрузка данных об использовании...",
+    "yourPlan": "Ваш тариф: {{plan}}",
+    "resets": "Сброс: {{date}}",
+
+    "credits": {
+      "heading": "ИИ-кредиты",
+      "remaining": "{{remaining}} / {{limit}} осталось",
+      "bonusCredits": "Бонусные кредиты:",
+      "neverExpire": "(бессрочные)",
+      "rollover": "Перенос:",
+      "fromLastMonth": "(с прошлого месяца)",
+      "totalAvailable": "Всего доступно:",
+      "creditsCount": "{{count}} кредитов",
+      "buyMore": "Купить ещё кредитов"
+    },
+
+    "thisMonth": {
+      "heading": "Этот месяц",
+      "scriptsGenerated": "Сгенерировано ИИ-сценариев",
+      "chatMessages": "Сообщений в чате",
+      "deepAnalyze": "Глубокий анализ",
+      "totalCreditsUsed": "Всего использовано кредитов"
+    },
+
+    "autoMode": {
+      "heading": "Авторежим",
+      "description": "ИИ автоматически выбирает лучшую модель для каждой задачи",
+      "savedThisMonth": "Сэкономлено за месяц: {{count}} кредитов",
+      "vsManualPro": "по сравнению с ручным выбором Pro-модели"
+    },
+
+    "error": "Не удалось загрузить данные об использовании",
+    "retry": "Повторить"
+  },
+
+  "billing": {
+    "currentPlan": {
+      "heading": "Текущий тариф",
+      "creatorPlan": "Тариф Creator",
+      "priceMonthly": "${{price}}/мес",
+      "active": "Активен",
+      "nextBilling": "Следующее списание: {{date}}",
+      "upgradeToPro": "Перейти на Pro",
+      "cancelSubscription": "Отменить подписку"
+    },
+
+    "paymentMethod": {
+      "heading": "Способ оплаты",
+      "expires": "Действует до {{date}}",
+      "edit": "Изменить",
+      "updatePaymentMethod": "Обновить способ оплаты"
+    },
+
+    "billingHistory": {
+      "heading": "История платежей",
+      "creatorPlanMonthly": "Тариф Creator — ежемесячный",
+      "invoice": "Счёт",
+      "viewAll": "Показать все"
+    }
+  }
+}

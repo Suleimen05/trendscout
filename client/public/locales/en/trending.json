@@ -1,0 +1,43 @@
+{
+  "title": "Trending Hashtags",
+  "subtitle": "Discover the hottest trends and viral hashtags on TikTok",
+  "searchPlaceholder": "Search hashtags...",
+  "card": {
+    "totalViews": "Total Views",
+    "videos": "Videos",
+    "analyze": "Analyze",
+    "hot": "Hot"
+  },
+  "timeRange": {
+    "24h": "24 Hours",
+    "7d": "7 Days",
+    "30d": "30 Days"
+  },
+  "filters": {
+    "all": "All",
+    "entertainment": "Entertainment",
+    "education": "Education",
+    "lifestyle": "Lifestyle",
+    "business": "Business"
+  },
+  "tabs": {
+    "trending": "Trending Now",
+    "rising": "Rising",
+    "analysis": "Analysis"
+  },
+  "analysis": {
+    "selectHashtag": "Select a hashtag to see detailed analysis",
+    "title": "Trend Analysis: #{{hashtag}}",
+    "currentViews": "Current Views",
+    "growthRate": "Growth Rate",
+    "prediction": "Prediction",
+    "predictions": {
+      "rising": "Rising",
+      "stable": "Stable",
+      "falling": "Falling"
+    },
+    "chartTitle": "Trend Growth Visualization",
+    "chartPeak": "Peak: {{date}}",
+    "topVideos": "Top Videos with this hashtag"
+  }
+}

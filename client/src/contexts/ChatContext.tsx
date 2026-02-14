@@ -18,6 +18,7 @@ import {
 import { useAuth } from './AuthContext';
 import { apiService } from '@/services/api';
 import { toast } from 'sonner';
+import i18n from '@/lib/i18n';
 
 // =============================================================================
 // TYPES
@@ -103,7 +104,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setSessions(data);
     } catch (error) {
       console.error('Failed to load sessions:', error);
-      toast.error('Не удалось загрузить чат-сессии');
+      toast.error(i18n.t('toasts:chat.loadSessionsFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -126,7 +127,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       });
     } catch (error) {
       console.error('Failed to load credits:', error);
-      toast.error('Не удалось загрузить информацию о кредитах');
+      toast.error(i18n.t('toasts:chat.loadCreditsFailed'));
     }
   }, [token]);
 
@@ -150,7 +151,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         return session.session_id;
       } catch (error) {
         console.error('Failed to create session:', error);
-        toast.error('Не удалось создать сессию');
+        toast.error(i18n.t('toasts:chat.createSessionFailed'));
         return null;
       }
     },
@@ -179,7 +180,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         );
       } catch (error) {
         console.error('Failed to load messages:', error);
-        toast.error('Не удалось загрузить сообщения');
+        toast.error(i18n.t('toasts:chat.loadMessagesFailed'));
       } finally {
         setIsLoading(false);
       }
@@ -197,14 +198,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       try {
         await apiService.deleteChatSession(sessionId);
         setSessions((prev) => prev.filter((s) => s.session_id !== sessionId));
-        toast.success('Сессия удалена');
+        toast.success(i18n.t('toasts:chat.sessionDeleted'));
         if (currentSessionId === sessionId) {
           setCurrentSessionId(null);
           setMessages([]);
         }
       } catch (error) {
         console.error('Failed to delete session:', error);
-        toast.error('Не удалось удалить сессию');
+        toast.error(i18n.t('toasts:chat.deleteSessionFailed'));
       }
     },
     [token, currentSessionId]
@@ -233,7 +234,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           sessionId = session.session_id;
         } catch (error) {
           console.error('Failed to auto-create session:', error);
-          toast.error('Не удалось создать сессию чата');
+          toast.error(i18n.t('toasts:chat.createChatFailed'));
           return;
         }
       }
@@ -253,6 +254,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           message,
           mode,
           model,
+          language: i18n.language === 'ru' ? 'Russian' : 'English',
         });
 
         // Update user message with real ID from database
@@ -316,12 +318,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
               timestamp: new Date().toISOString(),
             },
           ]);
-          toast.error('Недостаточно кредитов');
+          toast.error(i18n.t('toasts:chat.insufficientCredits'));
           return;
         }
 
         console.error('Failed to send message:', error);
-        toast.error('Ошибка при отправке сообщения');
+        toast.error(i18n.t('toasts:chat.sendMessageFailed'));
         setMessages((prev) => [
           ...prev,
           {

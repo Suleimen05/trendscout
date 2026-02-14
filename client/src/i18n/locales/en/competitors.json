@@ -1,0 +1,78 @@
+{
+  "title": "Competitors",
+  "subtitle": "Search and track competitor channels",
+  "channelCount": "{{count}} channels",
+  "search": {
+    "title": "Search & Add Channels",
+    "placeholder": "Enter {{platform}} @username...",
+    "button": "Search",
+    "searching": "Searching...",
+    "result": "Search Result:",
+    "followers": "followers",
+    "videos": "videos",
+    "add": "Add",
+    "adding": "Adding..."
+  },
+  "platforms": {
+    "tiktok": "TikTok",
+    "instagram": "Instagram"
+  },
+  "myCompetitors": "My Competitors",
+  "card": {
+    "followers": "Followers",
+    "videos": "Videos",
+    "avgViews": "Avg Views",
+    "newVideo": "New video {{time}}",
+    "upToDate": "Up to date • Last activity {{time}}",
+    "viewFeed": "View Feed",
+    "untrack": "Untrack",
+    "confirmRemove": "Remove @{{username}} from tracking?",
+    "new": "NEW"
+  },
+  "emptyState": {
+    "title": "No competitors yet",
+    "description": "Search for channels above to add them to your list"
+  },
+  "feed": {
+    "backToCompetitors": "Back to Competitors",
+    "competitorNotFound": "Competitor not found",
+    "followers": "Followers",
+    "avgViews": "Avg Views",
+    "videos": "Videos",
+    "engagement": "Engagement",
+    "trackingSince": "Tracking since {{date}}",
+    "lastChecked": "Last checked: {{date}}",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing...",
+    "notifications": "Notifications",
+    "newActivity": "New Activity!",
+    "newVideosCount": "{{count}} new videos in the last 24 hours",
+    "viewNewVideos": "View New Videos",
+    "recentVideos": "Recent Videos ({{count}})",
+    "filters": {
+      "all": "All",
+      "new": "New Only",
+      "trending": "Trending"
+    },
+    "emptyVideos": {
+      "title": "No videos found",
+      "noNew": "No new videos yet. Check back later!",
+      "noTrending": "No trending videos at the moment.",
+      "noVideos": "This competitor has no videos yet."
+    }
+  },
+  "toast": {
+    "addSuccess": "@{{username}} added to your list",
+    "alreadyExists": "@{{username}} already in your list",
+    "addError": "Failed to add channel",
+    "removeSuccess": "@{{username}} removed",
+    "removeError": "Failed to remove channel",
+    "loadError": "Failed to load competitors",
+    "searchNotFound": "{{platform}} channel @{{username}} not found",
+    "searchError": "Search failed. Try again.",
+    "feedNotFound": "Competitor @{{username}} not found",
+    "feedLoadError": "Failed to load competitor feed",
+    "refreshSuccess": "Refreshing competitor data...",
+    "refreshError": "Failed to refresh. Try again later."
+  }
+}

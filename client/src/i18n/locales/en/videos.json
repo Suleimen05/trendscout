@@ -1,0 +1,65 @@
+{
+  "myPosts": {
+    "title": "My Posts",
+    "subtitle": "View and analyze your post performance",
+    "platforms": {
+      "tiktok": "TikTok",
+      "instagram": "Instagram",
+      "youtube": "YouTube"
+    },
+    "notConnected": "Not connected",
+    "emptyState": {
+      "title": "No {{platform}} account connected",
+      "description": "Connect your {{platform}} account to see your videos and analytics here.",
+      "connectButton": "Connect Account"
+    },
+    "stats": {
+      "totalVideos": "Total Videos",
+      "totalViews": "Total Views",
+      "totalLikes": "Total Likes",
+      "avgEngagement": "Avg Engagement"
+    },
+    "videosGrid": {
+      "title": "Your Videos",
+      "showing": "Showing {{count}} videos from your {{platform}} account"
+    },
+    "videoCard": {
+      "engagement": "{{value}}% eng"
+    },
+    "relativeTime": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "daysAgo": "{{count}} days ago",
+      "weeksAgo": "{{count}} weeks ago",
+      "monthsAgo": "{{count}} months ago"
+    }
+  },
+  "saved": {
+    "title": "Saved Videos",
+    "subtitle": "{{count}} saved video in your collection",
+    "subtitlePlural": "{{count}} saved videos in your collection",
+    "search": {
+      "placeholder": "Search saved videos..."
+    },
+    "filterByTag": "Filter by tag",
+    "allTags": "All tags",
+    "emptyState": {
+      "title": "No saved videos yet",
+      "noResults": "No videos match your filters. Try adjusting your search.",
+      "noVideos": "Start saving videos from Discover or Deep Analysis to build your collection."
+    },
+    "loadMore": "Load More",
+    "loading": "Loading...",
+    "deleteDialog": {
+      "title": "Remove from saved?",
+      "description": "This video will be removed from your saved collection. You can always save it again later.",
+      "cancel": "Cancel",
+      "remove": "Remove"
+    },
+    "toast": {
+      "loadError": "Failed to load saved videos",
+      "removeSuccess": "Video removed from saved",
+      "removeError": "Failed to remove video"
+    }
+  }
+}

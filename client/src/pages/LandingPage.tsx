@@ -18,183 +18,225 @@ import {
   Link2,
   LineChart,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import Hero3D from '@/components/3d/Hero3D';
 import { useTheme } from '@/contexts/ThemeContext';
 import { cn } from '@/lib/utils';
 import { REVIEW_MODE } from '@/config/features';
+import { useLanguage } from '@/hooks/useLanguage';
 
 // Features for REVIEW_MODE (Official API only)
-const reviewModeFeatures = [
+const getReviewModeFeatures = (t: TFunction) => [
   {
     icon: Link2,
-    title: 'Connect Your Accounts',
-    description: 'Securely link your TikTok, Instagram, and YouTube accounts using official OAuth authentication.',
+    title: t('features.reviewMode.items.0.title'),
+    description: t('features.reviewMode.items.0.description'),
     color: '#8b5cf6',
   },
   {
     icon: LineChart,
-    title: 'Personal Analytics',
-    description: 'View detailed statistics for all your videos including views, likes, comments, and engagement rates.',
+    title: t('features.reviewMode.items.1.title'),
+    description: t('features.reviewMode.items.1.description'),
     color: '#3b82f6',
   },
   {
     icon: Bot,
-    title: 'AI-Powered Insights',
-    description: 'Get personalized recommendations powered by Gemini AI to improve your content strategy and grow your audience.',
+    title: t('features.reviewMode.items.2.title'),
+    description: t('features.reviewMode.items.2.description'),
     color: '#10b981',
   },
 ];
 
 // Features for full version
-const fullFeatures = [
+const getFullFeatures = (t: TFunction) => [
   {
     icon: TrendingUp,
-    title: 'AI Trend Detection',
-    description: 'Advanced AI analyzes millions of videos in real-time to identify emerging trends before they peak.',
+    title: t('features.fullMode.items.0.title'),
+    description: t('features.fullMode.items.0.description'),
     color: '#3b82f6',
   },
   {
     icon: Zap,
-    title: 'Viral Score Prediction',
-    description: 'Get accurate viral potential scores with our UTS algorithm based on 6-layer scoring system.',
+    title: t('features.fullMode.items.1.title'),
+    description: t('features.fullMode.items.1.description'),
     color: '#8b5cf6',
   },
   {
     icon: Bot,
-    title: 'AI Script Generation',
-    description: 'Generate viral-ready scripts with AI. Choose your niche, tone, and style - get compelling content.',
+    title: t('features.fullMode.items.2.title'),
+    description: t('features.fullMode.items.2.description'),
     color: '#f97316',
   },
   {
     icon: Target,
-    title: 'Competitor Analysis',
-    description: 'Track competitors performance, analyze their best content, and discover opportunities.',
+    title: t('features.fullMode.items.3.title'),
+    description: t('features.fullMode.items.3.description'),
     color: '#10b981',
   },
   {
     icon: BarChart3,
-    title: 'Visual Clustering',
-    description: 'CLIP-powered visual analysis groups similar content and identifies trending patterns.',
+    title: t('features.fullMode.items.4.title'),
+    description: t('features.fullMode.items.4.description'),
     color: '#f43f5e',
   },
   {
     icon: Video,
-    title: 'Deep Scan Analysis',
-    description: 'Comprehensive video insights with auto-rescan to track growth and engagement metrics.',
+    title: t('features.fullMode.items.5.title'),
+    description: t('features.fullMode.items.5.description'),
     color: '#d946ef',
   },
 ];
 
-const features = REVIEW_MODE ? reviewModeFeatures : fullFeatures;
-
 // Plans for REVIEW_MODE (simpler, focused on analytics)
-const reviewModePlans = [
+const getReviewModePlans = (t: TFunction) => [
   {
-    name: 'Free',
+    name: t('pricing.reviewMode.plans.0.name'),
     price: 0,
-    description: 'Get started with basic analytics',
-    features: ['Connect 1 social account', 'View video statistics', 'Basic performance insights', 'Community support'],
+    description: t('pricing.reviewMode.plans.0.description'),
+    features: [
+      t('pricing.reviewMode.plans.0.features.0'),
+      t('pricing.reviewMode.plans.0.features.1'),
+      t('pricing.reviewMode.plans.0.features.2'),
+      t('pricing.reviewMode.plans.0.features.3'),
+    ],
     highlighted: false,
   },
   {
-    name: 'Creator',
+    name: t('pricing.reviewMode.plans.1.name'),
     price: 9,
-    description: 'For growing creators',
-    features: ['Connect up to 3 accounts', 'Full video analytics', 'AI-powered recommendations', 'Email support'],
+    description: t('pricing.reviewMode.plans.1.description'),
+    features: [
+      t('pricing.reviewMode.plans.1.features.0'),
+      t('pricing.reviewMode.plans.1.features.1'),
+      t('pricing.reviewMode.plans.1.features.2'),
+      t('pricing.reviewMode.plans.1.features.3'),
+    ],
     highlighted: true,
   },
   {
-    name: 'Pro',
+    name: t('pricing.reviewMode.plans.2.name'),
     price: 29,
-    description: 'For serious creators',
-    features: ['Unlimited accounts', 'Advanced AI insights', 'Historical data analysis', 'Priority support'],
+    description: t('pricing.reviewMode.plans.2.description'),
+    features: [
+      t('pricing.reviewMode.plans.2.features.0'),
+      t('pricing.reviewMode.plans.2.features.1'),
+      t('pricing.reviewMode.plans.2.features.2'),
+      t('pricing.reviewMode.plans.2.features.3'),
+    ],
     highlighted: false,
   },
 ];
 
 // Plans for full version
-const fullPlans = [
+const getFullPlans = (t: TFunction) => [
   {
-    name: 'Starter',
+    name: t('pricing.fullMode.plans.0.name'),
     price: 19,
-    description: 'Perfect for individual creators',
-    features: ['50 deep scans/month', 'Basic AI scripts', '5 competitors', 'Email support'],
+    description: t('pricing.fullMode.plans.0.description'),
+    features: [
+      t('pricing.fullMode.plans.0.features.0'),
+      t('pricing.fullMode.plans.0.features.1'),
+      t('pricing.fullMode.plans.0.features.2'),
+      t('pricing.fullMode.plans.0.features.3'),
+    ],
     highlighted: false,
   },
   {
-    name: 'Professional',
+    name: t('pricing.fullMode.plans.1.name'),
     price: 49,
-    description: 'Best for growing creators',
-    features: ['Unlimited deep scans', 'Advanced AI scripts', '20 competitors', 'Priority support', 'API access'],
+    description: t('pricing.fullMode.plans.1.description'),
+    features: [
+      t('pricing.fullMode.plans.1.features.0'),
+      t('pricing.fullMode.plans.1.features.1'),
+      t('pricing.fullMode.plans.1.features.2'),
+      t('pricing.fullMode.plans.1.features.3'),
+      t('pricing.fullMode.plans.1.features.4'),
+    ],
     highlighted: true,
   },
   {
-    name: 'Enterprise',
+    name: t('pricing.fullMode.plans.2.name'),
     price: 99,
-    description: 'For agencies and teams',
-    features: ['Everything in Pro', 'Unlimited competitors', 'Account manager', 'White-label reports'],
+    description: t('pricing.fullMode.plans.2.description'),
+    features: [
+      t('pricing.fullMode.plans.2.features.0'),
+      t('pricing.fullMode.plans.2.features.1'),
+      t('pricing.fullMode.plans.2.features.2'),
+      t('pricing.fullMode.plans.2.features.3'),
+    ],
     highlighted: false,
   },
 ];
 
-const plans = REVIEW_MODE ? reviewModePlans : fullPlans;
-
 // Testimonials for REVIEW_MODE
-const reviewModeTestimonials = [
+const getReviewModeTestimonials = (t: TFunction) => [
   {
-    name: 'Alex Kim',
-    role: 'TikTok Creator',
-    followers: '150K',
-    content: 'Finally, a simple way to see all my analytics in one place! The AI insights helped me understand what content works best.',
+    name: t('testimonials.reviewMode.items.0.name'),
+    role: t('testimonials.reviewMode.items.0.role'),
+    followers: t('testimonials.reviewMode.items.0.followers'),
+    content: t('testimonials.reviewMode.items.0.content'),
     avatar: 'AK',
   },
   {
-    name: 'Jessica Taylor',
-    role: 'Instagram Influencer',
-    followers: '320K',
-    content: 'Connecting my accounts was super easy and secure. Love seeing my performance across all platforms!',
+    name: t('testimonials.reviewMode.items.1.name'),
+    role: t('testimonials.reviewMode.items.1.role'),
+    followers: t('testimonials.reviewMode.items.1.followers'),
+    content: t('testimonials.reviewMode.items.1.content'),
     avatar: 'JT',
   },
   {
-    name: 'David Chen',
-    role: 'YouTube Creator',
-    followers: '75K',
-    content: 'The personalized recommendations have really helped me improve my content strategy. Great tool for any creator!',
+    name: t('testimonials.reviewMode.items.2.name'),
+    role: t('testimonials.reviewMode.items.2.role'),
+    followers: t('testimonials.reviewMode.items.2.followers'),
+    content: t('testimonials.reviewMode.items.2.content'),
     avatar: 'DC',
   },
 ];
 
 // Testimonials for full version
-const fullTestimonials = [
+const getFullTestimonials = (t: TFunction) => [
   {
-    name: 'Sarah Chen',
-    role: 'Content Creator',
-    followers: '2.5M',
-    content: 'Rizko.ai completely transformed my content strategy. I went from 100K to 2.5M followers in just 6 months!',
+    name: t('testimonials.fullMode.items.0.name'),
+    role: t('testimonials.fullMode.items.0.role'),
+    followers: t('testimonials.fullMode.items.0.followers'),
+    content: t('testimonials.fullMode.items.0.content'),
     avatar: 'SC',
   },
   {
-    name: 'Marcus Johnson',
-    role: 'Social Media Manager',
-    followers: 'Agency',
-    content: 'We manage 15 creator accounts and Rizko.ai saves us hours every day. Our clients love the results.',
+    name: t('testimonials.fullMode.items.1.name'),
+    role: t('testimonials.fullMode.items.1.role'),
+    followers: t('testimonials.fullMode.items.1.followers'),
+    content: t('testimonials.fullMode.items.1.content'),
     avatar: 'MJ',
   },
   {
-    name: 'Emma Rodriguez',
-    role: 'Lifestyle Creator',
-    followers: '890K',
-    content: 'The AI script generator is incredible. It understands my voice perfectly and the engagement has been amazing.',
+    name: t('testimonials.fullMode.items.2.name'),
+    role: t('testimonials.fullMode.items.2.role'),
+    followers: t('testimonials.fullMode.items.2.followers'),
+    content: t('testimonials.fullMode.items.2.content'),
     avatar: 'ER',
   },
 ];
-
-const testimonials = REVIEW_MODE ? reviewModeTestimonials : fullTestimonials;
 
 export function LandingPage() {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: "-50px" });
   const { theme, toggleTheme } = useTheme();
+  const { t } = useTranslation('landing');
+  const { currentLanguage, changeLanguage } = useLanguage();
+
+  const reviewModeFeatures = getReviewModeFeatures(t);
+  const fullFeatures = getFullFeatures(t);
+  const features = REVIEW_MODE ? reviewModeFeatures : fullFeatures;
+
+  const reviewModePlans = getReviewModePlans(t);
+  const fullPlans = getFullPlans(t);
+  const plans = REVIEW_MODE ? reviewModePlans : fullPlans;
+
+  const reviewModeTestimonials = getReviewModeTestimonials(t);
+  const fullTestimonials = getFullTestimonials(t);
+  const testimonials = REVIEW_MODE ? reviewModeTestimonials : fullTestimonials;
 
   return (
     <div className={cn(
@@ -224,18 +266,18 @@ export function LandingPage() {
             {/* Navigation */}
             <nav className="hidden md:flex items-center gap-6">
               <a href="#features" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                Features
+                {t('nav.features')}
               </a>
               <a href="#pricing" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                Pricing
+                {t('nav.pricing')}
               </a>
               {REVIEW_MODE ? (
                 <Link to="/help" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                  Support
+                  {t('nav.support')}
                 </Link>
               ) : (
                 <a href="#testimonials" className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors">
-                  Testimonials
+                  {t('nav.testimonials')}
                 </a>
               )}
             </nav>
@@ -258,17 +300,29 @@ export function LandingPage() {
                 )}
               </button>
 
+              <button
+                onClick={() => changeLanguage(currentLanguage === 'en' ? 'ru' : 'en')}
+                className={cn(
+                  "p-2 rounded-lg transition-colors",
+                  "hover:bg-gray-100 dark:hover:bg-gray-800",
+                  "text-gray-600 dark:text-gray-400 text-sm font-medium"
+                )}
+                title={currentLanguage === 'en' ? 'Русский' : 'English'}
+              >
+                {currentLanguage === 'en' ? 'RU' : 'EN'}
+              </button>
+
               <Link
                 to="/login"
                 className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
-                {REVIEW_MODE ? 'Sign In' : 'Login'}
+                {REVIEW_MODE ? t('nav.signIn') : t('nav.login')}
               </Link>
               <Link
                 to="/login"
                 className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white text-sm font-medium hover:opacity-90 transition-opacity"
               >
-                {REVIEW_MODE ? 'Get Started' : 'Get Started'}
+                {t('nav.getStarted')}
               </Link>
             </div>
           </div>
@@ -296,12 +350,12 @@ export function LandingPage() {
                 {REVIEW_MODE ? (
                   <>
                     <BarChart3 className="w-4 h-4 text-blue-500" />
-                    <span className="text-sm font-medium text-blue-600 dark:text-blue-400">Social Media Analytics Platform</span>
+                    <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{t('hero.reviewMode.badge')}</span>
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4 text-blue-500" />
-                    <span className="text-sm font-medium text-blue-600 dark:text-blue-400">AI-Powered Content Intelligence</span>
+                    <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{t('hero.fullMode.badge')}</span>
                   </>
                 )}
               </div>
@@ -313,18 +367,18 @@ export function LandingPage() {
               )}>
                 {REVIEW_MODE ? (
                   <>
-                    Track Your Content{' '}
+                    {t('hero.reviewMode.titlePart1')}
                     <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-                      Performance
+                      {t('hero.reviewMode.titlePart2')}
                     </span>
                   </>
                 ) : (
                   <>
-                    Go Viral with{' '}
+                    {t('hero.fullMode.titlePart1')}
                     <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-                      AI-Powered
-                    </span>{' '}
-                    Analytics
+                      {t('hero.fullMode.titlePart2')}
+                    </span>
+                    {t('hero.fullMode.titlePart3')}
                   </>
                 )}
               </h1>
@@ -335,8 +389,8 @@ export function LandingPage() {
                 "text-gray-600 dark:text-gray-400"
               )}>
                 {REVIEW_MODE
-                  ? 'Securely connect your social accounts using official APIs. View detailed analytics and get personalized recommendations to grow your audience.'
-                  : 'Discover trending content, generate viral scripts, and analyze competitors with the most advanced AI tools for content creators.'}
+                  ? t('hero.reviewMode.description')
+                  : t('hero.fullMode.description')}
               </p>
 
               {/* CTA Buttons */}
@@ -345,14 +399,14 @@ export function LandingPage() {
                   to="/login"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-medium hover:opacity-90 transition-all hover:scale-105"
                 >
-                  {REVIEW_MODE ? 'Get Started Free' : 'Start Free Trial'}
+                  {REVIEW_MODE ? t('hero.reviewMode.cta') : t('hero.fullMode.cta')}
                   <ArrowRight className="w-5 h-5" />
                 </Link>
                 <a
                   href="#features"
                   className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-all"
                 >
-                  {REVIEW_MODE ? 'How It Works' : 'Learn More'}
+                  {REVIEW_MODE ? t('hero.reviewMode.secondaryCta') : t('hero.fullMode.secondaryCta')}
                 </a>
               </div>
 
@@ -361,15 +415,15 @@ export function LandingPage() {
                 <div className="mt-12 flex flex-wrap items-center gap-6 text-sm text-gray-600 dark:text-gray-400">
                   <div className="flex items-center gap-2">
                     <span className="text-lg">🔒</span>
-                    <span>Secure OAuth</span>
+                    <span>{t('hero.reviewMode.trustBadges.secureOAuth')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-lg">📈</span>
-                    <span>Real-time Stats</span>
+                    <span>{t('hero.reviewMode.trustBadges.realtimeStats')}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-lg">🤖</span>
-                    <span>AI Insights</span>
+                    <span>{t('hero.reviewMode.trustBadges.aiInsights')}</span>
                   </div>
                 </div>
               ) : (
@@ -391,7 +445,7 @@ export function LandingPage() {
                       ))}
                     </div>
                     <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                      <span className="font-semibold text-gray-900 dark:text-white">2,500+</span> creators trust Rizko.ai
+                      {t('hero.fullMode.trustBadges.creatorsTrust', { count: 2500 })}
                     </p>
                   </div>
                 </div>
@@ -424,12 +478,12 @@ export function LandingPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-              {REVIEW_MODE ? 'How Rizko.ai Works' : 'Everything You Need to Go Viral'}
+              {REVIEW_MODE ? t('features.reviewMode.title') : t('features.fullMode.title')}
             </h2>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               {REVIEW_MODE
-                ? 'Connect your accounts, view your analytics, and get AI-powered recommendations - all in one place.'
-                : 'Powerful AI tools designed to help content creators identify trends, create engaging content, and grow their audience.'}
+                ? t('features.reviewMode.subtitle')
+                : t('features.fullMode.subtitle')}
             </p>
           </motion.div>
 
@@ -472,10 +526,10 @@ export function LandingPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-              Simple, Transparent Pricing
+              {t('pricing.title')}
             </h2>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-              Choose the plan that fits your content creation needs. Upgrade or downgrade anytime.
+              {t('pricing.subtitle')}
             </p>
           </motion.div>
 
@@ -497,7 +551,7 @@ export function LandingPage() {
                 {plan.highlighted && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                     <span className="px-4 py-1 rounded-full bg-white text-blue-600 text-sm font-medium">
-                      Most Popular
+                      {t('pricing.mostPopular')}
                     </span>
                   </div>
                 )}
@@ -512,7 +566,7 @@ export function LandingPage() {
                     ${plan.price}
                   </span>
                   <span className={cn("text-sm", plan.highlighted ? "text-white/80" : "text-gray-600 dark:text-gray-400")}>
-                    /month
+                    {t('pricing.perMonth')}
                   </span>
                 </div>
                 <ul className="mt-6 space-y-3">
@@ -534,7 +588,7 @@ export function LandingPage() {
                       : "bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100"
                   )}
                 >
-                  Get Started
+                  {t('pricing.getStarted')}
                 </Link>
               </motion.div>
             ))}
@@ -553,12 +607,12 @@ export function LandingPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
-              {REVIEW_MODE ? 'What Creators Say' : 'Loved by Creators Worldwide'}
+              {REVIEW_MODE ? t('testimonials.reviewMode.title') : t('testimonials.fullMode.title')}
             </h2>
             <p className="mt-4 text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
               {REVIEW_MODE
-                ? 'Hear from creators who use Rizko.ai to track their content performance.'
-                : 'Join thousands of content creators who have transformed their growth with Rizko.ai.'}
+                ? t('testimonials.reviewMode.subtitle')
+                : t('testimonials.fullMode.subtitle')}
             </p>
           </motion.div>
 
@@ -603,23 +657,23 @@ export function LandingPage() {
             transition={{ duration: 0.8 }}
           >
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-              {REVIEW_MODE ? 'Ready to Grow Your Audience?' : 'Ready to Go Viral?'}
+              {REVIEW_MODE ? t('cta.reviewMode.title') : t('cta.fullMode.title')}
             </h2>
             <p className="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
               {REVIEW_MODE
-                ? 'Connect your social accounts and get AI-powered insights to improve your content strategy.'
-                : 'Join thousands of creators who are already using Rizko.ai to discover trends, create viral content, and grow their audience.'}
+                ? t('cta.reviewMode.description')
+                : t('cta.fullMode.description')}
             </p>
             <Link
               to="/login"
               className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-white text-blue-600 font-semibold hover:bg-gray-100 transition-all hover:scale-105"
             >
-              {REVIEW_MODE ? 'Get Started Free' : 'Start Your Free Trial'}
+              {REVIEW_MODE ? t('cta.reviewMode.button') : t('cta.fullMode.button')}
               <ArrowRight className="w-5 h-5" />
             </Link>
             {!REVIEW_MODE && (
               <p className="mt-4 text-sm text-white/60">
-                No credit card required. 14-day free trial.
+                {t('cta.fullMode.note')}
               </p>
             )}
           </motion.div>
@@ -645,40 +699,40 @@ export function LandingPage() {
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 {REVIEW_MODE
-                  ? 'Social media analytics platform. Connect your accounts and get personalized insights.'
-                  : 'AI-powered analytics platform for content creators. Discover trends, generate scripts, and grow your audience.'}
+                  ? t('footer.reviewMode.description')
+                  : t('footer.fullMode.description')}
               </p>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Product</h4>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-4">{t('footer.product.title')}</h4>
               <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                <li><a href="#features" className="hover:text-gray-900 dark:hover:text-white transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-gray-900 dark:hover:text-white transition-colors">Pricing</a></li>
+                <li><a href="#features" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t('footer.product.features')}</a></li>
+                <li><a href="#pricing" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t('footer.product.pricing')}</a></li>
                 {!REVIEW_MODE && (
-                  <li><a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">API</a></li>
+                  <li><a href="#" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t('footer.product.api')}</a></li>
                 )}
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Legal</h4>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-4">{t('footer.legal.title')}</h4>
               <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                <li><Link to="/privacy-policy" className="hover:text-gray-900 dark:hover:text-white transition-colors">Privacy Policy</Link></li>
-                <li><Link to="/terms-of-service" className="hover:text-gray-900 dark:hover:text-white transition-colors">Terms of Service</Link></li>
-                <li><Link to="/data-policy" className="hover:text-gray-900 dark:hover:text-white transition-colors">Data Policy</Link></li>
+                <li><Link to="/privacy-policy" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t('footer.legal.privacyPolicy')}</Link></li>
+                <li><Link to="/terms-of-service" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t('footer.legal.termsOfService')}</Link></li>
+                <li><Link to="/data-policy" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t('footer.legal.dataPolicy')}</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold text-gray-900 dark:text-white mb-4">Support</h4>
+              <h4 className="font-semibold text-gray-900 dark:text-white mb-4">{t('footer.support.title')}</h4>
               <ul className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                <li><a href="mailto:support@rizko.ai" className="hover:text-gray-900 dark:hover:text-white transition-colors">Contact Us</a></li>
-                <li><Link to="/help" className="hover:text-gray-900 dark:hover:text-white transition-colors">Help Center</Link></li>
-                <li><Link to="/help" className="hover:text-gray-900 dark:hover:text-white transition-colors">FAQ</Link></li>
+                <li><a href="mailto:support@rizko.ai" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t('footer.support.contactUs')}</a></li>
+                <li><Link to="/help" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t('footer.support.helpCenter')}</Link></li>
+                <li><Link to="/help" className="hover:text-gray-900 dark:hover:text-white transition-colors">{t('footer.support.faq')}</Link></li>
               </ul>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              © 2026 Rizko.ai. All rights reserved.
+              {t('footer.copyright')}
             </p>
             <div className="flex items-center gap-6">
               <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-pink-500 transition-colors" title="Instagram">

@@ -1,0 +1,41 @@
+{
+  "saved": {
+    "title": "Saved Videos",
+    "count": "{{count}} saved video in your collection",
+    "count_plural": "{{count}} saved videos in your collection",
+    "search": "Search saved videos...",
+    "filterByTag": "Filter by tag",
+    "allTags": "All tags",
+    "emptyTitle": "No saved videos yet",
+    "emptyFiltered": "No videos match your filters. Try adjusting your search.",
+    "emptyDefault": "Start saving videos from Discover or Deep Analysis to build your collection.",
+    "loadMore": "Load More",
+    "loading": "Loading...",
+    "removeTitle": "Remove from saved?",
+    "removeDescription": "This video will be removed from your saved collection. You can always save it again later.",
+    "cancel": "Cancel",
+    "remove": "Remove",
+    "removed": "Video removed from saved",
+    "removeFailed": "Failed to remove video",
+    "loadFailed": "Failed to load saved videos"
+  },
+  "myPosts": {
+    "title": "My Posts",
+    "subtitle": "View and analyze your post performance",
+    "notConnected": "No {{platform}} account connected",
+    "notConnectedDescription": "Connect your {{platform}} account to see your videos and analytics here.",
+    "connectAccount": "Connect Account",
+    "notConnectedBadge": "Not connected",
+    "totalVideos": "Total Videos",
+    "totalViews": "Total Views",
+    "totalLikes": "Total Likes",
+    "avgEngagement": "Avg Engagement",
+    "yourVideos": "Your Videos",
+    "showingVideos": "Showing {{count}} videos from your {{platform}} account",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{count}} days ago",
+    "weeksAgo": "{{count}} weeks ago",
+    "monthsAgo": "{{count}} months ago"
+  }
+}

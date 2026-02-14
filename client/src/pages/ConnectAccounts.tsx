@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Link2, CheckCircle2, XCircle, ExternalLink, RefreshCw, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -45,6 +46,7 @@ interface ConnectedAccount {
 }
 
 export function ConnectAccountsPage() {
+  const { t } = useTranslation('accounts');
   const { getAccessToken } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -61,6 +63,34 @@ export function ConnectAccountsPage() {
   const [loading, setLoading] = useState(true);
   const [disconnecting, setDisconnecting] = useState<string | null>(null);
 
+  // Конфигурация платформ — inside component to access t()
+  const getPlatformConfig = () => ({
+    tiktok: {
+      name: 'TikTok',
+      icon: TikTokIcon,
+      color: 'bg-black text-white',
+      description: t('connect.platforms.tiktok.description'),
+    },
+    instagram: {
+      name: 'Instagram',
+      icon: InstagramIcon,
+      color: 'bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 text-white',
+      description: t('connect.platforms.instagram.description'),
+    },
+    youtube: {
+      name: 'YouTube',
+      icon: YouTubeIcon,
+      color: 'bg-red-600 text-white',
+      description: t('connect.platforms.youtube.description'),
+    },
+    twitter: {
+      name: 'X (Twitter)',
+      icon: TwitterIcon,
+      color: 'bg-black text-white',
+      description: t('connect.platforms.twitter.description'),
+    },
+  });
+
   // Обработка success параметра после OAuth callback
   useEffect(() => {
     const success = searchParams.get('success');
@@ -68,13 +98,13 @@ export function ConnectAccountsPage() {
 
     if (success) {
       // Показываем toast и очищаем URL параметры
-      toast.success(`Your ${success} account has been connected successfully!`);
+      toast.success(t('connect.toasts.connected', { platform: success }));
       // Перезагружаем список аккаунтов
       fetchConnectedAccounts();
       // Убираем параметры из URL
       navigate('/dashboard/connect-accounts', { replace: true });
     } else if (error) {
-      toast.error(decodeURIComponent(error) || 'Failed to connect account. Please try again.');
+      toast.error(decodeURIComponent(error) || t('connect.toasts.failed'));
       navigate('/dashboard/connect-accounts', { replace: true });
     }
   }, [searchParams, navigate]);
@@ -130,7 +160,7 @@ export function ConnectAccountsPage() {
       // Получаем токен для авторизации
       const accessToken = await getAccessToken();
       if (!accessToken) {
-        toast.error('Please log in to connect your account');
+        toast.error(t('connect.toasts.loginRequired'));
         setConnecting(null);
         return;
       }
@@ -141,7 +171,7 @@ export function ConnectAccountsPage() {
       window.location.href = oauthUrl;
     } catch (error) {
       console.error('Failed to initiate OAuth:', error);
-      toast.error('Failed to connect. Please try again.');
+      toast.error(t('connect.toasts.connectFailed'));
       setConnecting(null);
     }
   };
@@ -168,45 +198,18 @@ export function ConnectAccountsPage() {
             ? { platform: acc.platform, connected: false }
             : acc
         ));
-        toast.success(`Your ${platform} account has been disconnected.`);
+        toast.success(t('connect.toasts.disconnected', { platform }));
       } else {
         throw new Error('Failed to disconnect');
       }
     } catch (error) {
-      toast.error('Failed to disconnect account. Please try again.');
+      toast.error(t('connect.toasts.disconnectFailed'));
     } finally {
       setDisconnecting(null);
     }
   };
 
-  // Конфигурация платформ
-  const platformConfig = {
-    tiktok: {
-      name: 'TikTok',
-      icon: TikTokIcon,
-      color: 'bg-black text-white',
-      description: 'Connect your TikTok account to see video analytics and performance metrics.',
-    },
-    instagram: {
-      name: 'Instagram',
-      icon: InstagramIcon,
-      color: 'bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 text-white',
-      description: 'Connect your Instagram Business account to track posts, reels and stories.',
-    },
-    youtube: {
-      name: 'YouTube',
-      icon: YouTubeIcon,
-      color: 'bg-red-600 text-white',
-      description: 'Connect your YouTube channel to analyze videos and shorts performance.',
-    },
-    twitter: {
-      name: 'X (Twitter)',
-      icon: TwitterIcon,
-      color: 'bg-black text-white',
-      description: 'Connect your X account to track tweets and engagement metrics.',
-    },
-  };
-
+  const platformConfig = getPlatformConfig();
   const connectedCount = accounts.filter(a => a.connected).length;
 
   // Показываем загрузку
@@ -215,7 +218,7 @@ export function ConnectAccountsPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-purple-500" />
-          <p className="text-muted-foreground">Loading connected accounts...</p>
+          <p className="text-muted-foreground">{t('connect.loading')}</p>
         </div>
       </div>
     );
@@ -227,10 +230,10 @@ export function ConnectAccountsPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
           <Link2 className="h-7 w-7" />
-          Connect Accounts
+          {t('connect.title')}
         </h1>
         <p className="text-muted-foreground">
-          Link your social media accounts to see all your analytics in one place.
+          {t('connect.subtitle')}
         </p>
       </div>
 
@@ -239,8 +242,8 @@ export function ConnectAccountsPage() {
         <CardContent className="pt-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-muted-foreground">Connected Accounts</p>
-              <p className="text-2xl font-bold">{connectedCount} of 4</p>
+              <p className="text-sm text-muted-foreground">{t('connect.connectedAccounts')}</p>
+              <p className="text-2xl font-bold">{t('connect.countOf', { count: connectedCount })}</p>
             </div>
             <div className="flex gap-2">
               {accounts.map(acc => (
@@ -272,12 +275,12 @@ export function ConnectAccountsPage() {
                   {account.connected ? (
                     <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
                       <CheckCircle2 className="h-3 w-3 mr-1" />
-                      Connected
+                      {t('connect.connected')}
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="bg-gray-50 text-gray-500">
                       <XCircle className="h-3 w-3 mr-1" />
-                      Not connected
+                      {t('connect.notConnected')}
                     </Badge>
                   )}
                 </div>
@@ -291,21 +294,21 @@ export function ConnectAccountsPage() {
                     {/* Connected Account Info */}
                     <div className="p-3 bg-muted rounded-lg space-y-2">
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Account</span>
+                        <span className="text-muted-foreground">{t('connect.account')}</span>
                         <span className="font-medium">{account.username}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Followers</span>
+                        <span className="text-muted-foreground">{t('connect.followers')}</span>
                         <span className="font-medium">
                           {account.followers?.toLocaleString()}
                         </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Last synced</span>
+                        <span className="text-muted-foreground">{t('connect.lastSynced')}</span>
                         <span className="font-medium text-xs">
                           {account.lastSync
                             ? new Date(account.lastSync).toLocaleString()
-                            : 'Never'
+                            : t('connect.never')
                           }
                         </span>
                       </div>
@@ -320,7 +323,7 @@ export function ConnectAccountsPage() {
                         onClick={() => handleConnect(account.platform)}
                       >
                         <RefreshCw className="h-4 w-4 mr-1" />
-                        Sync
+                        {t('connect.sync')}
                       </Button>
                       <Button
                         variant="outline"
@@ -332,7 +335,7 @@ export function ConnectAccountsPage() {
                         {disconnecting === account.platform ? (
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          'Disconnect'
+                          t('connect.disconnect')
                         )}
                       </Button>
                     </div>
@@ -346,12 +349,12 @@ export function ConnectAccountsPage() {
                     {connecting === account.platform ? (
                       <>
                         <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        Connecting...
+                        {t('connect.connecting')}
                       </>
                     ) : (
                       <>
                         <ExternalLink className="h-4 w-4 mr-2" />
-                        Connect {config.name}
+                        {t('connect.platforms.' + account.platform + '.connect', { name: config.name })}
                       </>
                     )}
                   </Button>
@@ -373,12 +376,10 @@ export function ConnectAccountsPage() {
             </div>
             <div>
               <h3 className="font-semibold text-blue-900 dark:text-blue-100">
-                Your data is secure
+                {t('connect.securityTitle')}
               </h3>
               <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                We only access your public profile information and video statistics.
-                We never post on your behalf or access private messages.
-                You can disconnect at any time.
+                {t('connect.securityDescription')}
               </p>
             </div>
           </div>

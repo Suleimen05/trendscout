@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { motion } from 'framer-motion';
-import { Download, RefreshCw, WifiOff, Wifi } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { AuthProvider, useAuth } from '@/contexts/AuthContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { ChatProvider } from '@/contexts/ChatContext';
@@ -20,7 +20,7 @@ import { Discover } from '@/pages/Discover';
 import { DeepAnalysis } from '@/pages/DeepAnalysis';
 import { AIScripts } from '@/pages/AIScripts';
 import { AIWorkspace } from '@/pages/AIWorkspace';
-import { WorkflowBuilder } from '@/pages/WorkflowBuilder';
+const WorkflowBuilder = lazy(() => import('@/pages/WorkflowBuilder').then(m => ({ default: m.WorkflowBuilder })));
 import { Competitors } from '@/pages/Competitors';
 import { CompetitorFeed } from '@/pages/CompetitorFeed';
 import { AccountSearch } from '@/pages/AccountSearch';
@@ -38,12 +38,13 @@ import { Saved } from '@/pages/Saved';
 import { MyVideosPage } from '@/pages/MyVideos';
 import { OAuthCallback } from '@/pages/OAuthCallback';
 import { Toaster } from '@/components/ui/sonner';
-import { toast } from 'sonner';
+
 import { DevAccessGate } from '@/components/DevAccessGate';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Button } from '@/components/ui/button';
-import { usePWA, useHaptic, useNetworkStatus } from '@/hooks/usePWA';
+import { usePWA, useHaptic } from '@/hooks/usePWA';
 import { useSwipe } from '@/hooks/useMobile';
+import { useTranslation } from 'react-i18next';
 
 // Protected Route component
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -61,7 +62,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
             <div className="w-full h-full rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 animate-pulse" />
           </div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Rizko.ai</h1>
-          <p className="text-gray-500 dark:text-gray-400">Loading your dashboard...</p>
+          <p className="text-muted-foreground">Loading...</p>
         </motion.div>
       </div>
     );
@@ -70,94 +71,24 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 };
 
-// PWA Install Banner Component
-function PWAInstallBanner() {
-  const { isInstallable, isInstalled, install, isOffline, updateAvailable, updateServiceWorker } = usePWA();
-  const network = useNetworkStatus();
+// PWA Update Banner & Offline Notifications (install moved to Settings)
+function PWAStatusBanner() {
+  const { updateAvailable, updateServiceWorker } = usePWA();
   const haptic = useHaptic();
+  const { t } = useTranslation('common');
 
-  // Debug log
-  useEffect(() => {
-    console.log('[PWA Banner] State:', { isInstallable, isInstalled, updateAvailable });
-  }, [isInstallable, isInstalled, updateAvailable]);
+  // Network status notifications removed — not useful for end users
 
-  // Show offline toast
-  useEffect(() => {
-    if (isOffline) {
-      toast.warning('Вы офлайн', {
-        description: 'Некоторые функции могут быть недоступны',
-        icon: <WifiOff className="h-4 w-4" />,
-        duration: 5000,
-      });
-    } else if (!isOffline && network.type !== 'unknown') {
-      toast.success('Соединение восстановлено', {
-        description: `Подключено через ${network.type}`,
-        icon: <Wifi className="h-4 w-4" />,
-        duration: 3000,
-      });
-    }
-  }, [isOffline, network.type]);
-
-  // Handle install click with haptic
-  const handleInstall = () => {
-    haptic.medium();
-    install();
-  };
-
-  // Handle update click with haptic
-  const handleUpdate = () => {
-    haptic.success();
-    updateServiceWorker();
-  };
-
-  // Show update banner
   if (updateAvailable) {
     return (
       <div className="fixed top-0 left-0 right-0 z-[100] bg-primary text-primary-foreground px-4 py-2 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-2 text-sm">
           <RefreshCw className="h-4 w-4 animate-spin" />
-          <span>Доступно обновление</span>
+          <span>{t('pwa.updateAvailable')}</span>
         </div>
-        <Button size="sm" variant="secondary" onClick={handleUpdate} className="text-xs">
-          Обновить сейчас
+        <Button size="sm" variant="secondary" onClick={() => { haptic.success(); updateServiceWorker(); }} className="text-xs">
+          {t('pwa.updateNow')}
         </Button>
-      </div>
-    );
-  }
-
-  // Show install banner
-  if (isInstallable && !isInstalled) {
-    // Detect iOS for special instructions
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-    return (
-      <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:w-80 z-[100] bg-card border rounded-xl shadow-2xl p-4">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold text-sm shrink-0">
-            R
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="font-semibold text-sm">Установить Rizko.ai</h3>
-            <p className="text-xs text-muted-foreground mt-1">
-              {isIOS
-                ? 'Нажмите "Поделиться" → "На экран Домой"'
-                : 'Добавьте на главный экран для быстрого доступа'
-              }
-            </p>
-          </div>
-        </div>
-        {!isIOS && (
-          <div className="flex gap-2 mt-3">
-            <Button
-              size="sm"
-              className="flex-1"
-              onClick={handleInstall}
-            >
-              <Download className="h-4 w-4 mr-2" />
-              Установить
-            </Button>
-          </div>
-        )}
       </div>
     );
   }
@@ -185,11 +116,11 @@ function DashboardLayout() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Desktop Sidebar */}
-      <Sidebar />
+      {/* Desktop Sidebar - hidden for full-width pages (AI Scripts, AI Workspace) */}
+      {!isFullWidthPage && <Sidebar />}
 
       {/* Mobile Sidebar */}
-      <MobileSidebar open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+      {!isFullWidthPage && <MobileSidebar open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />}
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden" {...swipeHandlers}>
@@ -201,10 +132,22 @@ function DashboardLayout() {
         {/* Page Content */}
         <main className={isFullWidthPage ? "flex-1 overflow-hidden" : "flex-1 overflow-y-auto bg-muted/30"}>
           {isFullWidthPage ? (
-            <Routes>
-              <Route path="/ai-scripts" element={<WorkflowBuilder />} />
-              <Route path="/ai-workspace" element={<AIWorkspace />} />
-            </Routes>
+            <Suspense fallback={
+              <div className="flex h-full bg-background">
+                <div className="w-[52px] bg-card/80 border-r border-border" />
+                <div className="flex-1 flex flex-col">
+                  <div className="h-12 bg-card/95 border-b border-border" />
+                  <div className="flex-1 flex items-center justify-center">
+                    <div className="animate-pulse text-muted-foreground text-sm">Loading...</div>
+                  </div>
+                </div>
+              </div>
+            }>
+              <Routes>
+                <Route path="/ai-scripts" element={<WorkflowBuilder />} />
+                <Route path="/ai-workspace" element={<AIWorkspace />} />
+              </Routes>
+            </Suspense>
           ) : (
             <div className="container mx-auto px-4 md:px-6 py-6 md:pt-8 max-w-7xl">
               <Routes>
@@ -255,6 +198,16 @@ const queryClient = new QueryClient({
 function App() {
   return (
     <ErrorBoundary>
+      <Suspense fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4">
+              <div className="w-full h-full rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 animate-pulse" />
+            </div>
+            <h1 className="text-2xl font-bold text-foreground mb-2">Rizko.ai</h1>
+          </div>
+        </div>
+      }>
       <DevAccessGate>
         <QueryClientProvider client={queryClient}>
           <BrowserRouter>
@@ -262,8 +215,8 @@ function App() {
               <AuthProvider>
                 <ChatProvider>
                   <WorkflowProvider>
-                {/* PWA Install Banner */}
-                <PWAInstallBanner />
+                {/* PWA Update Banner & Offline Notifications */}
+                <PWAStatusBanner />
 
               <Routes>
               {/* Public routes */}
@@ -304,6 +257,7 @@ function App() {
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
     </DevAccessGate>
+      </Suspense>
   </ErrorBoundary>
   );
 }

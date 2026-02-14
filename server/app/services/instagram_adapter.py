@@ -32,7 +32,7 @@ def adapt_instagram_to_standard(item: dict) -> dict:
 
         # For images, we skip them or treat them as zero-duration videos
         if not is_video:
-            print(f"⏭️  Skipping Instagram image post: {item.get('shortCode')}")
+            print(f"[SKIP] Skipping Instagram image post: {item.get('shortCode')}")
             return None  # We only want videos for now
 
         # Extract stats
@@ -92,7 +92,7 @@ def adapt_instagram_to_standard(item: dict) -> dict:
         }
 
     except Exception as e:
-        print(f"⚠️ Instagram adapter error: {e}")
+        print(f"[WARNING] Instagram adapter error: {e}")
         import traceback
         traceback.print_exc()
         return None

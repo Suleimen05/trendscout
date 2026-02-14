@@ -111,11 +111,11 @@ def parse_video_data(item: dict, idx: int = 0) -> dict:
         uploaded_cover = SupabaseStorage.upload_thumbnail(cover_url)
         if uploaded_cover:
             cover_url = uploaded_cover
-            logger.info(f"✅ Thumbnail uploaded to Supabase for video {video_id[:20]}")
+            logger.info(f"[OK] Thumbnail uploaded to Supabase for video {video_id[:20]}")
         else:
             # Fallback: remove TikTok signatures (temporary fix)
             cover_url = ApifyStorage.fix_tiktok_url(cover_url)
-            logger.warning(f"⚠️ Supabase upload failed, using fix_tiktok_url for {video_id[:20]}")
+            logger.warning(f"[WARNING] Supabase upload failed, using fix_tiktok_url for {video_id[:20]}")
 
     # Video URL
     video_url = (
@@ -274,7 +274,7 @@ def get_saved_results(
     User Isolation: Only returns trends belonging to the authenticated user.
     Self-cleaning: Removes trends after reading if rescan completed.
     """
-    logger.info(f"📂 DB Buffer Read: user={current_user.id}, query='{keyword}', mode='{mode}'")
+    logger.info(f"[DIR] DB Buffer Read: user={current_user.id}, query='{keyword}', mode='{mode}'")
 
     clean_nick = keyword.lower().strip().replace("@", "")
 
@@ -307,7 +307,7 @@ def get_saved_results(
             )
         )
         db.commit()
-        logger.info(f"🧹 Cleaned {len(ids_to_clean)} temporary records for user {current_user.id}")
+        logger.info(f"[CLEANUP] Cleaned {len(ids_to_clean)} temporary records for user {current_user.id}")
 
     return {"status": "ok", "items": data_to_return}
 
@@ -401,7 +401,7 @@ def search_trends(
         )
 
     logger.info(
-        f"🔎 Search [{req.mode.value}] on {req.platform.value.upper()}: {search_targets} "
+        f"[SEARCH] Search [{req.mode.value}] on {req.platform.value.upper()}: {search_targets} "
         f"(Mode: {'DEEP' if req.is_deep else 'LIGHT'}, "
         f"User: {current_user.id}, Tier: {current_user.subscription_tier.value})"
     )
@@ -414,7 +414,7 @@ def search_trends(
         collector = TikTokCollector()
         platform_name = "TikTok"
 
-    logger.info(f"📱 Using {platform_name} collector")
+    logger.info(f"[PLATFORM] Using {platform_name} collector")
 
     raw_items = []
     clean_items = []
@@ -449,11 +449,11 @@ def search_trends(
             if recent_cached:
                 execution_time = int((time.time() - start_time) * 1000)
                 log_search(db, current_user.id, search_targets[0], req.mode.value, False, len(recent_cached), execution_time)
-                logger.info(f"💾 [LIGHT] Using cache ({len(recent_cached)} items)")
+                logger.info(f"[CACHE] [LIGHT] Using cache ({len(recent_cached)} items)")
                 return {"status": "ok", "mode": "light", "items": [trend_to_dict(t) for t in recent_cached]}
 
         # No cache - fetch from Apify
-        logger.info(f"🔄 [LIGHT] No cache, fetching from Apify...")
+        logger.info(f"[REFRESH] [LIGHT] No cache, fetching from Apify...")
         raw_items = collector.collect(search_targets, limit=limit, mode="search", is_deep=False)
 
         if not raw_items:
@@ -463,7 +463,7 @@ def search_trends(
 
         # Adapt Instagram data to standard format if needed
         if req.platform == Platform.INSTAGRAM:
-            logger.info(f"📸 Adapting {len(raw_items)} Instagram profile(s) to posts...")
+            logger.info(f"[INSTAGRAM] Adapting {len(raw_items)} Instagram profile(s) to posts...")
             adapted_items = []
             for profile in raw_items:
                 # New: Each item is a profile with latestPosts array
@@ -471,7 +471,7 @@ def search_trends(
                 if posts:
                     adapted_items.extend(posts)  # Flatten posts from all profiles
             raw_items = adapted_items
-            logger.info(f"✅ {len(raw_items)} Instagram videos after extraction")
+            logger.info(f"[OK] {len(raw_items)} Instagram videos after extraction")
 
         # Filter by minimum views
         for item in raw_items:
@@ -484,7 +484,7 @@ def search_trends(
     # ==========================================================================
     elif req.mode == SearchMode.USERNAME:
         limit = 20
-        logger.info(f"🔍 Parsing user profile '{search_targets[0]}'...")
+        logger.info(f"[SEARCH] Parsing user profile '{search_targets[0]}'...")
         raw_items = collector.collect(search_targets, limit=limit, mode="profile", is_deep=True)
         if not raw_items:
             execution_time = int((time.time() - start_time) * 1000)
@@ -493,20 +493,20 @@ def search_trends(
 
         # Adapt Instagram data if needed
         if req.platform == Platform.INSTAGRAM:
-            logger.info(f"📸 Adapting {len(raw_items)} Instagram profile(s)...")
+            logger.info(f"[INSTAGRAM] Adapting {len(raw_items)} Instagram profile(s)...")
             adapted_items = []
             for profile in raw_items:
                 posts = adapt_instagram_profile_to_posts(profile)
                 if posts:
                     adapted_items.extend(posts)
             raw_items = adapted_items
-            logger.info(f"✅ {len(raw_items)} Instagram videos after extraction")
+            logger.info(f"[OK] {len(raw_items)} Instagram videos after extraction")
 
         clean_items = raw_items
 
     elif req.is_deep:
         limit = 50
-        logger.info(f"🔬 [DEEP] Full analysis for '{search_targets[0]}'...")
+        logger.info(f"[DEEP] Full analysis for '{search_targets[0]}'...")
         raw_items = collector.collect(search_targets, limit=limit, mode="search", is_deep=req.is_deep)
         if not raw_items:
             execution_time = int((time.time() - start_time) * 1000)
@@ -515,14 +515,14 @@ def search_trends(
 
         # Adapt Instagram data if needed
         if req.platform == Platform.INSTAGRAM:
-            logger.info(f"📸 Adapting {len(raw_items)} Instagram profile(s) [DEEP]...")
+            logger.info(f"[INSTAGRAM] Adapting {len(raw_items)} Instagram profile(s) [DEEP]...")
             adapted_items = []
             for profile in raw_items:
                 posts = adapt_instagram_profile_to_posts(profile)
                 if posts:
                     adapted_items.extend(posts)
             raw_items = adapted_items
-            logger.info(f"✅ {len(raw_items)} Instagram videos after extraction")
+            logger.info(f"[OK] {len(raw_items)} Instagram videos after extraction")
 
         for item in raw_items:
             v_count = int(item.get("views") or (item.get("stats") or {}).get("playCount") or 0)
@@ -568,7 +568,7 @@ def search_trends(
         log_search(db, current_user.id, search_targets[0], req.mode.value, False, len(live_results), execution_time)
 
         if live_results:
-            logger.info(f"✅ [LIGHT] Parsed {len(live_results)} items (saved to DB for bookmarks)")
+            logger.info(f"[OK] [LIGHT] Parsed {len(live_results)} items (saved to DB for bookmarks)")
 
         return {
             "status": "ok",
@@ -674,7 +674,7 @@ def search_trends(
         except Exception as e:
             logger.error(f"Error processing video {p_id}: {e}")
 
-    # Batch commit — one transaction for all videos instead of one per video
+    # Batch commit -- one transaction for all videos instead of one per video
     try:
         db.commit()
     except Exception as e:
@@ -683,7 +683,7 @@ def search_trends(
 
     # Clustering
     if req.is_deep and processed_trends:
-        logger.info(f"🧩 Clustering {len(processed_trends)} videos...")
+        logger.info(f"[CLUSTER] Clustering {len(processed_trends)} videos...")
         processed_trends = cluster_trends_by_visuals(processed_trends)
         for t in processed_trends:
             db.add(t)
@@ -702,7 +702,7 @@ def search_trends(
                 run_date=run_date,
                 args=[saved_urls, f"batch_{int(time.time())}_{current_user.id}"]
             )
-            logger.info(f"⏱️ Rescan scheduled in {req.rescan_hours}h for user {current_user.id}")
+            logger.info(f"[TIMER] Rescan scheduled in {req.rescan_hours}h for user {current_user.id}")
 
     # Build deep response
     deep_results = []
@@ -768,7 +768,7 @@ def search_trends(
     execution_time = int((time.time() - start_time) * 1000)
     log_search(db, current_user.id, search_targets[0], req.mode.value, True, len(deep_results), execution_time)
 
-    logger.info(f"✅ [DEEP] Processed {len(deep_results)} items. Clusters: {len(clusters_list)}")
+    logger.info(f"[OK] [DEEP] Processed {len(deep_results)} items. Clusters: {len(clusters_list)}")
 
     return {
         "status": "ok",
@@ -797,7 +797,7 @@ def clear_user_trends(
     deleted_count = query.delete(synchronize_session=False)
     db.commit()
 
-    logger.info(f"🗑️ Cleared {deleted_count} trends for user {current_user.id}")
+    logger.info(f"[DELETE] Cleared {deleted_count} trends for user {current_user.id}")
 
     return {
         "status": "ok",

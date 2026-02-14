@@ -1,0 +1,47 @@
+{
+  "title": "Deep Analysis",
+  "badge": "PRO",
+  "subtitle": "Advanced 6-layer UTS algorithm for viral trend detection",
+  "placeholder": "Enter keyword, hashtag, or niche to analyze...",
+  "analyze": "Deep Analyze",
+  "analyzing": "Analyzing...",
+  "algorithms": {
+    "uts": "6-Layer UTS",
+    "viralLift": "Viral Lift",
+    "velocity": "Velocity",
+    "retention": "Retention",
+    "cascade": "Cascade",
+    "saturation": "Saturation"
+  },
+  "stats": {
+    "videosAnalyzed": "Videos Analyzed",
+    "highViral": "High Viral Potential",
+    "totalViews": "Total Views",
+    "visualClusters": "Visual Clusters"
+  },
+  "modes": {
+    "deep": "Deep Analysis Mode",
+    "light": "Light Analysis Mode",
+    "deepApplied": "6-layer UTS algorithm applied"
+  },
+  "tabs": {
+    "all": "All Results ({{count}})",
+    "viral": "High Viral ({{count}})",
+    "trending": "Trending ({{count}})"
+  },
+  "empty": {
+    "readyTitle": "Ready to Analyze",
+    "readyDescription": "Enter a keyword, hashtag, or niche above to run deep analysis with our 6-layer UTS algorithm. Discover viral patterns and trending content.",
+    "noResultsTitle": "No Results Found",
+    "noResultsDescription": "Try a different keyword or hashtag. Make sure to use popular terms that have recent activity on TikTok."
+  },
+  "modal": {
+    "utsBreakdown": "UTS Score Breakdown",
+    "close": "Close"
+  },
+  "card": {
+    "viewBreakdown": "View Breakdown",
+    "noDescription": "No description",
+    "viralPotential": "Viral Potential"
+  }
+}

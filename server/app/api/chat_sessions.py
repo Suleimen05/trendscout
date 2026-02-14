@@ -83,8 +83,7 @@ CONVERSATION HISTORY:
 USER REQUEST: {user_message}
 
 Respond in a helpful, structured way. Use markdown formatting (bold, bullets, headers) for readability.
-Keep the response focused, concise, and actionable. Avoid overly long responses — be brief but informative.
-Language: respond in the same language as the user's message."""
+Keep the response focused, concise, and actionable. Avoid overly long responses -- be brief but informative."""
 
     try:
         if model == "gemini":
@@ -134,6 +133,50 @@ Language: respond in the same language as the user's message."""
                 max_tokens=4096
             )
             return response.choices[0].message.content.strip() if response.choices else "I couldn't generate a response."
+
+        elif model == "nano-bana":
+            # Image generation using Gemini
+            client = get_gemini_client()
+            if not client:
+                raise Exception("Gemini API not configured - add GEMINI_API_KEY to .env")
+
+            try:
+                from google.genai import types
+                from pathlib import Path
+                import uuid as _uuid
+
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash-image",
+                    contents=user_message,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["Text", "Image"]
+                    )
+                )
+
+                result_parts = []
+                uploads_dir = Path(__file__).parent.parent.parent / "uploads" / "generated"
+                uploads_dir.mkdir(parents=True, exist_ok=True)
+
+                for part in response.candidates[0].content.parts:
+                    if hasattr(part, 'inline_data') and part.inline_data:
+                        # Save image to file
+                        ext = "png" if "png" in (part.inline_data.mime_type or "") else "jpg"
+                        filename = f"{_uuid.uuid4().hex}.{ext}"
+                        filepath = uploads_dir / filename
+                        filepath.write_bytes(part.inline_data.data)
+                        img_url = f"/uploads/generated/{filename}"
+                        result_parts.append(f"![Generated Image]({img_url})")
+                        print(f"[AI] Image saved: {filepath} ({len(part.inline_data.data)} bytes)")
+                    elif hasattr(part, 'text') and part.text:
+                        result_parts.append(part.text.strip())
+
+                if result_parts:
+                    return "\n\n".join(result_parts)
+                return "Could not generate an image. Try a more descriptive prompt."
+
+            except Exception as img_err:
+                print(f"[AI] Nano Bana image generation error: {img_err}")
+                return await generate_ai_response("gemini", "You are an image generation assistant. The user wants to generate an image. Describe in detail what the image would look like, and apologize that image generation is temporarily unavailable.", user_message, history_text)
 
         else:
             # Default to Gemini
@@ -197,6 +240,7 @@ class ChatMessageCreate(BaseModel):
     message: str = Field(..., min_length=1, max_length=10000)
     mode: Optional[str] = None
     model: Optional[str] = None
+    language: Optional[str] = "English"
 
 
 class ChatMessageResponse(BaseModel):
@@ -273,7 +317,9 @@ Provide:
 - Why each works psychologically
 - Best delivery tips
 
-Keep it short and punchy."""
+Keep it short and punchy.""",
+
+    "chat": """You are a friendly and helpful AI assistant. Have a natural conversation with the user. Answer their questions directly and concisely. Do not format responses as scripts, hooks, or content strategies unless the user specifically asks for that."""
 }
 
 
@@ -599,8 +645,11 @@ async def send_message(
 
     # Generate AI response using selected model
     try:
-        # Add context to system prompt if available
+        # Add language instruction and context to system prompt
         full_system_prompt = system_prompt
+        user_lang = data.language or "English"
+        if user_lang.lower() != "english":
+            full_system_prompt = f"IMPORTANT: You MUST respond entirely in {user_lang}. All text, headings, and content must be in {user_lang}.\n\n{full_system_prompt}"
         if context_text:
             full_system_prompt += f"\n{context_text}"
 

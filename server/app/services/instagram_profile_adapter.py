@@ -30,15 +30,15 @@ def adapt_instagram_profile_to_posts(profile_item: dict) -> list:
     try:
         # Check if it's a profile response
         if not profile_item.get("username"):
-            print(f"⏭️  Skipping non-profile item")
+            print(f"[SKIP] Skipping non-profile item")
             return []
 
         latest_posts = profile_item.get("latestPosts", [])
         if not latest_posts:
-            print(f"⏭️  Profile {profile_item.get('username')} has no posts")
+            print(f"[SKIP] Profile {profile_item.get('username')} has no posts")
             return []
 
-        print(f"📸 Extracting {len(latest_posts)} posts from @{profile_item.get('username')}")
+        print(f"[INSTAGRAM] Extracting {len(latest_posts)} posts from @{profile_item.get('username')}")
 
         adapted_posts = []
         for post in latest_posts:
@@ -49,7 +49,7 @@ def adapt_instagram_profile_to_posts(profile_item: dict) -> list:
         return adapted_posts
 
     except Exception as e:
-        print(f"⚠️ Instagram profile adapter error: {e}")
+        print(f"[WARNING] Instagram profile adapter error: {e}")
         import traceback
         traceback.print_exc()
         return []
@@ -131,7 +131,7 @@ def adapt_instagram_post(post: dict, profile: dict = None) -> dict:
         }
 
     except Exception as e:
-        print(f"⚠️ Instagram post adapter error: {e}")
+        print(f"[WARNING] Instagram post adapter error: {e}")
         import traceback
         traceback.print_exc()
         return None

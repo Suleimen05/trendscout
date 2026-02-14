@@ -12,7 +12,7 @@ from ..services.scorer import TrendScorer
 scheduler = AsyncIOScheduler()
 
 async def rescan_videos_task(video_urls: list, batch_id: str):
-    print(f"⏰ [AUTO-RESCAN] Начало задачи сверки (Batch: {batch_id})")
+    print(f"[AUTO-RESCAN] Starting rescan task (Batch: {batch_id})")
     
     db = SessionLocal()
     scorer = TrendScorer() 
@@ -23,7 +23,7 @@ async def rescan_videos_task(video_urls: list, batch_id: str):
         raw_items = collector.collect(video_urls, limit=len(video_urls), mode="urls")
         
         if not raw_items:
-            print("⚠️ Rescan: Нет новых данных для сверки.")
+            print("Rescan: No new data for comparison.")
             return
 
         for item in raw_items:
@@ -63,10 +63,10 @@ async def rescan_videos_task(video_urls: list, batch_id: str):
                 video.last_scanned_at = datetime.utcnow()
                 
         db.commit()
-        print(f"✅ [AUTO-RESCAN] Сверка завершена. Статистика и UTS-баллы обновлены.")
+        print("[AUTO-RESCAN] Rescan complete. Stats and UTS scores updated.")
         
     except Exception as e:
-        print(f"❌ Ошибка рескана: {e}")
+        print(f"Rescan error: {e}")
         db.rollback()
     finally:
         db.close()
@@ -74,4 +74,4 @@ async def rescan_videos_task(video_urls: list, batch_id: str):
 def start_scheduler():
     if not scheduler.running:
         scheduler.start()
-        print("⏳ Background Scheduler успешно запущен.")
+        print("Background Scheduler started successfully.")

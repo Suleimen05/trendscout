@@ -1,11 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Settings as SettingsIcon, CheckCircle2, ExternalLink, RefreshCw, Loader2, Shield } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { Settings as SettingsIcon, CheckCircle2, ExternalLink, RefreshCw, Loader2, Shield, Download, Smartphone, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { apiService } from '@/services/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { usePWA } from '@/hooks/usePWA';
+import { useLanguage } from '@/hooks/useLanguage';
+import { appMeta } from '@/lib/config';
 import { toast } from 'sonner';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -136,10 +140,13 @@ const platformConfig: Record<PlatformKey, { name: string; icon: () => React.JSX.
 };
 
 export function SettingsPage() {
+  const { t } = useTranslation('settings');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { getAccessToken } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { isInstallable, isInstalled, install } = usePWA();
+  const { currentLanguage, changeLanguage, languages } = useLanguage();
 
   // Notification preferences
   const [emailNotifications, setEmailNotifications] = useState(true);
@@ -181,11 +188,11 @@ export function SettingsPage() {
     const error = searchParams.get('error');
 
     if (success) {
-      toast.success(`Your ${success} account has been connected successfully!`);
+      toast.success(t('toasts:settings.accountConnected', { platform: success }));
       fetchConnectedAccounts();
       navigate('/dashboard/settings?tab=accounts', { replace: true });
     } else if (error) {
-      toast.error(decodeURIComponent(error) || 'Failed to connect account. Please try again.');
+      toast.error(decodeURIComponent(error) || t('toasts:settings.connectFailed'));
       navigate('/dashboard/settings?tab=accounts', { replace: true });
     }
   }, [searchParams, navigate]);
@@ -286,7 +293,7 @@ export function SettingsPage() {
     try {
       const accessToken = await getAccessToken();
       if (!accessToken) {
-        toast.error('Please log in to connect your account');
+        toast.error(t('toasts:settings.loginRequired'));
         setConnecting(null);
         return;
       }
@@ -294,7 +301,7 @@ export function SettingsPage() {
       window.location.href = oauthUrl;
     } catch (error) {
       console.error('Failed to initiate OAuth:', error);
-      toast.error('Failed to connect. Please try again.');
+      toast.error(t('toasts:settings.connectFailed'));
       setConnecting(null);
     }
   };
@@ -319,7 +326,7 @@ export function SettingsPage() {
             ? { platform: acc.platform, connected: false }
             : acc
         ));
-        toast.success(`Your ${platform} account has been disconnected.`);
+        toast.success(t('toasts:settings.accountDisconnected', { platform }));
       } else {
         throw new Error('Failed to disconnect');
       }
@@ -345,10 +352,10 @@ export function SettingsPage() {
       <div className="w-64 border-r border-border bg-card/50 p-4">
         <nav className="space-y-1">
           {([
-            { key: 'general' as const, label: 'General' },
-            { key: 'accounts' as const, label: 'Accounts' },
-            { key: 'usage' as const, label: 'Usage' },
-            { key: 'billing' as const, label: 'Billing' },
+            { key: 'general' as const, label: t('tabs.general') },
+            { key: 'accounts' as const, label: t('tabs.accounts') },
+            { key: 'usage' as const, label: t('tabs.usage') },
+            { key: 'billing' as const, label: t('tabs.billing') },
           ]).map(({ key, label }) => (
             <button
               key={key}
@@ -372,10 +379,10 @@ export function SettingsPage() {
           <div className="mb-8">
             <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
               <SettingsIcon className="h-7 w-7" />
-              Settings
+              {t('page.title')}
             </h1>
             <p className="text-muted-foreground mt-1">
-              Manage your account preferences and notifications
+              {t('page.subtitle')}
             </p>
           </div>
 
@@ -385,12 +392,12 @@ export function SettingsPage() {
               {/* Profile Settings */}
               <div className="rounded-lg border border-border bg-card p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  👤 Profile
+                  👤 {t('general.profile.heading')}
                 </h3>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium mb-1.5 block">Full name</label>
+                    <label className="text-sm font-medium mb-1.5 block">{t('general.profile.fullName')}</label>
                     <input
                       type="text"
                       placeholder="Akylbek Karim"
@@ -399,7 +406,7 @@ export function SettingsPage() {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium mb-1.5 block">Email</label>
+                    <label className="text-sm font-medium mb-1.5 block">{t('general.profile.email')}</label>
                     <input
                       type="email"
                       placeholder="akylbekkarim01@gmail.com"
@@ -408,7 +415,7 @@ export function SettingsPage() {
                   </div>
 
                   <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition">
-                    Save Changes
+                    {t('general.profile.saveChanges')}
                   </button>
                 </div>
               </div>
@@ -416,15 +423,15 @@ export function SettingsPage() {
               {/* Preferences */}
               <div className="rounded-lg border border-border bg-card p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  🎨 Preferences
+                  🎨 {t('general.preferences.heading')}
                 </h3>
 
                 <div className="space-y-4">
                   {/* Dark Mode */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium">Dark Mode</p>
-                      <p className="text-xs text-muted-foreground">Enable dark theme</p>
+                      <p className="text-sm font-medium">{t('general.preferences.darkMode')}</p>
+                      <p className="text-xs text-muted-foreground">{t('general.preferences.darkModeDescription')}</p>
                     </div>
                     <button
                       onClick={toggleTheme}
@@ -443,16 +450,21 @@ export function SettingsPage() {
                   {/* Language & Region */}
                   <div className="grid grid-cols-2 gap-4 pt-2">
                     <div>
-                      <label className="text-sm font-medium mb-1.5 block">Language</label>
-                      <select className="w-full px-3 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
-                        <option>English</option>
-                        <option>Spanish</option>
-                        <option>French</option>
-                        <option>German</option>
+                      <label className="text-sm font-medium mb-1.5 block">{t('general.preferences.language')}</label>
+                      <select
+                        value={currentLanguage}
+                        onChange={(e) => changeLanguage(e.target.value as any)}
+                        className="w-full px-3 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        {languages.map((lang) => (
+                          <option key={lang.code} value={lang.code}>
+                            {lang.flag} {lang.label}
+                          </option>
+                        ))}
                       </select>
                     </div>
                     <div>
-                      <label className="text-sm font-medium mb-1.5 block">Region</label>
+                      <label className="text-sm font-medium mb-1.5 block">{t('general.preferences.region')}</label>
                       <select className="w-full px-3 py-2 bg-background border border-input rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary">
                         <option>United States</option>
                         <option>United Kingdom</option>
@@ -467,14 +479,14 @@ export function SettingsPage() {
               {/* Notifications */}
               <div className="rounded-lg border border-border bg-card p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  🔔 Notifications
+                  🔔 {t('general.notifications.heading')}
                 </h3>
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium">Email Notifications</p>
-                      <p className="text-xs text-muted-foreground">Get emails about trends and updates</p>
+                      <p className="text-sm font-medium">{t('general.notifications.emailNotifications')}</p>
+                      <p className="text-xs text-muted-foreground">{t('general.notifications.emailNotificationsDescription')}</p>
                     </div>
                     <button
                       onClick={() => setEmailNotifications(!emailNotifications)}
@@ -492,8 +504,8 @@ export function SettingsPage() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium">Weekly Summary</p>
-                      <p className="text-xs text-muted-foreground">Receive weekly usage reports</p>
+                      <p className="text-sm font-medium">{t('general.notifications.weeklySummary')}</p>
+                      <p className="text-xs text-muted-foreground">{t('general.notifications.weeklySummaryDescription')}</p>
                     </div>
                     <button
                       onClick={() => setWeeklySummary(!weeklySummary)}
@@ -510,6 +522,71 @@ export function SettingsPage() {
                   </div>
                 </div>
               </div>
+
+              {/* About & Install */}
+              <div className="rounded-lg border border-border bg-card p-6">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <Info className="h-5 w-5" />
+                  {t('general.about.heading')}
+                </h3>
+
+                <div className="space-y-4">
+                  {/* App Info */}
+                  <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground font-bold text-lg shrink-0">
+                      R
+                    </div>
+                    <div>
+                      <p className="font-semibold">{appMeta.name}</p>
+                      <p className="text-sm text-muted-foreground">{appMeta.description}</p>
+                    </div>
+                  </div>
+
+                  {/* Version & Build */}
+                  <div className="grid grid-cols-2 gap-4 pt-2">
+                    <div className="rounded-lg bg-secondary/50 p-3">
+                      <p className="text-xs text-muted-foreground mb-0.5">{t('general.about.version')}</p>
+                      <p className="text-sm font-medium">{appMeta.version}</p>
+                    </div>
+                    <div className="rounded-lg bg-secondary/50 p-3">
+                      <p className="text-xs text-muted-foreground mb-0.5">{t('general.about.platform')}</p>
+                      <p className="text-sm font-medium">
+                        {isInstalled ? t('general.about.installedPWA') : t('general.about.webBrowser')}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Install Button */}
+                  {isInstallable && !isInstalled && (
+                    <div className="flex items-center justify-between pt-2 border-t border-border">
+                      <div>
+                        <p className="text-sm font-medium flex items-center gap-2">
+                          <Smartphone className="h-4 w-4" />
+                          {t('general.about.installApp')}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {/iPad|iPhone|iPod/.test(navigator.userAgent)
+                            ? t('general.about.iosInstruction')
+                            : t('general.about.otherInstruction')}
+                        </p>
+                      </div>
+                      {!/iPad|iPhone|iPod/.test(navigator.userAgent) && (
+                        <Button size="sm" onClick={() => install()}>
+                          <Download className="h-4 w-4 mr-2" />
+                          {t('general.about.install')}
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  {isInstalled && (
+                    <div className="flex items-center gap-2 pt-2 border-t border-border text-sm text-muted-foreground">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      {t('general.about.appInstalled')}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           )}
 
@@ -521,7 +598,7 @@ export function SettingsPage() {
                 <div className="flex items-center justify-center py-12">
                   <div className="text-center space-y-4">
                     <Loader2 className="h-8 w-8 animate-spin mx-auto text-purple-500" />
-                    <p className="text-muted-foreground">Loading connected accounts...</p>
+                    <p className="text-muted-foreground">{t('accounts.loading')}</p>
                   </div>
                 </div>
               ) : (
@@ -531,8 +608,8 @@ export function SettingsPage() {
                     <CardContent className="pt-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-sm text-muted-foreground">Connected Accounts</p>
-                          <p className="text-2xl font-bold">{connectedCount} of {accounts.length}</p>
+                          <p className="text-sm text-muted-foreground">{t('accounts.connectedAccounts')}</p>
+                          <p className="text-2xl font-bold">{t('accounts.countOfTotal', { count: connectedCount, total: accounts.length })}</p>
                         </div>
                         <div className="flex gap-2">
                           {accounts.map(acc => (
@@ -563,7 +640,7 @@ export function SettingsPage() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="font-semibold text-sm">{config.name}</p>
-                                <p className="text-xs text-muted-foreground truncate">{config.description}</p>
+                                <p className="text-xs text-muted-foreground truncate">{t('accounts.platforms.' + account.platform)}</p>
                               </div>
                             </div>
 
@@ -583,7 +660,7 @@ export function SettingsPage() {
                                     onClick={() => handleConnect(account.platform)}
                                   >
                                     <RefreshCw className="h-3 w-3 mr-1" />
-                                    Sync
+                                    {t('accounts.actions.sync')}
                                   </Button>
                                   <Button
                                     variant="outline"
@@ -595,7 +672,7 @@ export function SettingsPage() {
                                     {disconnecting === account.platform ? (
                                       <Loader2 className="h-3 w-3 animate-spin" />
                                     ) : (
-                                      'Disconnect'
+                                      t('accounts.actions.disconnect')
                                     )}
                                   </Button>
                                 </div>
@@ -610,12 +687,12 @@ export function SettingsPage() {
                                 {connecting === account.platform ? (
                                   <>
                                     <RefreshCw className="h-3 w-3 mr-1.5 animate-spin" />
-                                    Connecting...
+                                    {t('accounts.actions.connecting')}
                                   </>
                                 ) : (
                                   <>
                                     <ExternalLink className="h-3 w-3 mr-1.5" />
-                                    Connect
+                                    {t('accounts.actions.connect')}
                                   </>
                                 )}
                               </Button>
@@ -635,11 +712,9 @@ export function SettingsPage() {
                         </div>
                       </div>
                       <div>
-                        <h3 className="font-semibold text-sm">Your data is secure</h3>
+                        <h3 className="font-semibold text-sm">{t('accounts.security.heading')}</h3>
                         <p className="text-sm text-muted-foreground mt-1">
-                          We only access your public profile information and video statistics.
-                          We never post on your behalf or access private messages.
-                          You can disconnect at any time.
+                          {t('accounts.security.description')}
                         </p>
                       </div>
                     </div>
@@ -650,12 +725,12 @@ export function SettingsPage() {
               {/* Account Security */}
               <div className="rounded-lg border border-border bg-card p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  🔐 Account Security
+                  🔐 {t('accounts.accountSecurity.heading')}
                 </h3>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium mb-1.5 block">Password</label>
+                    <label className="text-sm font-medium mb-1.5 block">{t('accounts.accountSecurity.password')}</label>
                     <input
                       type="password"
                       value="••••••••••••"
@@ -665,7 +740,7 @@ export function SettingsPage() {
                   </div>
 
                   <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition">
-                    Change Password
+                    {t('accounts.accountSecurity.changePassword')}
                   </button>
                 </div>
               </div>
@@ -673,15 +748,15 @@ export function SettingsPage() {
               {/* Danger Zone */}
               <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2 text-red-600 dark:text-red-400">
-                  ⚠️ Danger Zone
+                  ⚠️ {t('accounts.dangerZone.heading')}
                 </h3>
 
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground">
-                    Once you delete your account, there is no going back. Please be certain.
+                    {t('accounts.dangerZone.description')}
                   </p>
                   <button className="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition">
-                    Delete Account
+                    {t('accounts.dangerZone.deleteAccount')}
                   </button>
                 </div>
               </div>
@@ -695,7 +770,7 @@ export function SettingsPage() {
                 <div className="flex items-center justify-center py-12">
                   <div className="text-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-                    <p className="text-sm text-muted-foreground">Loading usage data...</p>
+                    <p className="text-sm text-muted-foreground">{t('usage.loading')}</p>
                   </div>
                 </div>
               ) : usageData ? (
@@ -703,22 +778,22 @@ export function SettingsPage() {
                   {/* Current Plan */}
                   <div className="rounded-lg border border-border bg-card p-6">
                     <div>
-                      <h3 className="text-lg font-semibold">Your Plan: {usageData.plan.charAt(0).toUpperCase() + usageData.plan.slice(1)}</h3>
-                      <p className="text-sm text-muted-foreground">Resets: {new Date(usageData.reset_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                      <h3 className="text-lg font-semibold">{t('usage.yourPlan', { plan: usageData.plan.charAt(0).toUpperCase() + usageData.plan.slice(1) })}</h3>
+                      <p className="text-sm text-muted-foreground">{t('usage.resets', { date: new Date(usageData.reset_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) })}</p>
                     </div>
                   </div>
 
                   {/* AI Credits */}
                   <div className="rounded-lg border border-border bg-card p-6">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      💎 AI Credits
+                      💎 {t('usage.credits.heading')}
                     </h3>
 
                     <div className="space-y-4">
                       <div>
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm text-muted-foreground">
-                            {usageData.credits.monthly_limit - usageData.credits.monthly_used} / {usageData.credits.monthly_limit} remaining
+                            {t('usage.credits.remaining', { remaining: usageData.credits.monthly_limit - usageData.credits.monthly_used, limit: usageData.credits.monthly_limit })}
                           </span>
                           <span className="text-sm font-medium">
                             {Math.round(((usageData.credits.monthly_limit - usageData.credits.monthly_used) / usageData.credits.monthly_limit) * 100)}%
@@ -734,21 +809,21 @@ export function SettingsPage() {
 
                       <div className="pt-2 space-y-1 text-sm">
                         <p className="text-muted-foreground">
-                          Bonus Credits: <span className="text-foreground font-medium">{usageData.credits.bonus}</span> (never expire)
+                          {t('usage.credits.bonusCredits')} <span className="text-foreground font-medium">{usageData.credits.bonus}</span> {t('usage.credits.neverExpire')}
                         </p>
                         <p className="text-muted-foreground">
-                          Rollover: <span className="text-foreground font-medium">{usageData.credits.rollover}</span> (from last month)
+                          {t('usage.credits.rollover')} <span className="text-foreground font-medium">{usageData.credits.rollover}</span> {t('usage.credits.fromLastMonth')}
                         </p>
                       </div>
 
                       <div className="pt-2">
                         <p className="text-sm font-medium mb-2">
-                          Total Available: <span className="text-lg">{usageData.credits.total_available} credits</span>
+                          {t('usage.credits.totalAvailable')} <span className="text-lg">{t('usage.credits.creditsCount', { count: usageData.credits.total_available })}</span>
                         </p>
                       </div>
 
                       <button className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition">
-                        Buy More Credits
+                        {t('usage.credits.buyMore')}
                       </button>
                     </div>
                   </div>
@@ -756,25 +831,25 @@ export function SettingsPage() {
                   {/* This Month Stats */}
                   <div className="rounded-lg border border-border bg-card p-6">
                     <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                      📊 This Month
+                      📊 {t('usage.thisMonth.heading')}
                     </h3>
 
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">AI Scripts Generated</span>
+                        <span className="text-sm text-muted-foreground">{t('usage.thisMonth.scriptsGenerated')}</span>
                         <span className="font-medium">{usageData.stats.scripts_generated}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Chat Messages</span>
+                        <span className="text-sm text-muted-foreground">{t('usage.thisMonth.chatMessages')}</span>
                         <span className="font-medium">{usageData.stats.chat_messages}</span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">Deep Analyze</span>
+                        <span className="text-sm text-muted-foreground">{t('usage.thisMonth.deepAnalyze')}</span>
                         <span className="font-medium">{usageData.stats.deep_analyze}</span>
                       </div>
                       <div className="pt-2 border-t border-border mt-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">Total Credits Used</span>
+                          <span className="text-sm font-medium">{t('usage.thisMonth.totalCreditsUsed')}</span>
                           <span className="font-semibold">{usageData.credits.monthly_used}</span>
                         </div>
                       </div>
@@ -785,7 +860,7 @@ export function SettingsPage() {
                   <div className="rounded-lg border border-border bg-card p-6">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-lg font-semibold flex items-center gap-2">
-                        🤖 Auto Mode
+                        🤖 {t('usage.autoMode.heading')}
                       </h3>
                       <button
                         onClick={handleToggleAutoMode}
@@ -803,15 +878,15 @@ export function SettingsPage() {
                     </div>
 
                     <p className="text-sm text-muted-foreground mb-3">
-                      AI automatically chooses the best model for each task
+                      {t('usage.autoMode.description')}
                     </p>
 
                     {usageData.auto_mode.enabled && usageData.auto_mode.savings > 0 && (
                       <div className="mt-4 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
                         <p className="text-sm">
                           💰 <span className="font-medium text-green-600 dark:text-green-400">
-                            Saved this month: {usageData.auto_mode.savings} credits
-                          </span> vs manual Pro model
+                            {t('usage.autoMode.savedThisMonth', { count: usageData.auto_mode.savings })}
+                          </span> {t('usage.autoMode.vsManualPro')}
                         </p>
                       </div>
                     )}
@@ -819,12 +894,12 @@ export function SettingsPage() {
                 </>
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-muted-foreground">Failed to load usage data</p>
+                  <p className="text-muted-foreground">{t('usage.error')}</p>
                   <button
                     onClick={loadUsageData}
                     className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
                   >
-                    Retry
+                    {t('usage.retry')}
                   </button>
                 </div>
               )}
@@ -837,29 +912,29 @@ export function SettingsPage() {
               {/* Current Plan */}
               <div className="rounded-lg border border-border bg-card p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  💳 Current Plan
+                  💳 {t('billing.currentPlan.heading')}
                 </h3>
 
                 <div className="space-y-4">
                   <div className="p-4 rounded-lg bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-200/50 dark:border-purple-500/20">
                     <div className="flex items-center justify-between mb-2">
                       <div>
-                        <p className="font-semibold text-lg">Creator Plan</p>
-                        <p className="text-sm text-muted-foreground">$20/month</p>
+                        <p className="font-semibold text-lg">{t('billing.currentPlan.creatorPlan')}</p>
+                        <p className="text-sm text-muted-foreground">{t('billing.currentPlan.priceMonthly', { price: 20 })}</p>
                       </div>
                       <span className="px-3 py-1 rounded-full text-sm font-medium bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-                        Active
+                        {t('billing.currentPlan.active')}
                       </span>
                     </div>
-                    <p className="text-sm text-muted-foreground">Next billing: Feb 28, 2026</p>
+                    <p className="text-sm text-muted-foreground">{t('billing.currentPlan.nextBilling', { date: 'Feb 28, 2026' })}</p>
                   </div>
 
                   <div className="flex gap-3">
                     <button className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg font-medium hover:opacity-90 transition">
-                      Upgrade to Pro
+                      {t('billing.currentPlan.upgradeToPro')}
                     </button>
                     <button className="px-4 py-2 border border-border rounded-lg font-medium hover:bg-accent transition">
-                      Cancel Subscription
+                      {t('billing.currentPlan.cancelSubscription')}
                     </button>
                   </div>
                 </div>
@@ -868,7 +943,7 @@ export function SettingsPage() {
               {/* Payment Method */}
               <div className="rounded-lg border border-border bg-card p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  💰 Payment Method
+                  💰 {t('billing.paymentMethod.heading')}
                 </h3>
 
                 <div className="space-y-4">
@@ -879,16 +954,16 @@ export function SettingsPage() {
                       </div>
                       <div>
                         <p className="text-sm font-medium">•••• •••• •••• 6411</p>
-                        <p className="text-xs text-muted-foreground">Expires 12/27</p>
+                        <p className="text-xs text-muted-foreground">{t('billing.paymentMethod.expires', { date: '12/27' })}</p>
                       </div>
                     </div>
                     <button className="px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-accent transition">
-                      Edit
+                      {t('billing.paymentMethod.edit')}
                     </button>
                   </div>
 
                   <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium hover:bg-primary/90 transition">
-                    Update Payment Method
+                    {t('billing.paymentMethod.updatePaymentMethod')}
                   </button>
                 </div>
               </div>
@@ -896,19 +971,19 @@ export function SettingsPage() {
               {/* Billing History */}
               <div className="rounded-lg border border-border bg-card p-6">
                 <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  🧾 Billing History
+                  🧾 {t('billing.billingHistory.heading')}
                 </h3>
 
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-3 rounded-lg border border-border">
                     <div>
                       <p className="text-sm font-medium">Feb 1, 2026</p>
-                      <p className="text-xs text-muted-foreground">Creator Plan - Monthly</p>
+                      <p className="text-xs text-muted-foreground">{t('billing.billingHistory.creatorPlanMonthly')}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="font-semibold">$20.00</span>
                       <button className="px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-accent transition">
-                        Invoice
+                        {t('billing.billingHistory.invoice')}
                       </button>
                     </div>
                   </div>
@@ -916,12 +991,12 @@ export function SettingsPage() {
                   <div className="flex items-center justify-between p-3 rounded-lg border border-border">
                     <div>
                       <p className="text-sm font-medium">Jan 1, 2026</p>
-                      <p className="text-xs text-muted-foreground">Creator Plan - Monthly</p>
+                      <p className="text-xs text-muted-foreground">{t('billing.billingHistory.creatorPlanMonthly')}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="font-semibold">$20.00</span>
                       <button className="px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-accent transition">
-                        Invoice
+                        {t('billing.billingHistory.invoice')}
                       </button>
                     </div>
                   </div>
@@ -929,18 +1004,18 @@ export function SettingsPage() {
                   <div className="flex items-center justify-between p-3 rounded-lg border border-border">
                     <div>
                       <p className="text-sm font-medium">Dec 1, 2025</p>
-                      <p className="text-xs text-muted-foreground">Creator Plan - Monthly</p>
+                      <p className="text-xs text-muted-foreground">{t('billing.billingHistory.creatorPlanMonthly')}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="font-semibold">$20.00</span>
                       <button className="px-3 py-1.5 text-sm border border-border rounded-lg hover:bg-accent transition">
-                        Invoice
+                        {t('billing.billingHistory.invoice')}
                       </button>
                     </div>
                   </div>
 
                   <button className="w-full px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition">
-                    View All
+                    {t('billing.billingHistory.viewAll')}
                   </button>
                 </div>
               </div>

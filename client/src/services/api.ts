@@ -617,13 +617,21 @@ class ApiService {
    * Chat with AI assistant
    * POST /api/ai-scripts/chat
    */
-  async chatWithAI(
-    message: string,
-    context?: { trend?: any; history?: any[] }
-  ): Promise<{ response: string; suggestions?: string[] }> {
+  async chatWithAI(params: {
+    message: string;
+    context?: string;
+    history?: Array<{ role: string; content: string }>;
+    model?: string;
+    mode?: string;
+    language?: string;
+  }): Promise<{ response: string; credits_used: number; model_used: string }> {
     const response = await apiClient.post('/ai-scripts/chat', {
-      message,
-      context,
+      message: params.message,
+      context: params.context || '',
+      history: params.history || [],
+      model: params.model || 'gemini',
+      mode: params.mode || 'chat',
+      language: params.language || 'English',
     });
     return response.data;
   }
@@ -725,7 +733,7 @@ class ApiService {
    */
   async sendChatMessage(
     sessionId: string,
-    data: { message: string; mode?: string; model?: string }
+    data: { message: string; mode?: string; model?: string; language?: string }
   ): Promise<any> {
     const response = await apiClient.post(`/chat-sessions/${sessionId}/messages`, data);
     return response.data;
@@ -810,6 +818,7 @@ class ApiService {
     connections: any[];
     node_configs?: Record<string, any>;
     workflow_id?: number;
+    language?: string;
   }): Promise<any> {
     const response = await apiClient.post('/workflows/execute', data, {
       timeout: 300000, // 5 minutes for long workflows
@@ -828,6 +837,26 @@ class ApiService {
   }): Promise<any> {
     const response = await apiClient.post('/workflows/analyze-video', data, {
       timeout: 180000, // 3 minutes for video analysis
+    });
+    return response.data;
+  }
+
+  /**
+   * Upload video file from device
+   * POST /api/workflows/upload-video-file
+   */
+  async uploadVideo(file: File): Promise<{
+    success: boolean;
+    filename: string;
+    url: string;
+    local_path: string;
+    size_mb: number;
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post('/workflows/upload-video-file', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      timeout: 120000, // 2 minutes for large uploads
     });
     return response.data;
   }

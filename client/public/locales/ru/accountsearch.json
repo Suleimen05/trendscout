@@ -1,0 +1,33 @@
+{
+  "title": "Поиск аккаунтов",
+  "subtitle": "Поиск и анализ аккаунтов TikTok по имени пользователя",
+  "searchTitle": "Поиск аккаунтов",
+  "placeholder": "Введите имя пользователя TikTok (например, @username или username)...",
+  "search": "Поиск",
+  "searching": "Поиск...",
+  "results": "Результаты поиска ({{count}})",
+  "clearAll": "Очистить всё",
+  "emptyTitle": "Нет поисковых запросов",
+  "emptyDescription": "Введите имя пользователя TikTok выше для анализа аккаунта",
+  "addToCompetitors": "Добавить в конкуренты",
+  "recentVideos": "Недавние видео ({{count}})",
+  "showLess": "Показать меньше",
+  "showAll": "Показать все {{count}}",
+  "followers": "Подписчики",
+  "avgViews": "Ср. просмотры",
+  "engagement": "Вовлечённость",
+  "videos": "Видео",
+  "efficiency": "Эффективность",
+  "viralLift": "Вирусный подъём",
+  "toasts": {
+    "enterUsername": "Введите имя пользователя или URL TikTok для поиска",
+    "alreadySearched": "Этот аккаунт уже есть в результатах",
+    "found": "Найден аккаунт: @{{username}}",
+    "loadFailed": "Не удалось загрузить данные аккаунта",
+    "noData": "Данные для этого аккаунта недоступны",
+    "alreadyCompetitor": "@{{username}} уже в списке конкурентов",
+    "addedCompetitor": "@{{username}} добавлен в список конкурентов",
+    "addFailed": "Не удалось добавить как конкурента"
+  },
+  "error": "Аккаунт не найден или ошибка загрузки данных"
+}

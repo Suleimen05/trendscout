@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   CreditCard,
   Check,
@@ -30,6 +31,7 @@ const planDetails: Record<string, { name: string; price: { monthly: number; year
 };
 
 export function BillingPage() {
+  const { t } = useTranslation('accounts');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user, getAccessToken, refreshUser } = useAuth();
@@ -128,16 +130,19 @@ export function BillingPage() {
     });
   };
 
+  // Get feature list from translations
+  const features = t(`billing.features.${currentPlan}`, { returnObjects: true }) as string[];
+
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
           <CreditCard className="h-7 w-7" />
-          Billing
+          {t('billing.title')}
         </h1>
         <p className="text-muted-foreground">
-          Manage your subscription and billing information
+          {t('billing.subtitle')}
         </p>
       </div>
 
@@ -152,7 +157,7 @@ export function BillingPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Crown className="h-5 w-5" />
-                Current Plan
+                {t('billing.currentPlan')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -162,11 +167,11 @@ export function BillingPage() {
                     <Crown className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <p className="font-semibold text-lg">{planInfo.name} Plan</p>
+                    <p className="font-semibold text-lg">{t('billing.plan', { name: planInfo.name })}</p>
                     <p className="text-sm text-muted-foreground">
                       {currentPlan === 'free'
-                        ? 'Free forever'
-                        : `$${planInfo.price.monthly}/month`}
+                        ? t('billing.freeForever')
+                        : t('billing.perMonth', { price: planInfo.price.monthly })}
                     </p>
                   </div>
                 </div>
@@ -179,10 +184,10 @@ export function BillingPage() {
                   }
                 >
                   {subscription?.cancel_at_period_end
-                    ? 'Canceling'
+                    ? t('billing.canceling')
                     : subscription?.status === 'active'
-                    ? 'Active'
-                    : subscription?.status || 'Active'}
+                    ? t('billing.active')
+                    : subscription?.status || t('billing.active')}
                 </Badge>
               </div>
 
@@ -192,8 +197,8 @@ export function BillingPage() {
                   <Calendar className="h-4 w-4" />
                   <span>
                     {subscription.cancel_at_period_end
-                      ? `Access until ${formatDate(subscription.current_period_end)}`
-                      : `Renews on ${formatDate(subscription.current_period_end)}`}
+                      ? t('billing.accessUntil', { date: formatDate(subscription.current_period_end) })
+                      : t('billing.renewsOn', { date: formatDate(subscription.current_period_end) })}
                   </span>
                 </div>
               )}
@@ -204,12 +209,10 @@ export function BillingPage() {
                   <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
                   <div>
                     <p className="text-sm font-medium text-yellow-600">
-                      Subscription Canceled
+                      {t('billing.canceledTitle')}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Your subscription will end on{' '}
-                      {formatDate(subscription.current_period_end)}. You can
-                      resubscribe anytime.
+                      {t('billing.canceledDescription', { date: formatDate(subscription.current_period_end) })}
                     </p>
                   </div>
                 </div>
@@ -220,25 +223,23 @@ export function BillingPage() {
           {/* Actions */}
           <Card>
             <CardHeader>
-              <CardTitle>Manage Subscription</CardTitle>
+              <CardTitle>{t('billing.manageSubscription')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               {currentPlan === 'free' ? (
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    Upgrade to unlock premium features like advanced analytics,
-                    unlimited AI scripts, and more.
+                    {t('billing.upgradeDescription')}
                   </p>
                   <Button onClick={() => navigate('/dashboard/pricing')}>
                     <Crown className="h-4 w-4 mr-2" />
-                    View Plans & Upgrade
+                    {t('billing.viewPlans')}
                   </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    Manage your subscription, update payment method, view invoices,
-                    or cancel your plan.
+                    {t('billing.manageBillingDescription')}
                   </p>
                   <div className="flex gap-3">
                     <Button
@@ -250,13 +251,13 @@ export function BillingPage() {
                       ) : (
                         <ExternalLink className="h-4 w-4 mr-2" />
                       )}
-                      Manage Billing
+                      {t('billing.manageBilling')}
                     </Button>
                     <Button
                       variant="outline"
                       onClick={() => navigate('/dashboard/pricing')}
                     >
-                      Change Plan
+                      {t('billing.changePlan')}
                     </Button>
                   </div>
                 </div>
@@ -267,46 +268,13 @@ export function BillingPage() {
           {/* Features */}
           <Card>
             <CardHeader>
-              <CardTitle>What's Included</CardTitle>
+              <CardTitle>{t('billing.whatsIncluded')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {currentPlan === 'free' && (
-                  <>
-                    <FeatureItem text="Connect up to 3 accounts" />
-                    <FeatureItem text="Basic analytics dashboard" />
-                    <FeatureItem text="AI-powered insights" />
-                    <FeatureItem text="Video library access" />
-                  </>
-                )}
-                {currentPlan === 'creator' && (
-                  <>
-                    <FeatureItem text="Everything in Free" />
-                    <FeatureItem text="Unlimited trend views" />
-                    <FeatureItem text="50 AI scripts per month" />
-                    <FeatureItem text="7-day historical data" />
-                    <FeatureItem text="Export to CSV" />
-                  </>
-                )}
-                {currentPlan === 'pro' && (
-                  <>
-                    <FeatureItem text="Everything in Creator" />
-                    <FeatureItem text="Deep Analyze (6-layer UTS)" />
-                    <FeatureItem text="Unlimited AI scripts" />
-                    <FeatureItem text="30-day historical data" />
-                    <FeatureItem text="Visual clustering (AI)" />
-                    <FeatureItem text="Priority support" />
-                  </>
-                )}
-                {currentPlan === 'agency' && (
-                  <>
-                    <FeatureItem text="Everything in Pro" />
-                    <FeatureItem text="5 team members" />
-                    <FeatureItem text="90-day historical data" />
-                    <FeatureItem text="API access (10K/mo)" />
-                    <FeatureItem text="Dedicated support" />
-                  </>
-                )}
+                {Array.isArray(features) && features.map((feature, index) => (
+                  <FeatureItem key={index} text={feature} />
+                ))}
               </div>
             </CardContent>
           </Card>

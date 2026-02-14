@@ -1,0 +1,38 @@
+{
+  "title": "Feedback",
+  "subtitle": "Help us improve Rizko.ai - your ideas and feedback matter!",
+  "typeQuestion": "What kind of feedback do you have?",
+  "types": {
+    "idea": { "label": "Feature Idea", "description": "Suggest a new feature" },
+    "bug": { "label": "Bug Report", "description": "Something not working?" },
+    "love": { "label": "I Love It!", "description": "Share what you love" },
+    "other": { "label": "Other", "description": "General feedback" }
+  },
+  "messageTitle": "Tell us more",
+  "placeholders": {
+    "idea": "I'd love to see a feature that...",
+    "bug": "I found a bug: when I try to...",
+    "love": "I really love how Rizko.ai...",
+    "default": "Your feedback here..."
+  },
+  "charCount": "{{count}}/1000 characters",
+  "ratingTitle": "How would you rate Rizko.ai overall?",
+  "ratings": {
+    "5": "Excellent!",
+    "4": "Great!",
+    "3": "Good",
+    "2": "Could be better",
+    "1": "Needs improvement"
+  },
+  "submit": "Send Feedback",
+  "submitting": "Sending...",
+  "thankYou": "Thank You!",
+  "thankYouMessage": "Your feedback helps us make Rizko.ai better for everyone. We read every message!",
+  "sendMore": "Send More Feedback",
+  "emailCta": "Or email us directly at",
+  "validation": {
+    "selectTypeAndMessage": "Please select a feedback type and write a message",
+    "minLength": "Message must be at least 10 characters"
+  },
+  "success": "Thank you for your feedback!"
+}

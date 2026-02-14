@@ -7,7 +7,8 @@
  * - Output nodes: format options + full output view
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   X,
   Video,
@@ -21,10 +22,14 @@ import {
   LayoutGrid,
   Copy,
   Check,
+  Upload,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ScrollArea } from '@/components/ui/scroll-area';
+// ScrollArea removed — native overflow-y-auto avoids Radix viewport width overflow
 import { cn } from '@/lib/utils';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -55,22 +60,33 @@ const GPTIcon = () => (
   </svg>
 );
 
-const modelOptions = [
-  { id: 'gemini', name: 'Gemini 2.0 Flash', icon: GeminiIcon, cost: 1 },
-  { id: 'claude', name: 'Claude 3.5 Sonnet', icon: ClaudeIcon, cost: 5 },
-  { id: 'gpt4', name: 'GPT-4o', icon: GPTIcon, cost: 4 },
+const modelOptionsDefs = [
+  { id: 'gemini', icon: GeminiIcon, baseCost: 1 },
+  { id: 'claude', icon: ClaudeIcon, baseCost: 5 },
+  { id: 'gpt4', icon: GPTIcon, baseCost: 4 },
 ];
 
+// Per-node-type costs (heavier nodes cost more) — exported for WorkflowBuilder
+export const NODE_MODEL_COSTS: Record<string, Record<string, number>> = {
+  analyze:    { gemini: 1, claude: 5, gpt4: 4 },
+  extract:    { gemini: 1, claude: 5, gpt4: 4 },
+  style:      { gemini: 1, claude: 5, gpt4: 4 },
+  generate:   { gemini: 2, claude: 6, gpt4: 5 },
+  refine:     { gemini: 1, claude: 5, gpt4: 4 },
+  script:     { gemini: 1, claude: 5, gpt4: 4 },
+  storyboard: { gemini: 2, claude: 6, gpt4: 5 },
+};
+
 const nodeIcons: Record<string, React.ReactNode> = {
-  video: <Video className="h-4 w-4" />,
-  brand: <Building2 className="h-4 w-4" />,
-  analyze: <Search className="h-4 w-4" />,
-  extract: <Target className="h-4 w-4" />,
-  style: <Palette className="h-4 w-4" />,
-  generate: <Wand2 className="h-4 w-4" />,
-  refine: <MessageSquare className="h-4 w-4" />,
-  script: <FileText className="h-4 w-4" />,
-  storyboard: <LayoutGrid className="h-4 w-4" />,
+  video: <Video className="h-5 w-5" />,
+  brand: <Building2 className="h-5 w-5" />,
+  analyze: <Search className="h-5 w-5" />,
+  extract: <Target className="h-5 w-5" />,
+  style: <Palette className="h-5 w-5" />,
+  generate: <Wand2 className="h-5 w-5" />,
+  refine: <MessageSquare className="h-5 w-5" />,
+  script: <FileText className="h-5 w-5" />,
+  storyboard: <LayoutGrid className="h-5 w-5" />,
 };
 
 const nodeColors: Record<string, string> = {
@@ -85,151 +101,44 @@ const nodeColors: Record<string, string> = {
   storyboard: 'from-orange-500 to-yellow-500',
 };
 
-const nodeTitles: Record<string, string> = {
-  video: 'Video Input',
-  brand: 'Brand Brief',
-  analyze: 'Analyze',
-  extract: 'Extract',
-  style: 'Style Match',
-  generate: 'Generate',
-  refine: 'Refine',
-  script: 'Script Output',
-  storyboard: 'Storyboard',
-};
-
 const aiNodeTypes = ['analyze', 'extract', 'style', 'generate', 'refine', 'script', 'storyboard'];
-
-const defaultPromptHints: Record<string, string> = {
-  analyze: 'e.g., "Focus on hook techniques and emotional triggers for fitness content"',
-  extract: 'e.g., "Extract only hooks and CTAs suitable for beauty niche"',
-  style: 'e.g., "Match the fast-paced, text-heavy style with trending sounds"',
-  generate: 'e.g., "Create a 30-second script about productivity tips for students"',
-  refine: 'e.g., "Make it more conversational and add humor"',
-  script: 'e.g., "Format for teleprompter use with clear timing cues"',
-  storyboard: 'e.g., "Include B-roll suggestions and specific camera angles"',
-};
-
-const nodeDescriptions: Record<string, { title: string; description: string; tips: string[] }> = {
-  video: {
-    title: 'Video Input',
-    description: 'Source video for analysis. Drag saved videos from the sidebar.',
-    tips: [
-      'Higher UTS score = better viral potential',
-      'Video description is used for content analysis',
-      'Connect to Analyze or Extract nodes'
-    ]
-  },
-  brand: {
-    title: 'Brand Brief',
-    description: 'Define your brand identity to align all generated content.',
-    tips: [
-      'Include target audience demographics',
-      'Specify tone of voice (casual, professional, etc.)',
-      'Add any content restrictions or guidelines',
-      'Mention key messages or values'
-    ]
-  },
-  analyze: {
-    title: 'Deep Analysis',
-    description: 'AI analyzes content for viral mechanics, hooks, and engagement patterns.',
-    tips: [
-      'Identifies why content works',
-      'Extracts replicable patterns',
-      'Best for understanding viral mechanics'
-    ]
-  },
-  extract: {
-    title: 'Element Extraction',
-    description: 'Pulls out reusable components: hooks, CTAs, hashtags, and templates.',
-    tips: [
-      'Creates copy-paste ready hooks',
-      'Generates hashtag strategy',
-      'Outputs CTA templates'
-    ]
-  },
-  style: {
-    title: 'Style Guide',
-    description: 'Creates detailed style guidelines for consistent content replication.',
-    tips: [
-      'Defines visual aesthetic',
-      'Specifies editing patterns',
-      'Includes audio/music direction'
-    ]
-  },
-  generate: {
-    title: 'Script Generator',
-    description: 'AI creates complete, production-ready TikTok scripts.',
-    tips: [
-      'Generates hook, body, and CTA',
-      'Includes visual directions',
-      'Adds hashtag recommendations'
-    ]
-  },
-  refine: {
-    title: 'Polish & Improve',
-    description: 'Optimizes existing scripts for maximum viral potential.',
-    tips: [
-      'Strengthens hooks',
-      'Adds viral mechanics',
-      'Improves engagement triggers'
-    ]
-  },
-  script: {
-    title: 'Final Script',
-    description: 'Formats script for production use - ready to film.',
-    tips: [
-      'Clean, professional format',
-      'Includes timing markers',
-      'Choose output format (Markdown/Plain/JSON)'
-    ]
-  },
-  storyboard: {
-    title: 'Visual Storyboard',
-    description: 'Scene-by-scene breakdown with visuals, actions, and timing.',
-    tips: [
-      'Shot-by-shot guide',
-      'Includes transitions',
-      'Equipment/prop checklist'
-    ]
-  },
-};
 
 // Markdown components for output rendering
 const MarkdownComponents = {
   p: ({ children }: { children: React.ReactNode }) => (
-    <p className="mb-2 last:mb-0 leading-relaxed text-xs">{children}</p>
+    <p className="mb-2.5 last:mb-0 leading-relaxed text-[13px]">{children}</p>
   ),
   h1: ({ children }: { children: React.ReactNode }) => (
-    <h1 className="text-sm font-bold mb-2 mt-3 first:mt-0">{children}</h1>
+    <h1 className="text-base font-bold mb-2.5 mt-4 first:mt-0 text-foreground">{children}</h1>
   ),
   h2: ({ children }: { children: React.ReactNode }) => (
-    <h2 className="text-xs font-bold mb-1.5 mt-2 first:mt-0">{children}</h2>
+    <h2 className="text-sm font-bold mb-2 mt-3 first:mt-0 text-foreground">{children}</h2>
   ),
   h3: ({ children }: { children: React.ReactNode }) => (
-    <h3 className="text-xs font-semibold mb-1 mt-2 first:mt-0">{children}</h3>
+    <h3 className="text-sm font-semibold mb-1.5 mt-2.5 first:mt-0 text-foreground">{children}</h3>
   ),
   ul: ({ children }: { children: React.ReactNode }) => (
-    <ul className="list-disc pl-4 mb-2 space-y-0.5 text-xs">{children}</ul>
+    <ul className="list-disc pl-5 mb-2.5 space-y-1 text-[13px]">{children}</ul>
   ),
   ol: ({ children }: { children: React.ReactNode }) => (
-    <ol className="list-decimal pl-4 mb-2 space-y-0.5 text-xs">{children}</ol>
+    <ol className="list-decimal pl-5 mb-2.5 space-y-1 text-[13px]">{children}</ol>
   ),
   li: ({ children }: { children: React.ReactNode }) => (
     <li className="leading-relaxed">{children}</li>
   ),
   strong: ({ children }: { children: React.ReactNode }) => (
-    <strong className="font-semibold text-white">{children}</strong>
+    <strong className="font-semibold text-foreground">{children}</strong>
   ),
   code: ({ children, className }: { children: React.ReactNode; className?: string }) => {
     const isBlock = className?.includes('language-');
     if (isBlock) {
       return (
-        <pre className="bg-zinc-900 text-zinc-300 rounded-md p-2 my-2 text-[10px] overflow-x-auto">
+        <pre className="bg-black/20 text-foreground/90 rounded-lg p-3 my-2.5 text-[13px] overflow-x-auto border border-border/50">
           <code>{children}</code>
         </pre>
       );
     }
-    return <code className="bg-zinc-700 text-zinc-200 px-1 py-0.5 rounded text-[10px]">{children}</code>;
+    return <code className="bg-black/20 text-foreground/90 px-1.5 py-0.5 rounded text-[13px]">{children}</code>;
   },
 };
 
@@ -254,6 +163,7 @@ interface WorkflowNode {
     uts: number;
     thumb: string;
     url?: string;
+    localPath?: string;
   };
   outputContent?: string;
   config?: NodeConfig;
@@ -268,6 +178,7 @@ interface SavedVideoItem {
   uts: number;
   thumb: string;
   url?: string;
+  localPath?: string;
 }
 
 interface NodeConfigPanelProps {
@@ -276,15 +187,20 @@ interface NodeConfigPanelProps {
   onUpdate: (nodeId: number, config: NodeConfig) => void;
   savedVideos?: SavedVideoItem[];
   onAttachVideo?: (nodeId: number, videoData: SavedVideoItem) => void;
+  onUploadVideo?: (nodeId: number, file: File) => Promise<void>;
 }
 
-export function NodeConfigPanel({ node, onClose, onUpdate, savedVideos = [], onAttachVideo }: NodeConfigPanelProps) {
+export function NodeConfigPanel({ node, onClose, onUpdate, savedVideos = [], onAttachVideo, onUploadVideo }: NodeConfigPanelProps) {
+  const { t } = useTranslation('workflow');
   const [customPrompt, setCustomPrompt] = useState(node.config?.customPrompt || '');
   const [selectedModel, setSelectedModel] = useState(node.config?.model || 'gemini');
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [brandContext, setBrandContext] = useState(node.config?.brandContext || '');
   const [outputFormat, setOutputFormat] = useState(node.config?.outputFormat || 'markdown');
   const [copied, setCopied] = useState(false);
   const [showVideoPicker, setShowVideoPicker] = useState(false);
+  const [infoExpanded, setInfoExpanded] = useState(false);
 
   // Sync when node changes
   useEffect(() => {
@@ -292,7 +208,20 @@ export function NodeConfigPanel({ node, onClose, onUpdate, savedVideos = [], onA
     setSelectedModel(node.config?.model || 'gemini');
     setBrandContext(node.config?.brandContext || '');
     setOutputFormat(node.config?.outputFormat || 'markdown');
+    setInfoExpanded(false);
   }, [node.id]);
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !onUploadVideo) return;
+    setIsUploading(true);
+    try {
+      await onUploadVideo(node.id, file);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   const isAINode = aiNodeTypes.includes(node.type);
 
@@ -317,21 +246,30 @@ export function NodeConfigPanel({ node, onClose, onUpdate, savedVideos = [], onA
   };
 
   return (
-    <div className="absolute top-0 right-0 h-full w-80 bg-card border-l border-border z-50 flex flex-col shadow-2xl animate-in slide-in-from-right-5 duration-200">
+    <div className="absolute top-0 right-0 h-full w-[420px] bg-card/95 backdrop-blur-xl border-l border-border z-50 flex flex-col shadow-2xl animate-in slide-in-from-right-5 duration-200">
+      {/* Hidden file input for video upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="video/mp4,video/quicktime,video/x-msvideo,video/webm,video/x-matroska,.mp4,.mov,.avi,.webm,.mkv,.m4v"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
+
       {/* Header */}
-      <div className={cn("px-4 py-3 border-b border-border bg-gradient-to-r", nodeColors[node.type] || 'from-purple-500 to-pink-500')}>
+      <div className={cn("px-5 py-3.5 border-b border-white/10 bg-gradient-to-r", nodeColors[node.type] || 'from-purple-500 to-pink-500')}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-white">
+          <div className="flex items-center gap-2.5 text-white">
             {nodeIcons[node.type]}
-            <span className="font-medium text-sm">{nodeTitles[node.type] || node.type}</span>
-            <Badge variant="secondary" className="bg-white/20 text-white border-0 text-[10px]">
+            <span className="font-semibold text-base">{t(`nodes.${node.type}.title`, node.type)}</span>
+            <Badge variant="secondary" className="bg-white/20 text-white border-0 text-xs font-mono">
               #{node.id}
             </Badge>
           </div>
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-white/70 hover:text-white hover:bg-white/20"
+            className="h-8 w-8 text-white/70 hover:text-white hover:bg-white/20 rounded-lg"
             onClick={onClose}
           >
             <X className="h-4 w-4" />
@@ -339,108 +277,157 @@ export function NodeConfigPanel({ node, onClose, onUpdate, savedVideos = [], onA
         </div>
       </div>
 
-      <ScrollArea className="flex-1">
-        <div className="p-4 space-y-4">
-          {/* Node Description */}
-          {nodeDescriptions[node.type] && (
-            <div className="bg-secondary/50 border border-border rounded-lg p-3">
-              <p className="text-xs text-muted-foreground mb-2">
-                {nodeDescriptions[node.type].description}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="p-5 space-y-5 max-w-full">
+
+          {/* Node Description — collapsible */}
+          <div className="bg-secondary/50 border border-border rounded-xl overflow-hidden">
+            <button
+              onClick={() => setInfoExpanded(!infoExpanded)}
+              className="w-full flex items-center justify-between px-4 py-3 hover:bg-secondary/80 transition-colors"
+            >
+              <p className="text-sm text-muted-foreground text-left min-w-0 break-words">
+                {t(`nodeConfig.nodeInfo.${node.type}.description`, '')}
               </p>
-              <div className="space-y-1">
-                {nodeDescriptions[node.type].tips.map((tip, i) => (
-                  <div key={i} className="flex items-start gap-2 text-[10px] text-muted-foreground">
-                    <span className="text-purple-400">•</span>
+              {infoExpanded ? (
+                <ChevronUp className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-muted-foreground flex-shrink-0 ml-2" />
+              )}
+            </button>
+            {infoExpanded && (
+              <div className="px-4 pb-3 space-y-1.5 border-t border-border/50 pt-2.5">
+                {(t(`nodeConfig.nodeInfo.${node.type}.tips`, { returnObjects: true }) as string[]).map((tip, i) => (
+                  <div key={i} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                    <span className="text-purple-400 mt-0.5">•</span>
                     <span>{tip}</span>
                   </div>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Video Node Config */}
           {node.type === 'video' && (
             <>
               {node.videoData ? (
                 <div className="space-y-3">
-                  <div className="w-full h-32 bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden relative">
+                  <div className="w-full h-36 bg-secondary rounded-xl overflow-hidden relative">
                     {node.videoData.thumb ? (
                       <img src={node.videoData.thumb} alt="" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <Video className="h-10 w-10 text-gray-600" />
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-secondary to-secondary/50">
+                        <Video className="h-12 w-12 text-muted-foreground/50" />
                       </div>
                     )}
-                    <Badge className="absolute top-2 left-2 bg-gradient-to-r from-red-500 to-orange-500 text-white border-0 text-xs">
+                    <Badge className="absolute top-2.5 left-2.5 bg-gradient-to-r from-red-500 to-orange-500 text-white border-0 text-xs font-semibold">
                       UTS {node.videoData.uts}
                     </Badge>
-                    <Badge className="absolute top-2 right-2 bg-black/60 text-white border-0 text-xs">
+                    <Badge className="absolute top-2.5 right-2.5 bg-black/60 text-white border-0 text-xs">
                       {node.videoData.platform}
                     </Badge>
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2 px-0.5">
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline" className="text-xs">{node.videoData.views} views</Badge>
+                      <Badge variant="outline" className="text-xs">{node.videoData.views} {t('nodeConfig.views')}</Badge>
                     </div>
-                    <p className="text-xs font-medium">@{node.videoData.author}</p>
-                    <p className="text-xs text-muted-foreground">{node.videoData.desc}</p>
+                    <p className="text-sm font-medium">@{node.videoData.author}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed break-words">{node.videoData.desc}</p>
                     {node.videoData.url && (
                       <a
                         href={node.videoData.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-xs text-blue-400 hover:text-blue-300 underline"
+                        className="text-sm text-blue-400 hover:text-blue-300 underline underline-offset-2"
                       >
-                        Open original
+                        {t('nodeConfig.openOriginal')}
                       </a>
                     )}
                   </div>
-                  {/* Change Video Button */}
-                  {savedVideos.length > 0 && onAttachVideo && (
-                    <div>
+                  {/* Change Video / Upload Buttons */}
+                  <div className="flex gap-2">
+                    {savedVideos.length > 0 && onAttachVideo && (
                       <button
                         onClick={() => setShowVideoPicker(prev => !prev)}
-                        className="w-full text-xs text-center py-1.5 rounded-lg border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-purple-500 transition-colors"
+                        className="flex-1 text-sm text-center py-2 rounded-xl border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-purple-500 transition-colors"
                       >
-                        Change Video
+                        {t('nodeConfig.changeVideo')}
                       </button>
-                    </div>
-                  )}
+                    )}
+                    {onUploadVideo && (
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                        className="flex-1 text-sm text-center py-2 rounded-xl border border-dashed border-border text-muted-foreground hover:text-foreground hover:border-blue-500 transition-colors flex items-center justify-center gap-1.5"
+                      >
+                        {isUploading ? (
+                          <><Loader2 className="h-3.5 w-3.5 animate-spin" />{t('nodeConfig.uploadingVideo')}</>
+                        ) : (
+                          <><Upload className="h-3.5 w-3.5" />{t('nodeConfig.uploadFromDevice')}</>
+                        )}
+                      </button>
+                    )}
+                  </div>
                 </div>
               ) : (
-                <div className="text-center py-6">
-                  <Video className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
-                  <p className="text-sm text-muted-foreground">No video attached</p>
-                  <p className="text-xs text-muted-foreground mt-1 mb-3">
-                    {savedVideos.length > 0 ? 'Select a video below or drag from the sidebar' : 'Drag a video from the sidebar onto this node'}
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-secondary flex items-center justify-center">
+                    <Video className="h-8 w-8 text-muted-foreground/50" />
+                  </div>
+                  <p className="text-sm font-medium text-muted-foreground">{t('nodeConfig.noVideoAttached')}</p>
+                  <p className="text-sm text-muted-foreground/70 mt-1 mb-4">
+                    {savedVideos.length > 0 ? t('nodeConfig.selectVideoOrDrag') : t('nodeConfig.dragVideoFromSidebar')}
                   </p>
-                  {savedVideos.length > 0 && !showVideoPicker && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setShowVideoPicker(true)}
-                      className="text-xs"
-                    >
-                      <Video className="h-3 w-3 mr-1.5" />
-                      Browse Saved Videos
-                    </Button>
-                  )}
+                  <div className="flex flex-col gap-2.5 items-center">
+                    {savedVideos.length > 0 && !showVideoPicker && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowVideoPicker(true)}
+                        className="text-sm rounded-xl"
+                      >
+                        <Video className="h-4 w-4 mr-1.5" />
+                        {t('nodeConfig.browseSavedVideos')}
+                      </Button>
+                    )}
+                    {onUploadVideo && (
+                      <>
+                        {savedVideos.length > 0 && (
+                          <p className="text-sm text-muted-foreground/60">{t('nodeConfig.orUploadFromDevice')}</p>
+                        )}
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={isUploading}
+                          className="text-sm rounded-xl"
+                        >
+                          {isUploading ? (
+                            <><Loader2 className="h-4 w-4 mr-1.5 animate-spin" />{t('nodeConfig.uploadingVideo')}</>
+                          ) : (
+                            <><Upload className="h-4 w-4 mr-1.5" />{t('nodeConfig.uploadFromDevice')}</>
+                          )}
+                        </Button>
+                        <p className="text-xs text-muted-foreground/50">{t('nodeConfig.maxFileSize')}</p>
+                      </>
+                    )}
+                  </div>
                 </div>
               )}
 
               {/* Video Picker */}
               {showVideoPicker && savedVideos.length > 0 && onAttachVideo && (
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] uppercase text-muted-foreground tracking-wide font-semibold">Select Video</span>
+                    <span className="text-xs uppercase text-muted-foreground tracking-wider font-semibold">{t('nodeConfig.selectVideo')}</span>
                     <button
                       onClick={() => setShowVideoPicker(false)}
-                      className="p-1 rounded hover:bg-secondary text-muted-foreground"
+                      className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground"
                     >
-                      <X className="h-3 w-3" />
+                      <X className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                  <div className="space-y-1 max-h-[200px] overflow-y-auto pr-1">
+                  <div className="space-y-1.5 max-h-[220px] overflow-y-auto pr-1">
                     {savedVideos.map(video => (
                       <button
                         key={video.id}
@@ -449,30 +436,30 @@ export function NodeConfigPanel({ node, onClose, onUpdate, savedVideos = [], onA
                           setShowVideoPicker(false);
                         }}
                         className={cn(
-                          "w-full flex gap-2 p-2 rounded-lg border text-left transition-all",
+                          "w-full flex gap-2.5 p-2.5 rounded-xl border text-left transition-all",
                           node.videoData?.id === video.id
                             ? "border-purple-500 bg-purple-500/10"
                             : "border-border bg-secondary/30 hover:border-purple-400 hover:bg-secondary/60"
                         )}
                       >
-                        <div className="w-10 h-14 bg-gradient-to-br from-gray-800 to-gray-900 rounded overflow-hidden flex-shrink-0">
+                        <div className="w-11 h-14 bg-secondary rounded-lg overflow-hidden flex-shrink-0">
                           {video.thumb ? (
                             <img src={video.thumb} alt="" className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center">
-                              <Video className="h-3 w-3 text-gray-600" />
+                              <Video className="h-4 w-4 text-muted-foreground" />
                             </div>
                           )}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1 mb-0.5">
-                            <Badge className="bg-gradient-to-r from-red-500 to-orange-500 text-white border-0 text-[8px] px-1 py-0 h-3.5">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <Badge className="bg-gradient-to-r from-red-500 to-orange-500 text-white border-0 text-xs px-1.5 py-0 h-5">
                               {video.uts}
                             </Badge>
-                            <span className="text-[10px] text-muted-foreground">{video.platform}</span>
+                            <span className="text-xs text-muted-foreground">{video.platform}</span>
                           </div>
-                          <p className="text-[10px] font-medium truncate">@{video.author}</p>
-                          <p className="text-[9px] text-muted-foreground line-clamp-1">{video.desc}</p>
+                          <p className="text-sm font-medium truncate">@{video.author}</p>
+                          <p className="text-xs text-muted-foreground line-clamp-1">{video.desc}</p>
                         </div>
                       </button>
                     ))}
@@ -486,25 +473,20 @@ export function NodeConfigPanel({ node, onClose, onUpdate, savedVideos = [], onA
           {node.type === 'brand' && (
             <div className="space-y-3">
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                  Brand Context
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  {t('nodeConfig.brandContext')}
                   <span className="text-purple-400 ml-1">*</span>
                 </label>
                 <textarea
                   value={brandContext}
                   onChange={(e) => setBrandContext(e.target.value)}
-                  placeholder={`Example:
-Brand: FitLife App - fitness tracking for busy professionals
-Audience: 25-40 year olds, health-conscious, time-poor
-Voice: Motivational but not preachy, casual, data-driven
-Values: Simplicity, progress over perfection, community
-Avoid: Extreme diet talk, unrealistic promises`}
-                  className="w-full h-48 bg-secondary border border-border rounded-lg p-3 text-xs resize-none focus:outline-none focus:border-purple-500 transition-colors"
+                  placeholder={t('nodeConfig.brandPlaceholder')}
+                  className="w-full h-52 bg-secondary border border-border rounded-xl p-3.5 text-sm resize-none focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 transition-all leading-relaxed"
                 />
               </div>
-              <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-2.5">
-                <p className="text-[10px] text-purple-300">
-                  <strong>Pro tip:</strong> The more specific your brand context, the better aligned your generated content will be. Include what makes you unique!
+              <div className="bg-purple-500/10 border border-purple-500/30 rounded-xl p-3">
+                <p className="text-sm text-purple-600 dark:text-purple-300 leading-relaxed break-words">
+                  <strong>{t('nodeConfig.brandProTip')}</strong> {t('nodeConfig.brandProTipText')}
                 </p>
               </div>
             </div>
@@ -515,45 +497,48 @@ Avoid: Extreme diet talk, unrealistic promises`}
             <>
               {/* Model Selector */}
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">AI Model</label>
-                <div className="space-y-1.5">
-                  {modelOptions.map(model => (
-                    <button
-                      key={model.id}
-                      onClick={() => setSelectedModel(model.id)}
-                      className={cn(
-                        "w-full flex items-center gap-3 p-2.5 rounded-lg border transition-all",
-                        selectedModel === model.id
-                          ? "border-purple-500 bg-purple-500/10"
-                          : "border-border bg-secondary/50 hover:border-purple-400"
-                      )}
-                    >
-                      <model.icon />
-                      <div className="flex-1 text-left">
-                        <div className="text-xs font-medium">{model.name}</div>
-                      </div>
-                      <Badge variant="outline" className="text-[10px]">
-                        {model.cost} cr
-                      </Badge>
-                    </button>
-                  ))}
+                <label className="text-sm font-medium text-foreground mb-2.5 block">{t('nodeConfig.aiModel')}</label>
+                <div className="space-y-2">
+                  {modelOptionsDefs.map(model => {
+                    const cost = NODE_MODEL_COSTS[node.type]?.[model.id] ?? model.baseCost;
+                    return (
+                      <button
+                        key={model.id}
+                        onClick={() => setSelectedModel(model.id)}
+                        className={cn(
+                          "w-full flex items-center gap-3 p-3 rounded-xl border transition-all",
+                          selectedModel === model.id
+                            ? "border-purple-500 bg-purple-500/10 shadow-sm shadow-purple-500/10"
+                            : "border-border bg-secondary/30 hover:border-purple-400 hover:bg-secondary/50"
+                        )}
+                      >
+                        <model.icon />
+                        <div className="flex-1 text-left">
+                          <div className="text-sm font-medium">{t(`models.${model.id}.name`)}</div>
+                        </div>
+                        <Badge variant="outline" className="text-xs font-medium">
+                          {cost} {t('nodeConfig.cr')}
+                        </Badge>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               {/* Custom Prompt */}
               <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                  Custom Prompt
-                  <span className="text-muted-foreground font-normal ml-1">(optional)</span>
+                <label className="text-sm font-medium text-foreground mb-2 block">
+                  {t('nodeConfig.customPrompt')}
+                  <span className="text-muted-foreground font-normal ml-1.5">{t('nodeConfig.optional')}</span>
                 </label>
                 <textarea
                   value={customPrompt}
                   onChange={(e) => setCustomPrompt(e.target.value)}
-                  placeholder={defaultPromptHints[node.type] || 'Enter a custom prompt for this node...'}
-                  className="w-full h-32 bg-secondary border border-border rounded-lg p-3 text-xs resize-none focus:outline-none focus:border-purple-500 transition-colors"
+                  placeholder={t(`nodeConfig.promptHints.${node.type}`, t('nodeConfig.customPromptPlaceholder'))}
+                  className="w-full h-36 bg-secondary border border-border rounded-xl p-3.5 text-sm resize-none focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500/30 transition-all leading-relaxed"
                 />
-                <p className="text-[10px] text-muted-foreground mt-1">
-                  Leave empty to use the default prompt. The input from connected nodes is automatically prepended.
+                <p className="text-xs text-muted-foreground/70 mt-1.5 leading-relaxed break-words">
+                  {t('nodeConfig.customPromptHint')}
                 </p>
               </div>
             </>
@@ -562,17 +547,17 @@ Avoid: Extreme diet talk, unrealistic promises`}
           {/* Output Format for script/storyboard */}
           {['script', 'storyboard'].includes(node.type) && (
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Output Format</label>
-              <div className="flex gap-1.5">
+              <label className="text-sm font-medium text-foreground mb-2.5 block">{t('nodeConfig.outputFormat')}</label>
+              <div className="flex gap-2">
                 {['markdown', 'plain', 'json'].map(fmt => (
                   <button
                     key={fmt}
                     onClick={() => setOutputFormat(fmt)}
                     className={cn(
-                      "flex-1 py-1.5 text-xs rounded-lg border transition-colors capitalize",
+                      "flex-1 py-2 text-sm rounded-xl border transition-all capitalize font-medium",
                       outputFormat === fmt
-                        ? "border-purple-500 bg-purple-500/10 text-foreground"
-                        : "border-border bg-secondary/50 text-muted-foreground hover:border-purple-400"
+                        ? "border-purple-500 bg-purple-500/10 text-foreground shadow-sm shadow-purple-500/10"
+                        : "border-border bg-secondary/30 text-muted-foreground hover:border-purple-400 hover:bg-secondary/50"
                     )}
                   >
                     {fmt}
@@ -585,23 +570,23 @@ Avoid: Extreme diet talk, unrealistic promises`}
           {/* Output Content (for any node that has been processed) */}
           {node.outputContent && (
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="text-xs font-medium text-muted-foreground">Output</label>
+              <div className="flex items-center justify-between mb-2.5">
+                <label className="text-sm font-medium text-foreground">{t('nodeConfig.output')}</label>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 px-2 text-[10px]"
+                  className="h-7 px-2.5 text-xs rounded-lg"
                   onClick={handleCopyOutput}
                 >
                   {copied ? (
-                    <><Check className="h-3 w-3 mr-1" /> Copied</>
+                    <><Check className="h-3.5 w-3.5 mr-1" /> {t('nodeConfig.copied')}</>
                   ) : (
-                    <><Copy className="h-3 w-3 mr-1" /> Copy</>
+                    <><Copy className="h-3.5 w-3.5 mr-1" /> {t('nodeConfig.copy')}</>
                   )}
                 </Button>
               </div>
-              <div className="bg-secondary border border-border rounded-lg p-3 max-h-[300px] overflow-y-auto">
-                <div className="prose prose-invert prose-xs max-w-none text-xs text-muted-foreground">
+              <div className="bg-secondary/80 border border-border rounded-xl p-4 max-h-[400px] overflow-y-auto overflow-x-hidden">
+                <div className="prose dark:prose-invert max-w-none text-[13px] text-foreground/80 leading-relaxed break-words">
                   <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents as any}>
                     {node.outputContent}
                   </ReactMarkdown>
@@ -610,19 +595,19 @@ Avoid: Extreme diet talk, unrealistic promises`}
             </div>
           )}
         </div>
-      </ScrollArea>
+      </div>
 
       {/* Footer with Save */}
-      <div className="p-4 border-t border-border flex gap-2">
-        <Button variant="outline" size="sm" className="flex-1" onClick={onClose}>
-          Cancel
+      <div className="p-4 border-t border-border flex gap-2.5">
+        <Button variant="outline" size="sm" className="flex-1 rounded-xl h-9" onClick={onClose}>
+          {t('nodeConfig.cancel')}
         </Button>
         <Button
           size="sm"
-          className="flex-1 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+          className="flex-1 rounded-xl h-9 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 font-medium"
           onClick={handleSave}
         >
-          Apply
+          {t('nodeConfig.apply')}
         </Button>
       </div>
     </div>

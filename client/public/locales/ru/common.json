@@ -1,0 +1,122 @@
+{
+  "nav": {
+    "dashboard": "Панель",
+    "myPosts": "Мои посты",
+    "myVideos": "Мои видео",
+    "trending": "Тренды",
+    "discover": "Поиск видео",
+    "deepAnalysis": "Глубокий анализ",
+    "saved": "Сохранённые",
+    "competitors": "Конкуренты",
+    "aiScripts": "AI Скрипты",
+    "feedback": "Обратная связь",
+    "help": "Помощь и FAQ",
+    "settings": "Настройки",
+    "language": "Язык",
+    "upgradePlan": "Улучшить план",
+    "logOut": "Выйти",
+    "getHelp": "Помощь",
+    "learnMore": "Узнать больше",
+    "about": "О нас",
+    "usagePolicy": "Правила использования",
+    "privacyPolicy": "Политика конфиденциальности",
+    "connectAccounts": "Подключить аккаунты",
+    "publishHub": "Публикации",
+    "marketplace": "Маркетплейс"
+  },
+  "section": {
+    "tools": "Инструменты",
+    "aiTools": "AI Инструменты",
+    "support": "Поддержка"
+  },
+  "tabs": {
+    "trends": "Тренды",
+    "scripts": "Скрипты"
+  },
+  "button": {
+    "save": "Сохранить",
+    "saveChanges": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "retry": "Повторить",
+    "connect": "Подключить",
+    "disconnect": "Отключить",
+    "sync": "Синхронизировать",
+    "viewAll": "Все",
+    "install": "Установить",
+    "update": "Обновить",
+    "apply": "Применить",
+    "close": "Закрыть",
+    "copy": "Копировать",
+    "copied": "Скопировано",
+    "newSearch": "Новый поиск",
+    "newChat": "Новый чат",
+    "generate": "Сгенерировать",
+    "run": "Запустить",
+    "signIn": "Войти",
+    "signUp": "Регистрация",
+    "getStarted": "Начать",
+    "tryFree": "Попробовать бесплатно",
+    "analyze": "Анализировать",
+    "download": "Скачать",
+    "share": "Поделиться",
+    "edit": "Редактировать",
+    "refresh": "Обновить",
+    "goBack": "Назад",
+    "goHome": "На главную"
+  },
+  "status": {
+    "loading": "Загрузка...",
+    "active": "Активен",
+    "connected": "Подключено",
+    "disconnected": "Отключено",
+    "online": "Онлайн",
+    "offline": "Оффлайн",
+    "pending": "Ожидание",
+    "completed": "Завершено",
+    "failed": "Ошибка",
+    "running": "Выполняется"
+  },
+  "plan": {
+    "free": "Бесплатный",
+    "creator": "Создатель",
+    "pro": "Про",
+    "agency": "Агентство",
+    "label": "Тариф {{plan}}"
+  },
+  "time": {
+    "today": "Сегодня",
+    "yesterday": "Вчера",
+    "daysAgo": "{{count}} дн. назад",
+    "hoursAgo": "{{count}} ч. назад",
+    "minutesAgo": "{{count}} мин. назад",
+    "justNow": "только что"
+  },
+  "pwa": {
+    "offline": "Вы офлайн",
+    "offlineDescription": "Некоторые функции могут быть недоступны",
+    "connectionRestored": "Соединение восстановлено",
+    "connectedVia": "Подключено через {{type}}",
+    "updateAvailable": "Доступно обновление",
+    "updateNow": "Обновить сейчас"
+  },
+  "search": {
+    "placeholder": "Поиск...",
+    "recentSearches": "Недавние поиски",
+    "noResults": "Ничего не найдено"
+  },
+  "history": {
+    "saved": "Сохранённые"
+  },
+  "error": {
+    "somethingWentWrong": "Что-то пошло не так",
+    "pleaseTryAgain": "Пожалуйста, попробуйте позже",
+    "pageError": "На странице произошла ошибка",
+    "tryAgain": "Попробовать снова",
+    "goHome": "На главную",
+    "appCrashed": "Приложение столкнулось с непредвиденной ошибкой"
+  },
+  "demo": {
+    "user": "Демо пользователь"
+  }
+}

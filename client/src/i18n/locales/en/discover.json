@@ -1,0 +1,84 @@
+{
+  "title": "Discover Videos",
+  "subtitle": "Search and filter through millions of viral videos",
+  "filters": "Filters",
+  "platform": {
+    "title": "Platform"
+  },
+  "analysisMode": {
+    "title": "Analysis Mode",
+    "light": {
+      "name": "Light Analyze",
+      "badge": "FREE",
+      "description": "Fast results with basic metrics (views, likes, engagement rate) - like other tools"
+    },
+    "deep": {
+      "name": "Deep Analyze",
+      "badge": "PRO",
+      "description": "6-layer UTS breakdown, AI clustering, velocity tracking, saturation indicator",
+      "unlock": "Unlock for $49/mo - Unique mathematical analysis no competitor has"
+    }
+  },
+  "search": {
+    "placeholder": "Search by keyword, hashtag, or creator...",
+    "button": "Search"
+  },
+  "advancedFilters": {
+    "title": "Advanced Filters",
+    "clearAll": "Clear All",
+    "sortBy": "Sort By",
+    "timePeriod": "Time Period",
+    "minViews": "Min Views",
+    "duration": "Duration",
+    "applyFilters": "Apply Filters",
+    "reset": "Reset",
+    "any": "Any"
+  },
+  "sort": {
+    "viral": "Viral Score",
+    "views": "Most Views",
+    "engagement": "Engagement",
+    "recent": "Most Recent"
+  },
+  "dateRange": {
+    "24h": "Last 24 hours",
+    "7d": "Last 7 days",
+    "30d": "Last 30 days",
+    "90d": "Last 90 days"
+  },
+  "viewsOptions": {
+    "10K": "10K+",
+    "50K": "50K+",
+    "100K": "100K+",
+    "500K": "500K+",
+    "1M": "1M+",
+    "10M": "10M+"
+  },
+  "durationOptions": {
+    "15": "Under 15s",
+    "30": "Under 30s",
+    "60": "Under 1min",
+    "180": "Under 3min"
+  },
+  "results": {
+    "loading": "Loading...",
+    "videosFound": "{{count}} videos found",
+    "sort": "Sort:"
+  },
+  "recentVideos": {
+    "title": "Recent Videos",
+    "clearAll": "Clear All"
+  },
+  "searchHistory": {
+    "title": "Search History"
+  },
+  "trendingSuggestions": {
+    "title": "Trending"
+  },
+  "emptyState": {
+    "title": "No videos found for \"{{keyword}}\"",
+    "description": "Try adjusting your search or filters to find more content",
+    "clearFilters": "Clear Filters"
+  },
+  "loadMore": "Load More Videos"
+}

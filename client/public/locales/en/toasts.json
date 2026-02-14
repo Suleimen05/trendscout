@@ -1,0 +1,75 @@
+{
+  "auth": {
+    "loginSuccess": "Welcome back!",
+    "loginFailed": "Login failed",
+    "registerSuccess": "Account created successfully!",
+    "registerFailed": "Registration failed",
+    "logoutSuccess": "Logged out successfully"
+  },
+  "chat": {
+    "loadSessionsFailed": "Failed to load chat sessions",
+    "loadCreditsFailed": "Failed to load credit info",
+    "createSessionFailed": "Failed to create session",
+    "loadMessagesFailed": "Failed to load messages",
+    "sessionDeleted": "Session deleted",
+    "deleteSessionFailed": "Failed to delete session",
+    "createChatFailed": "Failed to create chat session",
+    "insufficientCredits": "Insufficient credits",
+    "sendMessageFailed": "Error sending message"
+  },
+  "workflow": {
+    "saved": "Workflow saved",
+    "deleted": "Workflow deleted",
+    "createFailed": "Failed to create workflow",
+    "loadFailed": "Failed to load workflow",
+    "saveFailed": "Failed to save workflow",
+    "deleteFailed": "Failed to delete workflow",
+    "duplicated": "Workflow duplicated",
+    "duplicateFailed": "Failed to duplicate workflow",
+    "loginRequired": "Please login to save workflows",
+    "runComplete": "Workflow completed!",
+    "runFailed": "Workflow execution failed",
+    "notEnoughCredits": "Not enough credits. Need ~{{need}}, have {{have}}"
+  },
+  "settings": {
+    "accountConnected": "Your {{platform}} account has been connected!",
+    "accountDisconnected": "Your {{platform}} account has been disconnected.",
+    "connectFailed": "Failed to connect. Please try again.",
+    "loginRequired": "Please log in to connect your account",
+    "profileSaved": "Profile saved",
+    "passwordChanged": "Password changed successfully"
+  },
+  "video": {
+    "saved": "Video saved!",
+    "removed": "Removed from saved",
+    "saveFailed": "Failed to save video"
+  },
+  "clipboard": {
+    "copied": "Copied to clipboard",
+    "failed": "Failed to copy"
+  },
+  "dashboard": {
+    "syncSuccess": "Account synced successfully",
+    "syncFailed": "Failed to sync account",
+    "demoAdded": "Demo account added",
+    "loadFailed": "Failed to load dashboard data"
+  },
+  "discover": {
+    "searchFailed": "Search failed",
+    "noResults": "No results found"
+  },
+  "generic": {
+    "operationFailed": "Operation failed. Please try again.",
+    "networkError": "Network error. Check your connection."
+  },
+  "competitors": {
+    "loadFailed": "Failed to load competitors",
+    "channelNotFound": "{{platform}} channel @{{username}} not found",
+    "searchFailed": "Search failed. Try again.",
+    "addSuccess": "@{{username}} added to your list",
+    "alreadyExists": "@{{username}} already in your list",
+    "addFailed": "Failed to add channel",
+    "removeSuccess": "@{{username}} removed",
+    "removeFailed": "Failed to remove channel"
+  }
+}

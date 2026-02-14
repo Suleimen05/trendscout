@@ -165,7 +165,7 @@ def search_channel(
     """
     clean_username = username.lower().strip().replace("@", "")
 
-    logger.info(f"🔍 User {current_user.id} searching {platform} channel: @{clean_username}")
+    logger.info(f"[SEARCH] User {current_user.id} searching {platform} channel: @{clean_username}")
 
     if platform == "instagram":
         # Instagram search using profile scraper
@@ -311,18 +311,18 @@ async def add_competitor(
             existing.tags = data.tags or existing.tags
             db.commit()
             db.refresh(existing)
-            logger.info(f"🔄 User {current_user.id} reactivated competitor @{clean_username}")
+            logger.info(f"[REFRESH] User {current_user.id} reactivated competitor @{clean_username}")
             return CompetitorResponse.model_validate(existing)
 
     # Deduct credits
     await CreditManager.check_and_deduct("competitor_add", current_user, db)
 
-    logger.info(f"🔍 User {current_user.id} adding competitor: @{clean_username}")
+    logger.info(f"[SEARCH] User {current_user.id} adding competitor: @{clean_username}")
 
     # ALWAYS fetch full profile data with videos (30 videos) from Apify
     # This ensures we have complete data immediately after adding competitor
     # NO FAST MODE - always get full data to avoid double API calls
-    logger.info(f"📡 Fetching @{clean_username} from {data.platform} Apify with full video data")
+    logger.info(f"[FETCH] Fetching @{clean_username} from {data.platform} Apify with full video data")
 
     if data.platform == "instagram":
         # Instagram flow
@@ -420,7 +420,7 @@ async def add_competitor(
     db.commit()
     db.refresh(competitor)
 
-    logger.info(f"✅ User {current_user.id} added competitor @{clean_username}")
+    logger.info(f"[OK] User {current_user.id} added competitor @{clean_username}")
 
     return CompetitorResponse.model_validate(competitor)
 
@@ -489,7 +489,7 @@ def update_competitor(
     db.commit()
     db.refresh(competitor)
 
-    logger.info(f"📝 User {current_user.id} updated competitor @{clean_username}")
+    logger.info(f"[NOTE] User {current_user.id} updated competitor @{clean_username}")
 
     return CompetitorResponse.model_validate(competitor)
 
@@ -529,14 +529,14 @@ def delete_competitor(
             recent_videos=competitor.recent_videos or []
         )
         if deleted_count:
-            logger.info(f"🗑️ Cleaned {deleted_count} images from Supabase for @{clean_username}")
+            logger.info(f"[DELETE] Cleaned {deleted_count} images from Supabase for @{clean_username}")
 
         db.delete(competitor)
-        logger.info(f"🗑️ User {current_user.id} permanently deleted competitor @{clean_username}")
+        logger.info(f"[DELETE] User {current_user.id} permanently deleted competitor @{clean_username}")
     else:
         competitor.is_active = False
         competitor.updated_at = datetime.utcnow()
-        logger.info(f"🔴 User {current_user.id} deactivated competitor @{clean_username}")
+        logger.info(f"[STOP] User {current_user.id} deactivated competitor @{clean_username}")
 
     db.commit()
 
@@ -565,7 +565,7 @@ def refresh_competitor_data(
             detail=f"Competitor @{clean_username} not found"
         )
 
-    logger.info(f"🔄 User {current_user.id} refreshing competitor: @{clean_username}")
+    logger.info(f"[REFRESH] User {current_user.id} refreshing competitor: @{clean_username}")
 
     collector = TikTokCollector()
     raw_videos = collector.collect([clean_username], limit=30, mode="profile")
@@ -620,7 +620,7 @@ def refresh_competitor_data(
     db.commit()
     db.refresh(competitor)
 
-    logger.info(f"✅ User {current_user.id} refreshed competitor @{clean_username}")
+    logger.info(f"[OK] User {current_user.id} refreshed competitor @{clean_username}")
 
     return CompetitorResponse.model_validate(competitor)
 
@@ -731,7 +731,7 @@ def get_competitor_feed(
             detail=f"Competitor @{clean_username} not found in your tracking list"
         )
     
-    logger.info(f"📊 User {current_user.id} viewing feed for @{clean_username}")
+    logger.info(f"[STATS] User {current_user.id} viewing feed for @{clean_username}")
 
     # FEED ДОЛЖЕН ПОКАЗЫВАТЬ ДАННЫЕ ИЗ БАЗЫ МГНОВЕННО!
     # Обновление данных через отдельный endpoint: PUT /competitors/{username}/refresh

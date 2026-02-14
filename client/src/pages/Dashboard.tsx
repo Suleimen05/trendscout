@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { motion } from 'framer-motion';
 import {
   Plus,
@@ -32,29 +34,29 @@ import { toast } from 'sonner';
 import { REVIEW_MODE } from '@/config/features';
 
 // AI Insights (mock for now — would come from AI service)
-const AI_INSIGHTS = [
+const getAiInsights = (t: TFunction) => [
   {
     id: 1,
     type: 'trend',
-    title: 'Post a video with trend "gym motivation"',
-    description: 'This trend is gaining 340% traction in your niche',
-    action: 'View examples',
+    title: t('aiInsights.insight1.title'),
+    description: t('aiInsights.insight1.description'),
+    action: t('aiInsights.insight1.action'),
     icon: TrendingUp,
   },
   {
     id: 2,
     type: 'engagement',
-    title: 'Reply to 10 comments',
-    description: 'Your engagement rate is dropping by 2.1%',
-    action: 'Check comments',
+    title: t('aiInsights.insight2.title'),
+    description: t('aiInsights.insight2.description'),
+    action: t('aiInsights.insight2.action'),
     icon: Target,
   },
   {
     id: 3,
     type: 'sound',
-    title: 'Use sound "Eye of the Tiger remix"',
-    description: 'Trending in your niche with high completion rate',
-    action: 'Preview',
+    title: t('aiInsights.insight3.title'),
+    description: t('aiInsights.insight3.description'),
+    action: t('aiInsights.insight3.action'),
     icon: Zap,
   },
 ];
@@ -113,6 +115,7 @@ const USE_MOCK_DATA = true;
 export function Dashboard() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation('dashboard');
 
   // State
   const [accounts, setAccounts] = useState<Account[]>(USE_MOCK_DATA ? [MOCK_ACCOUNT] : []);
@@ -125,6 +128,7 @@ export function Dashboard() {
   const [isAddingDemo, setIsAddingDemo] = useState(false);
 
   const allPlatforms = getAllPlatforms();
+  const aiInsights = getAiInsights(t);
 
   // Load data
   useEffect(() => {
@@ -157,7 +161,7 @@ export function Dashboard() {
       }
     } catch (error) {
       console.error('Error loading dashboard:', error);
-      toast.error('Failed to load dashboard data');
+      toast.error(t('toasts:dashboard.loadFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -170,14 +174,14 @@ export function Dashboard() {
       setIsSyncing(true);
       if (USE_MOCK_DATA) {
         await new Promise(resolve => setTimeout(resolve, 1500));
-        toast.success('Account synced successfully');
+        toast.success(t('toasts:dashboard.syncSuccess'));
       } else {
         await accountsApi.syncAccount(selectedAccount.id);
-        toast.success('Account synced successfully');
+        toast.success(t('toasts:dashboard.syncSuccess'));
         await loadDashboardData();
       }
     } catch (error) {
-      toast.error('Failed to sync account');
+      toast.error(t('toasts:dashboard.syncFailed'));
     } finally {
       setIsSyncing(false);
     }
@@ -188,10 +192,10 @@ export function Dashboard() {
       setIsAddingDemo(true);
       if (USE_MOCK_DATA) {
         await new Promise(resolve => setTimeout(resolve, 1000));
-        toast.success('Demo account added');
+        toast.success(t('toasts:dashboard.demoAdded'));
       } else {
         await accountsApi.addDemoAccount();
-        toast.success('Demo account added');
+        toast.success(t('toasts:dashboard.demoAdded'));
         await loadDashboardData();
       }
     } catch (error) {
@@ -213,7 +217,7 @@ export function Dashboard() {
   // Stats configuration
   const STATS_CONFIG = stats ? [
     {
-      label: 'Followers',
+      label: t('stats.followers'),
       value: formatNumber(stats.total_followers),
       change: `+${stats.followers_change}%`,
       trend: 'up' as const,
@@ -221,7 +225,7 @@ export function Dashboard() {
       color: 'from-nl-indigo to-nl-purple',
     },
     {
-      label: 'Avg Views',
+      label: t('stats.avgViews'),
       value: formatNumber(stats.avg_views),
       change: `+${stats.views_change}%`,
       trend: 'up' as const,
@@ -229,7 +233,7 @@ export function Dashboard() {
       color: 'from-nl-purple to-nl-pink',
     },
     {
-      label: 'Engagement',
+      label: t('stats.engagement'),
       value: `${stats.engagement_rate}%`,
       change: `${stats.engagement_change}%`,
       trend: stats.engagement_change >= 0 ? 'up' as const : 'down' as const,
@@ -237,7 +241,7 @@ export function Dashboard() {
       color: 'from-green-500 to-emerald-500',
     },
     {
-      label: 'Videos',
+      label: t('stats.videos'),
       value: stats.total_videos.toString(),
       change: `+${stats.videos_change}`,
       trend: 'up' as const,
@@ -254,9 +258,9 @@ export function Dashboard() {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('title')}</h1>
           <p className="text-muted-foreground">
-            Your personal analytics hub with AI-powered insights
+            {t('subtitle')}
           </p>
         </div>
 
@@ -267,7 +271,7 @@ export function Dashboard() {
                 <Link2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Connected</p>
+                <p className="text-sm text-muted-foreground">{t('reviewMode.connected')}</p>
                 <p className="text-2xl font-bold">{connectedCount} / {totalPlatforms}</p>
               </div>
             </div>
@@ -278,7 +282,7 @@ export function Dashboard() {
                 <Users className="h-6 w-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Followers</p>
+                <p className="text-sm text-muted-foreground">{t('reviewMode.followers')}</p>
                 <p className="text-2xl font-bold">—</p>
               </div>
             </div>
@@ -289,7 +293,7 @@ export function Dashboard() {
                 <Eye className="h-6 w-6 text-green-600 dark:text-green-400" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Total Views</p>
+                <p className="text-sm text-muted-foreground">{t('reviewMode.totalViews')}</p>
                 <p className="text-2xl font-bold">—</p>
               </div>
             </div>
@@ -300,7 +304,7 @@ export function Dashboard() {
                 <Video className="h-6 w-6 text-red-600 dark:text-red-400" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">Videos</p>
+                <p className="text-sm text-muted-foreground">{t('reviewMode.videos')}</p>
                 <p className="text-2xl font-bold">—</p>
               </div>
             </div>
@@ -312,9 +316,9 @@ export function Dashboard() {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
               <Link2 className="h-8 w-8 text-purple-600 dark:text-purple-400" />
             </div>
-            <h2 className="text-2xl font-bold mb-2">Get Started</h2>
+            <h2 className="text-2xl font-bold mb-2">{t('reviewMode.getStarted')}</h2>
             <p className="text-muted-foreground mb-6">
-              Connect your TikTok, Instagram, or YouTube account to unlock personalized AI insights and detailed analytics.
+              {t('reviewMode.getStartedDescription')}
             </p>
             <Button
               size="lg"
@@ -322,7 +326,7 @@ export function Dashboard() {
               onClick={() => navigate('/dashboard/connect-accounts')}
             >
               <Plus className="h-5 w-5" />
-              Connect Your First Account
+              {t('reviewMode.connectFirstAccount')}
             </Button>
           </div>
         </Card>
@@ -339,7 +343,7 @@ export function Dashboard() {
           <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-nl-indigo to-nl-purple flex items-center justify-center animate-pulse">
             <Sparkles className="w-6 h-6 text-white" />
           </div>
-          <p className="text-muted-foreground">Loading dashboard...</p>
+          <p className="text-muted-foreground">{t('loading')}</p>
         </div>
       </div>
     );
@@ -357,14 +361,14 @@ export function Dashboard() {
           <div className="w-20 h-20 mx-auto rounded-3xl bg-gradient-to-br from-nl-indigo via-nl-purple to-nl-pink flex items-center justify-center shadow-glow mb-6">
             <Link2 className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold mb-4">Connect Your Account</h1>
+          <h1 className="text-3xl font-bold mb-4">{t('emptyState.title')}</h1>
           <p className="text-muted-foreground text-lg mb-8 max-w-md mx-auto">
-            Connect your TikTok account to start analyzing your content, discover trends, and grow your audience.
+            {t('emptyState.description')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" onClick={() => navigate('/dashboard/connect-accounts')}>
               <Plus className="w-5 h-5 mr-2" />
-              Connect Account
+              {t('emptyState.connectAccount')}
             </Button>
             <Button size="lg" variant="outline" onClick={handleAddDemo} disabled={isAddingDemo}>
               {isAddingDemo ? (
@@ -372,7 +376,7 @@ export function Dashboard() {
               ) : (
                 <Play className="w-5 h-5 mr-2" />
               )}
-              Try Demo Account
+              {t('emptyState.tryDemo')}
             </Button>
           </div>
         </motion.div>
@@ -391,20 +395,20 @@ export function Dashboard() {
       >
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
-            Welcome back, <span className="gradient-text">{user?.name?.split(' ')[0] || 'Creator'}</span>
+            {t('header.welcomeBack')}<span className="gradient-text">{user?.name?.split(' ')[0] || t('header.fallbackName')}</span>
           </h1>
           <p className="text-muted-foreground mt-1">
-            Here's what's happening with your content today
+            {t('header.subtitle')}
           </p>
         </div>
         <div className="flex items-center gap-3">
           <Button variant="outline" size="sm" onClick={handleSync} disabled={isSyncing}>
             <RefreshCw className={cn("w-4 h-4 mr-2", isSyncing && "animate-spin")} />
-            Sync
+            {t('header.sync')}
           </Button>
           <Button size="sm" onClick={() => navigate('/dashboard/discover')}>
             <Plus className="w-4 h-4 mr-2" />
-            New Search
+            {t('header.newSearch')}
           </Button>
         </div>
       </motion.div>
@@ -437,7 +441,7 @@ export function Dashboard() {
               {hasAccount && <span className="w-2 h-2 rounded-full bg-green-500" />}
               {!platform.enabled && (
                 <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
-                  Soon
+                  {t('platformBadge.soon')}
                 </Badge>
               )}
             </button>
@@ -508,11 +512,11 @@ export function Dashboard() {
             <div className="p-6 border-b border-border/30">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold">Recent Videos</h2>
-                  <p className="text-sm text-muted-foreground">Your latest content performance</p>
+                  <h2 className="text-lg font-semibold">{t('recentVideos.title')}</h2>
+                  <p className="text-sm text-muted-foreground">{t('recentVideos.subtitle')}</p>
                 </div>
                 <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard/my-videos')}>
-                  View All
+                  {t('recentVideos.viewAll')}
                   <ChevronRight className="w-4 h-4 ml-1" />
                 </Button>
               </div>
@@ -522,11 +526,11 @@ export function Dashboard() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border/30">
-                    <th className="text-left py-3 px-6 text-xs font-medium text-muted-foreground uppercase">Video</th>
-                    <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground uppercase">Views</th>
-                    <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground uppercase">Likes</th>
-                    <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground uppercase hidden sm:table-cell">UTS</th>
-                    <th className="text-right py-3 px-6 text-xs font-medium text-muted-foreground uppercase">Actions</th>
+                    <th className="text-left py-3 px-6 text-xs font-medium text-muted-foreground uppercase">{t('recentVideos.tableHeader.video')}</th>
+                    <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground uppercase">{t('recentVideos.tableHeader.views')}</th>
+                    <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground uppercase">{t('recentVideos.tableHeader.likes')}</th>
+                    <th className="text-right py-3 px-4 text-xs font-medium text-muted-foreground uppercase hidden sm:table-cell">{t('recentVideos.tableHeader.uts')}</th>
+                    <th className="text-right py-3 px-6 text-xs font-medium text-muted-foreground uppercase">{t('recentVideos.tableHeader.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -555,7 +559,7 @@ export function Dashboard() {
                             )}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-medium truncate">Video {index + 1}</p>
+                            <p className="text-sm font-medium truncate">{t('recentVideos.videoName', { index: index + 1 })}</p>
                             <p className="text-xs text-muted-foreground">
                               {new Date(video.created_at).toLocaleDateString()}
                             </p>
@@ -594,7 +598,7 @@ export function Dashboard() {
                   {recentVideos.length === 0 && (
                     <tr>
                       <td colSpan={5} className="py-12 text-center text-muted-foreground">
-                        No videos yet. Connect your account to see your content here.
+                        {t('recentVideos.empty')}
                       </td>
                     </tr>
                   )}
@@ -610,13 +614,13 @@ export function Dashboard() {
                 <Sparkles className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold">AI Recommendations</h2>
-                <p className="text-sm text-muted-foreground">Personalized for your growth</p>
+                <h2 className="text-lg font-semibold">{t('aiInsights.title')}</h2>
+                <p className="text-sm text-muted-foreground">{t('aiInsights.subtitle')}</p>
               </div>
             </div>
 
             <div className="space-y-4">
-              {AI_INSIGHTS.map((insight, index) => (
+              {aiInsights.map((insight, index) => (
                 <motion.div
                   key={insight.id}
                   className="flex items-start gap-4 p-4 rounded-xl bg-background/50 hover:bg-background transition-colors cursor-pointer group"
@@ -670,7 +674,7 @@ export function Dashboard() {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                  <span className="text-xs text-muted-foreground">Active</span>
+                  <span className="text-xs text-muted-foreground">{t('accountCard.active')}</span>
                 </div>
               </div>
 
@@ -681,22 +685,22 @@ export function Dashboard() {
               <div className="flex gap-4 pt-4 border-t border-border/30">
                 <div>
                   <p className="text-lg font-bold">{formatNumber(selectedAccount.stats.followers)}</p>
-                  <p className="text-xs text-muted-foreground">Followers</p>
+                  <p className="text-xs text-muted-foreground">{t('accountCard.followers')}</p>
                 </div>
                 <div>
                   <p className="text-lg font-bold">{selectedAccount.stats.total_videos}</p>
-                  <p className="text-xs text-muted-foreground">Videos</p>
+                  <p className="text-xs text-muted-foreground">{t('accountCard.videos')}</p>
                 </div>
                 <div>
                   <p className="text-lg font-bold">{selectedAccount.stats.engagement_rate}%</p>
-                  <p className="text-xs text-muted-foreground">Engagement</p>
+                  <p className="text-xs text-muted-foreground">{t('accountCard.engagement')}</p>
                 </div>
               </div>
 
               {selectedAccount.last_synced_at && (
                 <div className="flex items-center gap-2 mt-4 text-xs text-muted-foreground">
                   <Clock className="w-3 h-3" />
-                  Last synced: {new Date(selectedAccount.last_synced_at).toLocaleString()}
+                  {t('accountCard.lastSynced')}{new Date(selectedAccount.last_synced_at).toLocaleString()}
                 </div>
               )}
             </Card>
@@ -705,9 +709,9 @@ export function Dashboard() {
           {/* Health Score */}
           <Card variant="glass" className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold">Account Health</h3>
+              <h3 className="font-semibold">{t('health.title')}</h3>
               <Badge variant="outline" className="bg-green-500/10 text-green-400 border-0">
-                Excellent
+                {t('health.excellent')}
               </Badge>
             </div>
             <div className="flex items-center gap-4">
@@ -736,7 +740,7 @@ export function Dashboard() {
               </div>
               <div className="flex-1">
                 <p className="text-sm text-muted-foreground">
-                  Your account is performing well! Keep posting consistently to improve your score.
+                  {t('health.description')}
                 </p>
               </div>
             </div>
@@ -746,11 +750,11 @@ export function Dashboard() {
           <Card variant="gradient" className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Available Credits</p>
+                <p className="text-sm text-muted-foreground">{t('credits.available')}</p>
                 <p className="text-2xl font-bold mt-1">{user?.credits || 10}</p>
               </div>
               <Button size="sm" variant="secondary" onClick={() => navigate('/dashboard/pricing')}>
-                Upgrade
+                {t('credits.upgrade')}
               </Button>
             </div>
           </Card>
@@ -759,12 +763,12 @@ export function Dashboard() {
           <div className="grid grid-cols-2 gap-3">
             {[
               {
-                title: 'Trending',
+                title: t('quickActions.trending'),
                 icon: TrendingUp,
                 action: () => navigate('/dashboard/trending'),
               },
               {
-                title: 'AI Scripts',
+                title: t('quickActions.aiScripts'),
                 icon: Sparkles,
                 action: () => navigate('/dashboard/ai-scripts'),
               },

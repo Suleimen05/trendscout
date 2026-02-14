@@ -143,7 +143,7 @@ def add_favorite(
     db.commit()
     db.refresh(favorite)
 
-    logger.info(f"⭐ User {current_user.id} favorited trend {data.trend_id}")
+    logger.info(f"[STAR] User {current_user.id} favorited trend {data.trend_id}")
 
     # Build response with trend data
     trend_summary = TrendSummary(
@@ -246,7 +246,7 @@ def update_favorite(
     db.commit()
     db.refresh(favorite)
 
-    logger.info(f"📝 User {current_user.id} updated favorite {favorite_id}")
+    logger.info(f"[NOTE] User {current_user.id} updated favorite {favorite_id}")
 
     trend_summary = None
     if favorite.trend:
@@ -297,7 +297,7 @@ def delete_favorite(
     db.delete(favorite)
     db.commit()
 
-    logger.info(f"🗑️ User {current_user.id} removed favorite {favorite_id}")
+    logger.info(f"[DELETE] User {current_user.id} removed favorite {favorite_id}")
 
 
 # =============================================================================
@@ -350,7 +350,7 @@ def bulk_add_favorites(
 
     db.commit()
 
-    logger.info(f"⭐ User {current_user.id} bulk added {success_count} favorites")
+    logger.info(f"[STAR] User {current_user.id} bulk added {success_count} favorites")
 
     return BulkOperationResult(
         success_count=success_count,
@@ -390,7 +390,7 @@ def bulk_delete_favorites(
 
     db.commit()
 
-    logger.info(f"🗑️ User {current_user.id} bulk removed {success_count} favorites")
+    logger.info(f"[DELETE] User {current_user.id} bulk removed {success_count} favorites")
 
     return BulkOperationResult(
         success_count=success_count,
@@ -444,7 +444,7 @@ def check_if_favorited(
 
 
 # =============================================================================
-# SAVE VIDEO (Light Analyze → DB + Favorite in one step)
+# SAVE VIDEO (Light Analyze --> DB + Favorite in one step)
 # =============================================================================
 
 class SaveVideoRequest(BaseModel):
@@ -473,7 +473,7 @@ def save_video_to_favorites(
     Creates the Trend record if needed, then adds to favorites.
     """
     try:
-        logger.info(f"📥 save-video request: platform_id={data.platform_id}, user={current_user.id}")
+        logger.info(f"[DOWNLOAD] save-video request: platform_id={data.platform_id}, user={current_user.id}")
 
         # Check if trend already exists for this user
         existing_trend = db.query(Trend).filter(
@@ -532,7 +532,7 @@ def save_video_to_favorites(
         db.add(favorite)
         db.commit()
 
-        logger.info(f"⭐ User {current_user.id} saved video {data.platform_id} to favorites")
+        logger.info(f"[STAR] User {current_user.id} saved video {data.platform_id} to favorites")
 
         return {
             "id": favorite.id,
@@ -541,5 +541,5 @@ def save_video_to_favorites(
         }
     except Exception as e:
         db.rollback()
-        logger.error(f"❌ save-video failed for user {current_user.id}: {type(e).__name__}: {e}")
+        logger.error(f"[ERROR] save-video failed for user {current_user.id}: {type(e).__name__}: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to save video: {str(e)}")

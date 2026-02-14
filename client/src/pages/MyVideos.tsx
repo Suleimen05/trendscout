@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import {
   Video,
   Eye,
@@ -22,6 +23,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import type { TFunction } from 'i18next';
 
 // Иконки платформ
 const TikTokIcon = () => (
@@ -130,16 +132,16 @@ const formatNumber = (num: number): string => {
 };
 
 // Относительное время
-const getRelativeTime = (dateStr: string): string => {
+const getRelativeTime = (dateStr: string, t: TFunction): string => {
   const date = new Date(dateStr);
   const now = new Date();
   const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  return `${Math.floor(diffDays / 30)} months ago`;
+  if (diffDays === 0) return t('myPosts.relativeTime.today');
+  if (diffDays === 1) return t('myPosts.relativeTime.yesterday');
+  if (diffDays < 7) return t('myPosts.relativeTime.daysAgo', { count: diffDays });
+  if (diffDays < 30) return t('myPosts.relativeTime.weeksAgo', { count: Math.floor(diffDays / 7) });
+  return t('myPosts.relativeTime.monthsAgo', { count: Math.floor(diffDays / 30) });
 };
 
 type Platform = 'tiktok' | 'instagram' | 'youtube';
@@ -152,6 +154,7 @@ interface ConnectedAccount {
 
 export function MyVideosPage() {
   const navigate = useNavigate();
+  const { t } = useTranslation('videos');
   const [selectedPlatform, setSelectedPlatform] = useState<Platform>('tiktok');
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -191,10 +194,10 @@ export function MyVideosPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <Video className="h-7 w-7" />
-            My Posts
+            {t('myPosts.title')}
           </h1>
           <p className="text-muted-foreground">
-            View and analyze your post performance
+            {t('myPosts.subtitle')}
           </p>
         </div>
 
@@ -234,7 +237,7 @@ export function MyVideosPage() {
                     {config.name}
                     {!account?.connected && (
                       <Badge variant="outline" className="ml-auto text-xs">
-                        Not connected
+                        {t('myPosts.notConnected')}
                       </Badge>
                     )}
                   </DropdownMenuItem>
@@ -262,13 +265,13 @@ export function MyVideosPage() {
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
               <AlertCircle className="h-8 w-8 text-muted-foreground" />
             </div>
-            <h3 className="text-lg font-semibold mb-2">No {platformConfig[selectedPlatform].name} account connected</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('myPosts.emptyState.title', { platform: platformConfig[selectedPlatform].name })}</h3>
             <p className="text-muted-foreground text-center max-w-md mb-4">
-              Connect your {platformConfig[selectedPlatform].name} account to see your videos and analytics here.
+              {t('myPosts.emptyState.description', { platform: platformConfig[selectedPlatform].name })}
             </p>
             <Button onClick={() => navigate('/dashboard/connect-accounts')}>
               <Link2 className="h-4 w-4 mr-2" />
-              Connect Account
+              {t('myPosts.emptyState.connectButton')}
             </Button>
           </CardContent>
         </Card>
@@ -280,7 +283,7 @@ export function MyVideosPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 text-muted-foreground mb-1">
                   <Video className="h-4 w-4" />
-                  <span className="text-sm">Total Videos</span>
+                  <span className="text-sm">{t('myPosts.stats.totalVideos')}</span>
                 </div>
                 <p className="text-2xl font-bold">{mockVideos.length}</p>
               </CardContent>
@@ -290,7 +293,7 @@ export function MyVideosPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 text-muted-foreground mb-1">
                   <Eye className="h-4 w-4" />
-                  <span className="text-sm">Total Views</span>
+                  <span className="text-sm">{t('myPosts.stats.totalViews')}</span>
                 </div>
                 <p className="text-2xl font-bold">{formatNumber(totalViews)}</p>
               </CardContent>
@@ -300,7 +303,7 @@ export function MyVideosPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 text-muted-foreground mb-1">
                   <Heart className="h-4 w-4" />
-                  <span className="text-sm">Total Likes</span>
+                  <span className="text-sm">{t('myPosts.stats.totalLikes')}</span>
                 </div>
                 <p className="text-2xl font-bold">{formatNumber(totalLikes)}</p>
               </CardContent>
@@ -310,7 +313,7 @@ export function MyVideosPage() {
               <CardContent className="pt-6">
                 <div className="flex items-center gap-2 text-muted-foreground mb-1">
                   <TrendingUp className="h-4 w-4" />
-                  <span className="text-sm">Avg Engagement</span>
+                  <span className="text-sm">{t('myPosts.stats.avgEngagement')}</span>
                 </div>
                 <p className="text-2xl font-bold">{avgEngagement.toFixed(1)}%</p>
               </CardContent>
@@ -320,9 +323,9 @@ export function MyVideosPage() {
           {/* Videos Grid */}
           <Card>
             <CardHeader>
-              <CardTitle>Your Videos</CardTitle>
+              <CardTitle>{t('myPosts.videosGrid.title')}</CardTitle>
               <CardDescription>
-                Showing {mockVideos.length} videos from your {platformConfig[selectedPlatform].name} account
+                {t('myPosts.videosGrid.showing', { count: mockVideos.length, platform: platformConfig[selectedPlatform].name })}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -364,11 +367,11 @@ export function MyVideosPage() {
                       {/* Bottom Row */}
                       <div className="flex items-center justify-between text-xs">
                         <Badge variant="outline" className="text-xs">
-                          {video.engagement}% eng
+                          {t('myPosts.videoCard.engagement', { value: video.engagement })}
                         </Badge>
                         <span className="text-muted-foreground flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          {getRelativeTime(video.postedAt)}
+                          {getRelativeTime(video.postedAt, t)}
                         </span>
                       </div>
                     </div>

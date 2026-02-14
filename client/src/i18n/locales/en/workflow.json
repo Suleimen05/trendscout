@@ -1,0 +1,172 @@
+{
+  "title": "Untitled Workflow",
+  "aiModels": {
+    "gemini": {
+      "name": "Gemini 2.0 Flash",
+      "description": "Fast & efficient"
+    },
+    "claude": {
+      "name": "Claude 3.5 Sonnet",
+      "description": "Best for writing"
+    },
+    "gpt4": {
+      "name": "GPT-4o",
+      "description": "Most capable"
+    }
+  },
+  "contentModes": {
+    "script": {
+      "name": "Script Writer",
+      "description": "Create viral scripts"
+    },
+    "ideas": {
+      "name": "Idea Generator",
+      "description": "Generate content ideas"
+    },
+    "analysis": {
+      "name": "Trend Analyst",
+      "description": "Analyze content"
+    },
+    "improve": {
+      "name": "Content Improver",
+      "description": "Enhance existing content"
+    },
+    "hook": {
+      "name": "Hook Master",
+      "description": "Create attention hooks"
+    }
+  },
+  "suggestedPrompts": {
+    "script": "Write a viral TikTok script about...",
+    "ideas": "Give me 5 content ideas for...",
+    "analysis": "Analyze this trending video concept",
+    "hook": "Create 3 hooks for my video about..."
+  },
+  "nodeTypes": {
+    "video": {
+      "title": "Video Input",
+      "description": "Drop saved video here"
+    },
+    "brand": {
+      "title": "Brand Brief",
+      "description": "Your brand context"
+    },
+    "analyze": {
+      "title": "Analyze",
+      "description": "Deep content analysis"
+    },
+    "extract": {
+      "title": "Extract",
+      "description": "Extract key elements"
+    },
+    "style": {
+      "title": "Style Match",
+      "description": "Match visual style"
+    },
+    "generate": {
+      "title": "Generate",
+      "description": "AI script creation"
+    },
+    "refine": {
+      "title": "Refine",
+      "description": "Polish & improve"
+    },
+    "script": {
+      "title": "Script Output",
+      "description": "Final script"
+    },
+    "storyboard": {
+      "title": "Storyboard",
+      "description": "Visual breakdown"
+    }
+  },
+  "templates": {
+    "videoAnalysis": "Video Analysis Pipeline",
+    "scriptGenerator": "Script Generator",
+    "fullPipeline": "Full Content Pipeline"
+  },
+  "sidebar": {
+    "nodes": "Nodes",
+    "saved": "Saved",
+    "history": "History",
+    "chat": "Chat"
+  },
+  "savedTabs": {
+    "videos": "Videos",
+    "workflows": "Workflows"
+  },
+  "historyTabs": {
+    "runs": "Runs",
+    "chats": "Chats"
+  },
+  "canvas": {
+    "zoomIn": "Zoom In",
+    "zoomOut": "Zoom Out",
+    "fitToScreen": "Fit to Screen",
+    "deleteSelected": "Delete Selected"
+  },
+  "actions": {
+    "save": "Save",
+    "run": "Run",
+    "running": "Running...",
+    "newWorkflow": "New Workflow",
+    "deleteWorkflow": "Delete Workflow",
+    "close": "Close"
+  },
+  "chat": {
+    "placeholder": "Ask AI anything...",
+    "send": "Send",
+    "newChat": "New Chat",
+    "deleteChat": "Delete Chat",
+    "copyMessage": "Copy",
+    "regenerate": "Regenerate",
+    "credits": "Credits"
+  },
+  "results": {
+    "title": "Run Results",
+    "tabs": {
+      "all": "All",
+      "script": "Script",
+      "storyboard": "Storyboard",
+      "nodes": "Nodes"
+    },
+    "creditsUsed": "Credits Used",
+    "executionTime": "Execution Time",
+    "copy": "Copy",
+    "download": "Download",
+    "close": "Close",
+    "back": "Back"
+  },
+  "runHistory": {
+    "title": "Run History",
+    "noRuns": "No runs yet",
+    "success": "Success",
+    "failed": "Failed",
+    "viewDetails": "View Details"
+  },
+  "savedVideos": {
+    "title": "Saved Videos",
+    "noVideos": "No saved videos",
+    "dragToCanvas": "Drag videos to canvas",
+    "filterAll": "All",
+    "views": "views",
+    "uts": "UTS"
+  },
+  "savedWorkflows": {
+    "title": "Saved Workflows",
+    "noWorkflows": "No saved workflows",
+    "load": "Load",
+    "delete": "Delete"
+  },
+  "toast": {
+    "workflowSaved": "Workflow saved",
+    "workflowDeleted": "Workflow deleted",
+    "runStarted": "Workflow running...",
+    "runComplete": "Workflow completed",
+    "runFailed": "Workflow run failed",
+    "noNodes": "Add nodes to the canvas first",
+    "messageCopied": "Message copied to clipboard",
+    "resultCopied": "Copied to clipboard",
+    "loadError": "Failed to load run details"
+  }
+}

@@ -1,0 +1,150 @@
+{
+  "page": {
+    "title": "Settings",
+    "subtitle": "Manage your account preferences and notifications"
+  },
+
+  "tabs": {
+    "general": "General",
+    "accounts": "Accounts",
+    "usage": "Usage",
+    "billing": "Billing"
+  },
+
+  "general": {
+    "profile": {
+      "heading": "Profile",
+      "fullName": "Full name",
+      "email": "Email",
+      "saveChanges": "Save Changes"
+    },
+    "preferences": {
+      "heading": "Preferences",
+      "darkMode": "Dark Mode",
+      "darkModeDescription": "Enable dark theme",
+      "language": "Language",
+      "region": "Region"
+    },
+    "notifications": {
+      "heading": "Notifications",
+      "emailNotifications": "Email Notifications",
+      "emailNotificationsDescription": "Get emails about trends and updates",
+      "weeklySummary": "Weekly Summary",
+      "weeklySummaryDescription": "Receive weekly usage reports"
+    },
+    "about": {
+      "heading": "About",
+      "version": "Version",
+      "platform": "Platform",
+      "installedPWA": "Installed (PWA)",
+      "webBrowser": "Web Browser",
+      "installApp": "Install App",
+      "iosInstruction": "Tap Share > Add to Home Screen",
+      "otherInstruction": "Add to home screen for quick access",
+      "install": "Install",
+      "appInstalled": "App installed"
+    }
+  },
+
+  "accounts": {
+    "loading": "Loading connected accounts...",
+    "connectedAccounts": "Connected Accounts",
+    "countOfTotal": "{{count}} of {{total}}",
+
+    "platforms": {
+      "tiktok": "Video analytics and performance metrics.",
+      "instagram": "Track posts, reels and stories.",
+      "youtube": "Analyze videos and shorts performance.",
+      "twitter": "Track tweets and engagement metrics.",
+      "reddit": "Monitor subreddit trends and posts.",
+      "discord": "Track server engagement and growth.",
+      "telegram": "Analyze channel and group metrics."
+    },
+
+    "actions": {
+      "sync": "Sync",
+      "disconnect": "Disconnect",
+      "connect": "Connect",
+      "connecting": "Connecting..."
+    },
+
+    "security": {
+      "heading": "Your data is secure",
+      "description": "We only access your public profile information and video statistics. We never post on your behalf or access private messages. You can disconnect at any time."
+    },
+
+    "accountSecurity": {
+      "heading": "Account Security",
+      "password": "Password",
+      "changePassword": "Change Password"
+    },
+
+    "dangerZone": {
+      "heading": "Danger Zone",
+      "description": "Once you delete your account, there is no going back. Please be certain.",
+      "deleteAccount": "Delete Account"
+    }
+  },
+
+  "usage": {
+    "loading": "Loading usage data...",
+    "yourPlan": "Your Plan: {{plan}}",
+    "resets": "Resets: {{date}}",
+
+    "credits": {
+      "heading": "AI Credits",
+      "remaining": "{{remaining}} / {{limit}} remaining",
+      "bonusCredits": "Bonus Credits:",
+      "neverExpire": "(never expire)",
+      "rollover": "Rollover:",
+      "fromLastMonth": "(from last month)",
+      "totalAvailable": "Total Available:",
+      "creditsCount": "{{count}} credits",
+      "buyMore": "Buy More Credits"
+    },
+
+    "thisMonth": {
+      "heading": "This Month",
+      "scriptsGenerated": "AI Scripts Generated",
+      "chatMessages": "Chat Messages",
+      "deepAnalyze": "Deep Analyze",
+      "totalCreditsUsed": "Total Credits Used"
+    },
+
+    "autoMode": {
+      "heading": "Auto Mode",
+      "description": "AI automatically chooses the best model for each task",
+      "savedThisMonth": "Saved this month: {{count}} credits",
+      "vsManualPro": "vs manual Pro model"
+    },
+
+    "error": "Failed to load usage data",
+    "retry": "Retry"
+  },
+
+  "billing": {
+    "currentPlan": {
+      "heading": "Current Plan",
+      "creatorPlan": "Creator Plan",
+      "priceMonthly": "${{price}}/month",
+      "active": "Active",
+      "nextBilling": "Next billing: {{date}}",
+      "upgradeToPro": "Upgrade to Pro",
+      "cancelSubscription": "Cancel Subscription"
+    },
+
+    "paymentMethod": {
+      "heading": "Payment Method",
+      "expires": "Expires {{date}}",
+      "edit": "Edit",
+      "updatePaymentMethod": "Update Payment Method"
+    },
+
+    "billingHistory": {
+      "heading": "Billing History",
+      "creatorPlanMonthly": "Creator Plan - Monthly",
+      "invoice": "Invoice",
+      "viewAll": "View All"
+    }
+  }
+}

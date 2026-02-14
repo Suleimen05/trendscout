@@ -3,30 +3,38 @@
 Thumbs.db
 *.swp
 *.swo
+nul
 
 # IDE
 .vscode/
 .idea/
 *.code-workspace
 
+# Environment variables
+.env
+server/.env
+client/.env
+ml-service/.env
+
+# Python
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+
 # Server (Backend)
 server/venv/
 server/env/
-server/.env
-server/__pycache__/
-server/*.pyc
-server/*.pyo
-server/*.pyd
-server/.Python
-server/*.so
-server/*.egg
-server/*.egg-info/
 server/dist/
 server/build/
+server/uploads/
 
 # Client (Frontend)
 client/node_modules/
-client/.env
 client/dist/
 client/build/
 client/.vite/
@@ -36,15 +44,6 @@ client/coverage/
 # ML Service
 ml-service/venv/
 ml-service/env/
-ml-service/.env
-ml-service/__pycache__/
-ml-service/*.pyc
-ml-service/*.pyo
-ml-service/*.pyd
-ml-service/.Python
-ml-service/*.so
-ml-service/*.egg
-ml-service/*.egg-info/
 ml-service/.cache/
 ml-service/models/
 

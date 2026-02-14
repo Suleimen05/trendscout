@@ -1,0 +1,45 @@
+{
+  "title": "Трендовые хэштеги",
+  "subtitle": "Откройте самые горячие тренды и вирусные хэштеги в TikTok",
+  "search": {
+    "placeholder": "Поиск хэштегов..."
+  },
+  "timeRange": {
+    "24h": "24 часа",
+    "7d": "7 дней",
+    "30d": "30 дней"
+  },
+  "categories": {
+    "all": "Все",
+    "entertainment": "Развлечения",
+    "education": "Образование",
+    "lifestyle": "Лайфстайл",
+    "business": "Бизнес"
+  },
+  "tabs": {
+    "trending": "Сейчас в тренде",
+    "rising": "Растущие",
+    "analysis": "Анализ"
+  },
+  "card": {
+    "totalViews": "Всего просмотров",
+    "videos": "Видео",
+    "analyze": "Анализировать",
+    "hot": "Горячее"
+  },
+  "analysis": {
+    "title": "Анализ тренда: #{{hashtag}}",
+    "selectHashtag": "Выберите хэштег для детального анализа",
+    "currentViews": "Текущие просмотры",
+    "growthRate": "Темп роста",
+    "prediction": "Прогноз",
+    "trendGrowth": "Визуализация роста тренда",
+    "peak": "Пик",
+    "topVideos": "Лучшие видео с этим хэштегом",
+    "predictions": {
+      "rising": "Растёт",
+      "stable": "Стабильно",
+      "falling": "Падает"
+    }
+  }
+}

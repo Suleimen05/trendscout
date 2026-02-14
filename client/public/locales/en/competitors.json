@@ -1,0 +1,37 @@
+{
+  "pageTitle": "Competitors",
+  "channelsCount": "{{count}} channels",
+  "pageDescription": "Search and track competitor channels",
+
+  "searchTitle": "Search & Add Channels",
+  "searchPlaceholderTiktok": "Enter TikTok @username...",
+  "searchPlaceholderInstagram": "Enter Instagram @username...",
+  "searchButton": "Search",
+  "searching": "Searching...",
+  "searchResult": "Search Result:",
+  "followers": "followers",
+  "videos": "videos",
+  "adding": "Adding...",
+  "add": "Add",
+
+  "myCompetitors": "My Competitors",
+
+  "newBadge": "NEW",
+  "statsFollowers": "Followers",
+  "statsVideos": "Videos",
+  "statsAvgViews": "Avg Views",
+
+  "newVideo": "New video {{time}}",
+  "upToDate": "Up to date • Last activity {{time}}",
+
+  "viewFeed": "View Feed",
+  "untrack": "Untrack",
+  "removeConfirm": "Remove @{{username}} from tracking?",
+
+  "emptyTitle": "No competitors yet",
+  "emptyDescription": "Search for channels above to add them to your list",
+
+  "timeAgoMinutes": "{{count}}m ago",
+  "timeAgoHours": "{{count}}h ago",
+  "timeAgoDays": "{{count}}d ago"
+}

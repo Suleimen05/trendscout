@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ArrowLeft, RefreshCw, Bell, Loader2, TrendingUp, Users, Eye, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -22,6 +23,7 @@ interface CompetitorProfile {
 }
 
 export function CompetitorFeed() {
+  const { t } = useTranslation('competitorfeed');
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
 
@@ -129,10 +131,10 @@ export function CompetitorFeed() {
     } catch (error: any) {
       console.error('Error loading competitor feed:', error);
       if (error.response?.status === 404) {
-        toast.error(`Competitor @${username} not found`);
+        toast.error(t('notFoundError', { username }));
         navigate('/dashboard/competitors');
       } else {
-        toast.error('Failed to load competitor feed');
+        toast.error(t('loadFailed'));
       }
     } finally {
       setIsLoading(false);
@@ -145,7 +147,7 @@ export function CompetitorFeed() {
     try {
       setIsRefreshing(true);
       await apiClient.put(`/competitors/${username}/refresh`);
-      toast.success('Refreshing competitor data...');
+      toast.success(t('refreshSuccess'));
 
       // Reload after 2 seconds to give backend time to fetch
       setTimeout(() => {
@@ -153,7 +155,7 @@ export function CompetitorFeed() {
       }, 2000);
     } catch (error) {
       console.error('Error refreshing:', error);
-      toast.error('Failed to refresh. Try again later.');
+      toast.error(t('refreshFailed'));
     } finally {
       setIsRefreshing(false);
     }
@@ -196,10 +198,10 @@ export function CompetitorFeed() {
   if (!profile) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <p className="text-muted-foreground">Competitor not found</p>
+        <p className="text-muted-foreground">{t('notFound')}</p>
         <Button onClick={() => navigate('/dashboard/competitors')}>
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Competitors
+          {t('backToCompetitors')}
         </Button>
       </div>
     );
@@ -214,7 +216,7 @@ export function CompetitorFeed() {
         className="mb-4"
       >
         <ArrowLeft className="h-4 w-4 mr-2" />
-        Back to Competitors
+        {t('backToCompetitors')}
       </Button>
 
       {/* Profile Header */}
@@ -252,28 +254,28 @@ export function CompetitorFeed() {
                 <div className="text-center md:text-left">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                     <Users className="h-4 w-4" />
-                    Followers
+                    {t('followers')}
                   </div>
                   <div className="text-2xl font-bold">{formatNumber(profile.followerCount)}</div>
                 </div>
                 <div className="text-center md:text-left">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                     <Eye className="h-4 w-4" />
-                    Avg Views
+                    {t('avgViews')}
                   </div>
                   <div className="text-2xl font-bold">{formatNumber(profile.avgViews)}</div>
                 </div>
                 <div className="text-center md:text-left">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                     <TrendingUp className="h-4 w-4" />
-                    Videos
+                    {t('videos')}
                   </div>
                   <div className="text-2xl font-bold">{formatNumber(profile.videoCount)}</div>
                 </div>
                 <div className="text-center md:text-left">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground mb-1">
                     <Heart className="h-4 w-4" />
-                    Engagement
+                    {t('engagement')}
                   </div>
                   <div className="text-2xl font-bold">{profile.engagementRate.toFixed(1)}%</div>
                 </div>
@@ -281,9 +283,9 @@ export function CompetitorFeed() {
 
               {/* Tracking Info */}
               <div className="flex flex-wrap items-center gap-3 pt-4 border-t text-sm text-muted-foreground">
-                <span>✅ Tracking since {formatDate(profile.tracking_since)}</span>
+                <span>{t('trackingSince', { date: formatDate(profile.tracking_since) })}</span>
                 <span>•</span>
-                <span>Last checked: {formatDate(profile.last_checked)}</span>
+                <span>{t('lastChecked', { date: formatDate(profile.last_checked) })}</span>
               </div>
             </div>
 
@@ -297,18 +299,18 @@ export function CompetitorFeed() {
                 {isRefreshing ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Refreshing...
+                    {t('refreshing')}
                   </>
                 ) : (
                   <>
                     <RefreshCw className="h-4 w-4 mr-2" />
-                    Refresh
+                    {t('refresh')}
                   </>
                 )}
               </Button>
               <Button variant="outline">
                 <Bell className="h-4 w-4 mr-2" />
-                Notifications
+                {t('notifications')}
               </Button>
             </div>
           </div>
@@ -325,9 +327,9 @@ export function CompetitorFeed() {
                   <TrendingUp className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="font-semibold">New Activity!</p>
+                  <p className="font-semibold">{t('newActivity')}</p>
                   <p className="text-sm text-muted-foreground">
-                    {videos.filter((v) => isNewVideo(v)).length} new videos in the last 24 hours
+                    {t('newVideosCount', { count: videos.filter((v) => isNewVideo(v)).length })}
                   </p>
                 </div>
               </div>
@@ -336,7 +338,7 @@ export function CompetitorFeed() {
                 size="sm"
                 onClick={() => setFilter('new')}
               >
-                View New Videos
+                {t('viewNewVideos')}
               </Button>
             </div>
           </CardContent>
@@ -346,7 +348,7 @@ export function CompetitorFeed() {
       {/* Filters */}
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">
-          Recent Videos ({filteredVideos.length})
+          {t('recentVideos', { count: filteredVideos.length })}
         </h2>
 
         <div className="flex gap-2">
@@ -355,21 +357,21 @@ export function CompetitorFeed() {
             size="sm"
             onClick={() => setFilter('all')}
           >
-            All
+            {t('filterAll')}
           </Button>
           <Button
             variant={filter === 'new' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setFilter('new')}
           >
-            🆕 New Only
+            {t('filterNew')}
           </Button>
           <Button
             variant={filter === 'trending' ? 'default' : 'outline'}
             size="sm"
             onClick={() => setFilter('trending')}
           >
-            🔥 Trending
+            {t('filterTrending')}
           </Button>
         </div>
       </div>
@@ -379,13 +381,13 @@ export function CompetitorFeed() {
         <Card className="p-12">
           <div className="text-center">
             <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No videos found</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('noVideos')}</h3>
             <p className="text-muted-foreground">
               {filter === 'new'
-                ? 'No new videos yet. Check back later!'
+                ? t('emptyNew')
                 : filter === 'trending'
-                ? 'No trending videos at the moment.'
-                : 'This competitor has no videos yet.'}
+                ? t('emptyTrending')
+                : t('emptyAll')}
             </p>
           </div>
         </Card>

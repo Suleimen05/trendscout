@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { MessageSquare, Send, Star, Lightbulb, Bug, Heart, Loader2, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -7,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/services/api';
+import type { TFunction } from 'i18next';
 
 type FeedbackType = 'idea' | 'bug' | 'love' | 'other';
 
@@ -18,39 +20,40 @@ interface FeedbackOption {
   color: string;
 }
 
-const feedbackOptions: FeedbackOption[] = [
+const getFeedbackOptions = (t: TFunction): FeedbackOption[] => [
   {
     type: 'idea',
     icon: Lightbulb,
-    label: 'Feature Idea',
-    description: 'Suggest a new feature',
+    label: t('typeSelection.idea.label'),
+    description: t('typeSelection.idea.description'),
     color: 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20',
   },
   {
     type: 'bug',
     icon: Bug,
-    label: 'Bug Report',
-    description: 'Something not working?',
+    label: t('typeSelection.bug.label'),
+    description: t('typeSelection.bug.description'),
     color: 'text-red-500 bg-red-500/10 border-red-500/20',
   },
   {
     type: 'love',
     icon: Heart,
-    label: 'I Love It!',
-    description: 'Share what you love',
+    label: t('typeSelection.love.label'),
+    description: t('typeSelection.love.description'),
     color: 'text-pink-500 bg-pink-500/10 border-pink-500/20',
   },
   {
     type: 'other',
     icon: MessageSquare,
-    label: 'Other',
-    description: 'General feedback',
+    label: t('typeSelection.other.label'),
+    description: t('typeSelection.other.description'),
     color: 'text-blue-500 bg-blue-500/10 border-blue-500/20',
   },
 ];
 
 export function Feedback() {
   useAuth(); // Ensure user is authenticated context is available
+  const { t } = useTranslation('feedback');
   const [selectedType, setSelectedType] = useState<FeedbackType | null>(null);
   const [message, setMessage] = useState('');
   const [rating, setRating] = useState(0);
@@ -58,14 +61,16 @@ export function Feedback() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  const feedbackOptions = getFeedbackOptions(t);
+
   const handleSubmit = async () => {
     if (!selectedType || !message.trim()) {
-      toast.error('Please select a feedback type and write a message');
+      toast.error(t('toast.validationRequired'));
       return;
     }
 
     if (message.trim().length < 10) {
-      toast.error('Message must be at least 10 characters');
+      toast.error(t('toast.validationMinLength'));
       return;
     }
 
@@ -79,9 +84,9 @@ export function Feedback() {
       });
 
       setIsSubmitted(true);
-      toast.success('Thank you for your feedback!');
+      toast.success(t('toast.success'));
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || 'Failed to send feedback';
+      const errorMessage = error.response?.data?.detail || t('toast.error');
       toast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
@@ -103,13 +108,12 @@ export function Feedback() {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/10 flex items-center justify-center">
               <CheckCircle className="h-8 w-8 text-green-500" />
             </div>
-            <h2 className="text-2xl font-bold mb-2">Thank You!</h2>
+            <h2 className="text-2xl font-bold mb-2">{t('success.title')}</h2>
             <p className="text-muted-foreground mb-6">
-              Your feedback helps us make Rizko.ai better for everyone.
-              We read every message!
+              {t('success.description')}
             </p>
             <Button onClick={resetForm}>
-              Send More Feedback
+              {t('success.sendMore')}
             </Button>
           </Card>
         </div>
@@ -123,16 +127,16 @@ export function Feedback() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
           <MessageSquare className="h-7 w-7" />
-          Feedback
+          {t('title')}
         </h1>
         <p className="text-muted-foreground">
-          Help us improve Rizko.ai - your ideas and feedback matter!
+          {t('subtitle')}
         </p>
       </div>
 
       {/* Feedback Type Selection */}
       <Card className="p-6">
-        <h3 className="font-semibold mb-4">What kind of feedback do you have?</h3>
+        <h3 className="font-semibold mb-4">{t('typeSelection.title')}</h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {feedbackOptions.map((option) => {
             const Icon = option.icon;
@@ -160,29 +164,29 @@ export function Feedback() {
 
       {/* Message Input */}
       <Card className="p-6">
-        <h3 className="font-semibold mb-4">Tell us more</h3>
+        <h3 className="font-semibold mb-4">{t('message.title')}</h3>
         <Textarea
           placeholder={
             selectedType === 'idea'
-              ? "I'd love to see a feature that..."
+              ? t('message.placeholders.idea')
               : selectedType === 'bug'
-              ? "I found a bug: when I try to..."
+              ? t('message.placeholders.bug')
               : selectedType === 'love'
-              ? "I really love how Rizko.ai..."
-              : "Your feedback here..."
+              ? t('message.placeholders.love')
+              : t('message.placeholders.other')
           }
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           className="min-h-[150px] resize-none"
         />
         <p className="text-xs text-muted-foreground mt-2">
-          {message.length}/1000 characters
+          {t('message.charCount', { count: message.length })}
         </p>
       </Card>
 
       {/* Rating */}
       <Card className="p-6">
-        <h3 className="font-semibold mb-4">How would you rate Rizko.ai overall?</h3>
+        <h3 className="font-semibold mb-4">{t('rating.title')}</h3>
         <div className="flex items-center gap-2">
           {[1, 2, 3, 4, 5].map((star) => (
             <button
@@ -204,11 +208,7 @@ export function Feedback() {
           ))}
           {rating > 0 && (
             <span className="ml-3 text-sm text-muted-foreground">
-              {rating === 5 && 'Excellent!'}
-              {rating === 4 && 'Great!'}
-              {rating === 3 && 'Good'}
-              {rating === 2 && 'Could be better'}
-              {rating === 1 && 'Needs improvement'}
+              {t(`rating.labels.${rating}`)}
             </span>
           )}
         </div>
@@ -224,19 +224,19 @@ export function Feedback() {
         {isSubmitting ? (
           <>
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-            Sending...
+            {t('submit.sending')}
           </>
         ) : (
           <>
             <Send className="h-4 w-4 mr-2" />
-            Send Feedback
+            {t('submit.button')}
           </>
         )}
       </Button>
 
       {/* Contact Info */}
       <p className="text-center text-sm text-muted-foreground">
-        Or email us directly at{' '}
+        {t('contactEmail')}{' '}
         <a href="mailto:feedback@rizko.ai" className="text-purple-500 hover:underline">
           feedback@rizko.ai
         </a>

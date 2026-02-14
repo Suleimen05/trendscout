@@ -1,0 +1,75 @@
+{
+  "auth": {
+    "loginSuccess": "С возвращением!",
+    "loginFailed": "Ошибка входа",
+    "registerSuccess": "Аккаунт создан!",
+    "registerFailed": "Ошибка регистрации",
+    "logoutSuccess": "Вы вышли из аккаунта"
+  },
+  "chat": {
+    "loadSessionsFailed": "Не удалось загрузить сессии чата",
+    "loadCreditsFailed": "Не удалось загрузить информацию о кредитах",
+    "createSessionFailed": "Не удалось создать сессию",
+    "loadMessagesFailed": "Не удалось загрузить сообщения",
+    "sessionDeleted": "Сессия удалена",
+    "deleteSessionFailed": "Не удалось удалить сессию",
+    "createChatFailed": "Не удалось создать сессию чата",
+    "insufficientCredits": "Недостаточно кредитов",
+    "sendMessageFailed": "Ошибка отправки сообщения"
+  },
+  "workflow": {
+    "saved": "Воркфлоу сохранён",
+    "deleted": "Воркфлоу удалён",
+    "createFailed": "Не удалось создать воркфлоу",
+    "loadFailed": "Не удалось загрузить воркфлоу",
+    "saveFailed": "Не удалось сохранить воркфлоу",
+    "deleteFailed": "Не удалось удалить воркфлоу",
+    "duplicated": "Воркфлоу дублирован",
+    "duplicateFailed": "Не удалось дублировать воркфлоу",
+    "loginRequired": "Войдите, чтобы сохранять воркфлоу",
+    "runComplete": "Воркфлоу завершён!",
+    "runFailed": "Ошибка выполнения воркфлоу",
+    "notEnoughCredits": "Недостаточно кредитов. Нужно ~{{need}}, есть {{have}}"
+  },
+  "settings": {
+    "accountConnected": "Ваш аккаунт {{platform}} подключён!",
+    "accountDisconnected": "Ваш аккаунт {{platform}} отключён.",
+    "connectFailed": "Не удалось подключить. Попробуйте снова.",
+    "loginRequired": "Войдите, чтобы подключить аккаунт",
+    "profileSaved": "Профиль сохранён",
+    "passwordChanged": "Пароль изменён"
+  },
+  "video": {
+    "saved": "Видео сохранено!",
+    "removed": "Удалено из сохранённых",
+    "saveFailed": "Не удалось сохранить видео"
+  },
+  "clipboard": {
+    "copied": "Скопировано в буфер обмена",
+    "failed": "Не удалось скопировать"
+  },
+  "dashboard": {
+    "syncSuccess": "Аккаунт синхронизирован",
+    "syncFailed": "Ошибка синхронизации",
+    "demoAdded": "Демо-аккаунт добавлен",
+    "loadFailed": "Не удалось загрузить данные"
+  },
+  "discover": {
+    "searchFailed": "Ошибка поиска",
+    "noResults": "Ничего не найдено"
+  },
+  "generic": {
+    "operationFailed": "Операция не удалась. Попробуйте снова.",
+    "networkError": "Ошибка сети. Проверьте подключение."
+  },
+  "competitors": {
+    "loadFailed": "Не удалось загрузить конкурентов",
+    "channelNotFound": "Канал {{platform}} @{{username}} не найден",
+    "searchFailed": "Ошибка поиска. Попробуйте снова.",
+    "addSuccess": "@{{username}} добавлен в список",
+    "alreadyExists": "@{{username}} уже в вашем списке",
+    "addFailed": "Не удалось добавить канал",
+    "removeSuccess": "@{{username}} удалён",
+    "removeFailed": "Не удалось удалить канал"
+  }
+}

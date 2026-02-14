@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Loader2, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 export function OAuthCallback() {
+  const { t } = useTranslation('accounts');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
@@ -29,9 +31,9 @@ export function OAuthCallback() {
       setMessage(decodeURIComponent(error) || 'Failed to connect account. Please try again.');
     } else {
       setStatus('error');
-      setMessage('Invalid callback. Please try connecting again.');
+      setMessage(t('oauth.invalidCallback'));
     }
-  }, [searchParams, navigate]);
+  }, [searchParams, navigate, t]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -41,8 +43,8 @@ export function OAuthCallback() {
             {status === 'loading' && (
               <>
                 <Loader2 className="h-12 w-12 animate-spin mx-auto text-purple-500" />
-                <h2 className="text-xl font-semibold">Connecting your account...</h2>
-                <p className="text-muted-foreground">Please wait while we complete the connection.</p>
+                <h2 className="text-xl font-semibold">{t('oauth.connecting')}</h2>
+                <p className="text-muted-foreground">{t('oauth.pleaseWait')}</p>
               </>
             )}
 
@@ -52,11 +54,11 @@ export function OAuthCallback() {
                   <CheckCircle className="h-8 w-8 text-green-600 dark:text-green-400" />
                 </div>
                 <h2 className="text-xl font-semibold text-green-700 dark:text-green-300">
-                  Successfully Connected!
+                  {t('oauth.success')}
                 </h2>
                 <p className="text-muted-foreground">{message}</p>
                 <p className="text-sm text-muted-foreground">
-                  Redirecting you back...
+                  {t('oauth.redirecting')}
                 </p>
               </>
             )}
@@ -67,14 +69,14 @@ export function OAuthCallback() {
                   <XCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
                 </div>
                 <h2 className="text-xl font-semibold text-red-700 dark:text-red-300">
-                  Connection Failed
+                  {t('oauth.failed')}
                 </h2>
                 <p className="text-muted-foreground">{message}</p>
                 <Button
                   onClick={() => navigate('/dashboard/connect-accounts')}
                   className="mt-4"
                 >
-                  Try Again
+                  {t('oauth.tryAgain')}
                 </Button>
               </>
             )}

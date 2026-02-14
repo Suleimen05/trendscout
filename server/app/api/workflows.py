@@ -5,11 +5,14 @@ Includes CRUD for workflow persistence and execution engine.
 Supports per-node model selection (Gemini, Claude, GPT-4).
 """
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Depends, status
+from pathlib import Path
+from fastapi import APIRouter, HTTPException, Depends, status, UploadFile, File
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 from sqlalchemy.orm import Session
 import logging
+import uuid
+import shutil
 
 from ..core.database import get_db
 from ..services.gemini_script_generator import GeminiScriptGenerator
@@ -31,6 +34,13 @@ def get_script_generator() -> GeminiScriptGenerator:
     if _script_generator is None:
         _script_generator = GeminiScriptGenerator()
     return _script_generator
+
+
+def _lang_instruction(language: str) -> str:
+    """Return a language instruction to prepend to prompts."""
+    if language and language.lower() != "english":
+        return f"IMPORTANT: You MUST write your ENTIRE response in {language}. All headings, labels, descriptions, and content must be in {language}.\n\n"
+    return ""
 
 
 def generate_with_model(model: str, prompt: str) -> str:
@@ -93,6 +103,7 @@ class VideoData(BaseModel):
     uts: float = 0
     thumb: str = ""
     url: Optional[str] = None
+    localPath: Optional[str] = None  # Path to uploaded video file
 
 
 class NodeConfig(BaseModel):
@@ -500,6 +511,59 @@ async def analyze_video(
 
 
 # ============================================================================
+# VIDEO UPLOAD ENDPOINT
+# ============================================================================
+
+VIDEOS_UPLOAD_DIR = Path(__file__).parent.parent.parent / "uploads" / "videos"
+VIDEOS_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+ALLOWED_VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi", ".webm", ".mkv", ".m4v"}
+MAX_VIDEO_SIZE_MB = 100
+
+
+@router.post("/upload-video-file")
+async def upload_video(
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+):
+    """
+    Upload a video file from the user's device.
+    Returns a URL that can be used in workflow video nodes.
+    """
+    # Validate file extension
+    ext = Path(file.filename or "video.mp4").suffix.lower()
+    if ext not in ALLOWED_VIDEO_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported format: {ext}. Allowed: {', '.join(ALLOWED_VIDEO_EXTENSIONS)}"
+        )
+
+    # Read file and check size
+    content = await file.read()
+    size_mb = len(content) / (1024 * 1024)
+    if size_mb > MAX_VIDEO_SIZE_MB:
+        raise HTTPException(
+            status_code=400,
+            detail=f"File too large: {size_mb:.1f}MB (max {MAX_VIDEO_SIZE_MB}MB)"
+        )
+
+    # Save with unique name
+    unique_name = f"{uuid.uuid4().hex}{ext}"
+    file_path = VIDEOS_UPLOAD_DIR / unique_name
+    file_path.write_bytes(content)
+
+    logger.info(f"[UPLOAD] Video saved: {file_path} ({size_mb:.1f}MB) by user {current_user.id}")
+
+    return {
+        "success": True,
+        "filename": unique_name,
+        "url": f"/uploads/videos/{unique_name}",
+        "local_path": str(file_path),
+        "size_mb": round(size_mb, 1),
+    }
+
+
+# ============================================================================
 # WORKFLOW RUN HISTORY ENDPOINTS
 # ============================================================================
 
@@ -694,7 +758,7 @@ def topological_sort(nodes: List[WorkflowNode], connections: List[Connection]) -
     return result
 
 
-def process_video_node(node: WorkflowNode) -> str:
+def process_video_node(node: WorkflowNode, language: str = "English") -> str:
     """Process video input node - downloads actual video and analyzes it with Gemini Vision."""
     if not node.videoData:
         return "No video attached. Drag a saved video onto this node."
@@ -704,7 +768,14 @@ def process_video_node(node: WorkflowNode) -> str:
     if node.config and node.config.customPrompt:
         custom_prompt = node.config.customPrompt
 
-    if video.url:
+    # Prepend language instruction to custom prompt (or create one)
+    lang_instr = _lang_instruction(language)
+    if custom_prompt:
+        custom_prompt = lang_instr + custom_prompt
+    elif lang_instr:
+        custom_prompt = lang_instr + "Analyze this video in detail."
+
+    if video.url or video.localPath:
         try:
             from ..services.video_analyzer import analyze_video_with_gemini
 
@@ -714,14 +785,15 @@ def process_video_node(node: WorkflowNode) -> str:
                 'views': video.views,
                 'uts': video.uts,
                 'desc': video.desc,
-                'url': video.url,
+                'url': video.url or 'Local upload',
             }
 
-            logger.info(f"[WORKFLOW] Analyzing video with Gemini: {video.url}")
+            logger.info(f"[WORKFLOW] Analyzing video with Gemini: {video.localPath or video.url}")
             result = analyze_video_with_gemini(
-                video_url=video.url,
+                video_url=video.url or "",
                 video_metadata=metadata,
                 custom_prompt=custom_prompt,
+                local_path=video.localPath,
             )
             return result
 
@@ -782,15 +854,16 @@ To get better results, double-click this node and add:
 **Instructions for downstream nodes:** All generated content MUST align with this brand identity."""
 
 
-def process_analyze_node(input_content: str, config: Optional[NodeConfig] = None) -> str:
+def process_analyze_node(input_content: str, config: Optional[NodeConfig] = None, language: str = "English") -> str:
     """Deep content analysis."""
     if not input_content or input_content.strip() == "":
         return "No input content to analyze. Connect a Video Input or Brand Brief node."
 
     model = (config.model if config and config.model else "gemini")
+    lang = _lang_instruction(language)
 
     if config and config.customPrompt:
-        prompt = f"""You are an expert content strategist analyzing viral content.
+        prompt = f"""{lang}You are an expert content strategist analyzing viral content.
 
 {config.customPrompt}
 
@@ -798,7 +871,7 @@ def process_analyze_node(input_content: str, config: Optional[NodeConfig] = None
 CONTENT TO ANALYZE:
 {input_content}"""
     else:
-        prompt = f"""You are an expert viral content strategist. Analyze this content deeply.
+        prompt = f"""{lang}You are an expert viral content strategist. Analyze this content deeply.
 
 ---
 CONTENT TO ANALYZE:
@@ -838,15 +911,16 @@ Be specific and actionable."""
         return f"Analysis error: {str(e)}"
 
 
-def process_extract_node(input_content: str, config: Optional[NodeConfig] = None) -> str:
+def process_extract_node(input_content: str, config: Optional[NodeConfig] = None, language: str = "English") -> str:
     """Extract key elements."""
     if not input_content or input_content.strip() == "":
         return "No input content to extract from. Connect upstream nodes first."
 
     model = (config.model if config and config.model else "gemini")
+    lang = _lang_instruction(language)
 
     if config and config.customPrompt:
-        prompt = f"""You are extracting reusable content elements.
+        prompt = f"""{lang}You are extracting reusable content elements.
 
 {config.customPrompt}
 
@@ -854,7 +928,7 @@ def process_extract_node(input_content: str, config: Optional[NodeConfig] = None
 SOURCE CONTENT:
 {input_content}"""
     else:
-        prompt = f"""Extract all reusable elements from this content analysis. Create a toolkit for similar content.
+        prompt = f"""{lang}Extract all reusable elements from this content analysis. Create a toolkit for similar content.
 
 ---
 SOURCE CONTENT:
@@ -890,15 +964,16 @@ Keep it brief and immediately usable."""
         return f"Extraction error: {str(e)}"
 
 
-def process_style_node(input_content: str, config: Optional[NodeConfig] = None) -> str:
+def process_style_node(input_content: str, config: Optional[NodeConfig] = None, language: str = "English") -> str:
     """Style matching."""
     if not input_content or input_content.strip() == "":
         return "No input content for style matching. Connect upstream nodes first."
 
     model = (config.model if config and config.model else "gemini")
+    lang = _lang_instruction(language)
 
     if config and config.customPrompt:
-        prompt = f"""You are creating a style guide for content replication.
+        prompt = f"""{lang}You are creating a style guide for content replication.
 
 {config.customPrompt}
 
@@ -906,7 +981,7 @@ def process_style_node(input_content: str, config: Optional[NodeConfig] = None) 
 REFERENCE CONTENT:
 {input_content}"""
     else:
-        prompt = f"""Create a concise style guide based on this content.
+        prompt = f"""{lang}Create a concise style guide based on this content.
 
 ---
 REFERENCE CONTENT:
@@ -937,15 +1012,16 @@ Keep this concise and actionable."""
         return f"Style matching error: {str(e)}"
 
 
-def process_generate_node(input_content: str, config: Optional[NodeConfig] = None) -> str:
+def process_generate_node(input_content: str, config: Optional[NodeConfig] = None, language: str = "English") -> str:
     """AI Script Generation."""
     if not input_content or input_content.strip() == "":
         return "No input context for script generation. Connect upstream nodes."
 
     model = (config.model if config and config.model else "gemini")
+    lang = _lang_instruction(language)
 
     if config and config.customPrompt:
-        prompt = f"""You are a viral content scriptwriter creating a TikTok script.
+        prompt = f"""{lang}You are a viral content scriptwriter creating a TikTok script.
 
 {config.customPrompt}
 
@@ -953,7 +1029,7 @@ def process_generate_node(input_content: str, config: Optional[NodeConfig] = Non
 CONTEXT & GUIDELINES:
 {input_content}"""
     else:
-        prompt = f"""Write a complete, production-ready TikTok script. Be concise.
+        prompt = f"""{lang}Write a complete, production-ready TikTok script. Be concise.
 
 ---
 CONTEXT & GUIDELINES:
@@ -1003,15 +1079,16 @@ Keep it natural and scroll-stopping."""
         return f"Generation error: {str(e)}"
 
 
-def process_refine_node(input_content: str, config: Optional[NodeConfig] = None) -> str:
+def process_refine_node(input_content: str, config: Optional[NodeConfig] = None, language: str = "English") -> str:
     """Polish & Improve."""
     if not input_content or input_content.strip() == "":
         return "No content to refine. Connect a Generate node."
 
     model = (config.model if config and config.model else "gemini")
+    lang = _lang_instruction(language)
 
     if config and config.customPrompt:
-        prompt = f"""You are optimizing content for viral performance.
+        prompt = f"""{lang}You are optimizing content for viral performance.
 
 {config.customPrompt}
 
@@ -1019,7 +1096,7 @@ def process_refine_node(input_content: str, config: Optional[NodeConfig] = None)
 CONTENT TO REFINE:
 {input_content}"""
     else:
-        prompt = f"""Refine this script for MAXIMUM impact. Be concise.
+        prompt = f"""{lang}Refine this script for MAXIMUM impact. Be concise.
 
 ---
 ORIGINAL CONTENT:
@@ -1041,16 +1118,17 @@ The refined version should feel noticeably more engaging."""
         return f"Refinement error: {str(e)}"
 
 
-def process_script_output_node(input_content: str, config: Optional[NodeConfig] = None) -> str:
+def process_script_output_node(input_content: str, config: Optional[NodeConfig] = None, language: str = "English") -> str:
     """Final Script Output."""
     if not input_content or input_content.strip() == "":
         return "No script content to format. Connect a Generate or Refine node."
 
     model = (config.model if config and config.model else "gemini")
+    lang = _lang_instruction(language)
     output_format = (config.outputFormat if config and config.outputFormat else "markdown")
 
     if config and config.customPrompt:
-        prompt = f"""Format this script for production use.
+        prompt = f"""{lang}Format this script for production use.
 
 {config.customPrompt}
 
@@ -1066,7 +1144,7 @@ RAW SCRIPT:
         else:
             format_instruction = "Use clean Markdown formatting."
 
-        prompt = f"""Clean up and format this script for FINAL PRODUCTION USE. Be concise.
+        prompt = f"""{lang}Clean up and format this script for FINAL PRODUCTION USE. Be concise.
 
 ---
 RAW SCRIPT:
@@ -1085,15 +1163,16 @@ Remove analysis/meta-commentary. Keep ONLY actionable content."""
         return input_content
 
 
-def process_storyboard_node(input_content: str, config: Optional[NodeConfig] = None) -> str:
+def process_storyboard_node(input_content: str, config: Optional[NodeConfig] = None, language: str = "English") -> str:
     """Visual Storyboard."""
     if not input_content or input_content.strip() == "":
         return "No script content for storyboard. Connect a Script Output or Generate node."
 
     model = (config.model if config and config.model else "gemini")
+    lang = _lang_instruction(language)
 
     if config and config.customPrompt:
-        prompt = f"""Create a storyboard for this script.
+        prompt = f"""{lang}Create a storyboard for this script.
 
 {config.customPrompt}
 
@@ -1101,7 +1180,7 @@ def process_storyboard_node(input_content: str, config: Optional[NodeConfig] = N
 SCRIPT:
 {input_content}"""
     else:
-        prompt = f"""Create a concise VISUAL STORYBOARD for this TikTok script.
+        prompt = f"""{lang}Create a concise VISUAL STORYBOARD for this TikTok script.
 
 ---
 SCRIPT:
@@ -1144,6 +1223,7 @@ class WorkflowExecuteRequestV2(BaseModel):
     brand_context: Optional[str] = None
     workflow_id: Optional[int] = None
     workflow_name: Optional[str] = None
+    language: Optional[str] = "English"
 
 
 @router.post("/execute", response_model=WorkflowExecuteResponse)
@@ -1258,25 +1338,26 @@ async def execute_workflow(
 
             try:
                 node_config = node.config
+                lang = request.language or "English"
                 if node.type == "video":
-                    output = process_video_node(node)
+                    output = process_video_node(node, lang)
                 elif node.type == "brand":
                     output = process_brand_node(node, request.brand_context or "", node_config)
                 elif node.type == "analyze":
-                    output = process_analyze_node(input_content, node_config)
+                    output = process_analyze_node(input_content, node_config, lang)
                 elif node.type == "extract":
-                    output = process_extract_node(input_content, node_config)
+                    output = process_extract_node(input_content, node_config, lang)
                 elif node.type == "style":
-                    output = process_style_node(input_content, node_config)
+                    output = process_style_node(input_content, node_config, lang)
                 elif node.type == "generate":
-                    output = process_generate_node(input_content, node_config)
+                    output = process_generate_node(input_content, node_config, lang)
                 elif node.type == "refine":
-                    output = process_refine_node(input_content, node_config)
+                    output = process_refine_node(input_content, node_config, lang)
                 elif node.type == "script":
-                    output = process_script_output_node(input_content, node_config)
+                    output = process_script_output_node(input_content, node_config, lang)
                     final_script = output
                 elif node.type == "storyboard":
-                    output = process_storyboard_node(input_content, node_config)
+                    output = process_storyboard_node(input_content, node_config, lang)
                     storyboard = output
                 else:
                     output = f"Unknown node type: {node.type}"

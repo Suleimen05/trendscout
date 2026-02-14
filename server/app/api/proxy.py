@@ -64,7 +64,7 @@ async def proxy_image(url: str):
         raise HTTPException(status_code=400, detail="Invalid URL")
 
     if not is_allowed_domain(url):
-        logger.warning(f"🚫 Blocked proxy request to non-whitelisted domain: {url[:80]}")
+        logger.warning(f"[BLOCKED] Blocked proxy request to non-whitelisted domain: {url[:80]}")
         raise HTTPException(status_code=403, detail="Domain not allowed")
 
     try:
@@ -96,7 +96,7 @@ async def proxy_image(url: str):
             # Pay-as-you-go: $12.50/GB for residential IPs
             # This is required because TikTok blocks datacenter IPs for tos-alisg storage
             proxy_url = f"http://groups-RESIDENTIAL:{APIFY_PROXY_PASSWORD}@proxy.apify.com:8000"
-            logger.info(f"📥 Proxying geo-restricted image via Apify RESIDENTIAL: {url[:80]}...")
+            logger.info(f"[DOWNLOAD] Proxying geo-restricted image via Apify RESIDENTIAL: {url[:80]}...")
 
             async with httpx.AsyncClient(
                 timeout=30.0,  # Longer timeout for proxy
@@ -107,7 +107,7 @@ async def proxy_image(url: str):
                 response = await client.get(url, headers=headers)
         else:
             # Direct connection for US CDN (faster, no proxy needed)
-            logger.info(f"📥 Proxying image (direct): {url[:80]}...")
+            logger.info(f"[DOWNLOAD] Proxying image (direct): {url[:80]}...")
 
             async with httpx.AsyncClient(
                 timeout=15.0,
@@ -127,12 +127,12 @@ async def proxy_image(url: str):
                 }
             )
         else:
-            logger.error(f"❌ Proxy failed: {response.status_code} for {url[:80]}")
+            logger.error(f"[ERROR] Proxy failed: {response.status_code} for {url[:80]}")
             raise HTTPException(status_code=response.status_code, detail="Image not available")
 
     except httpx.TimeoutException:
-        logger.error(f"❌ Proxy timeout for {url[:80]}")
+        logger.error(f"[ERROR] Proxy timeout for {url[:80]}")
         raise HTTPException(status_code=504, detail="Image fetch timeout")
     except Exception as e:
-        logger.error(f"❌ Proxy error for {url[:80]}: {str(e)}")
+        logger.error(f"[ERROR] Proxy error for {url[:80]}: {str(e)}")
         raise HTTPException(status_code=500, detail="Image proxy failed")

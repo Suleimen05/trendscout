@@ -11,15 +11,15 @@ class GeminiScriptGenerator:
     def __init__(self):
         api_key = os.getenv("GEMINI_API_KEY")
         if not api_key or api_key == "your_gemini_api_key_here":
-            print("⚠️  GEMINI API KEY не настроен!")
+            print("WARNING: GEMINI API KEY not configured!")
             self.client = None
         else:
             try:
                 from google import genai
                 self.client = genai.Client(api_key=api_key)
-                print("✅ Gemini Flash initialized")
+                print("Gemini Flash initialized")
             except Exception as e:
-                print(f"⚠️  Failed to initialize Gemini: {e}")
+                print(f"WARNING: Failed to initialize Gemini: {e}")
                 self.client = None
 
     def generate_script(
@@ -68,7 +68,7 @@ class GeminiScriptGenerator:
             return script
 
         except Exception as e:
-            print(f"❌ Gemini generation error: {e}")
+            print(f"Gemini generation error: {e}")
             return self._fallback_script(video_description)
 
     def _create_prompt(
@@ -143,7 +143,7 @@ Generate the script now as valid JSON only, no additional text:"""
             return data
 
         except Exception as e:
-            print(f"⚠️  Failed to parse Gemini response: {e}")
+            print(f"WARNING: Failed to parse Gemini response: {e}")
             print(f"Response was: {response_text[:500]}")
 
             # Возвращаем базовую структуру с текстом ответа

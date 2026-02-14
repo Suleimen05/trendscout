@@ -1,6 +1,8 @@
 /**
  * Workflow Context
  * Manages workflow persistence: save, load, auto-save, CRUD
+ * Also preloads saved videos and run history on auth so they're
+ * ready when the user opens the AI Scripts page.
  * Uses apiService (axios + auto-refresh) for all API calls.
  */
 
@@ -16,6 +18,7 @@ import {
 import { useAuth } from './AuthContext';
 import { apiService } from '@/services/api';
 import { toast } from 'sonner';
+import i18n from '@/lib/i18n';
 
 // =============================================================================
 // TYPES
@@ -49,6 +52,39 @@ export interface WorkflowData {
   updated_at: string;
 }
 
+export interface SavedVideo {
+  id: number;
+  platform: string;
+  author: string;
+  desc: string;
+  views: string;
+  uts: number;
+  thumb: string;
+  url?: string;
+  localPath?: string;
+}
+
+// =============================================================================
+// UTILITY FUNCTIONS
+// =============================================================================
+
+const detectPlatform = (url: string): string => {
+  if (url.includes('tiktok')) return 'TikTok';
+  if (url.includes('instagram')) return 'Instagram';
+  if (url.includes('youtube') || url.includes('youtu.be')) return 'YouTube';
+  if (url.includes('snapchat')) return 'Snapchat';
+  if (url.includes('twitter') || url.includes('x.com')) return 'X';
+  if (url.includes('pinterest')) return 'Pinterest';
+  if (url.includes('linkedin')) return 'LinkedIn';
+  return 'TikTok';
+};
+
+const formatViews = (num: number): string => {
+  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
+  return num.toString();
+};
+
 interface WorkflowContextType {
   workflows: WorkflowListItem[];
   currentWorkflow: WorkflowData | null;
@@ -68,6 +104,15 @@ interface WorkflowContextType {
   closeWorkflow: () => void;
   markDirty: () => void;
   setCurrentWorkflow: (wf: WorkflowData | null) => void;
+  // Preloaded data
+  savedVideos: SavedVideo[];
+  loadingSaved: boolean;
+  runHistory: any[];
+  loadingHistory: boolean;
+  loadSavedVideos: () => Promise<void>;
+  loadRunHistory: () => Promise<void>;
+  removeSavedVideo: (id: number) => void;
+  removeRunHistoryItem: (id: number) => void;
 }
 
 // =============================================================================
@@ -89,6 +134,12 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
   const [isDirty, setIsDirty] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Preloaded data — ready before user opens AI Scripts
+  const [savedVideos, setSavedVideos] = useState<SavedVideo[]>([]);
+  const [loadingSaved, setLoadingSaved] = useState(false);
+  const [runHistory, setRunHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // ---------------------------------------------------------------------------
@@ -108,6 +159,61 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
   }, [token]);
 
   // ---------------------------------------------------------------------------
+  // Load saved videos (favorites)
+  // ---------------------------------------------------------------------------
+  const loadSavedVideos = useCallback(async () => {
+    if (!token) return;
+    try {
+      setLoadingSaved(true);
+      const response = await apiService.getFavorites({ page: 1, per_page: 50 });
+      const videos: SavedVideo[] = response.items.map((item: any) => ({
+        id: item.id,
+        platform: detectPlatform(item.trend?.url || ''),
+        author: item.trend?.author_username || 'unknown',
+        desc: item.trend?.description || 'No description',
+        views: formatViews(item.trend?.stats?.playCount || 0),
+        uts: item.trend?.uts_score || 0,
+        thumb: item.trend?.cover_url || '',
+        url: item.trend?.url,
+      }));
+      setSavedVideos(videos);
+    } catch (error) {
+      console.error('Failed to load saved videos:', error);
+      setSavedVideos([]);
+    } finally {
+      setLoadingSaved(false);
+    }
+  }, [token]);
+
+  // ---------------------------------------------------------------------------
+  // Load run history
+  // ---------------------------------------------------------------------------
+  const loadRunHistory = useCallback(async () => {
+    if (!token) return;
+    try {
+      setLoadingHistory(true);
+      const history = await apiService.getWorkflowHistory(30);
+      setRunHistory(history);
+    } catch (error) {
+      console.error('Failed to load run history:', error);
+      setRunHistory([]);
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, [token]);
+
+  // ---------------------------------------------------------------------------
+  // Mutations for preloaded data
+  // ---------------------------------------------------------------------------
+  const removeSavedVideo = useCallback((id: number) => {
+    setSavedVideos(prev => prev.filter(v => v.id !== id));
+  }, []);
+
+  const removeRunHistoryItem = useCallback((id: number) => {
+    setRunHistory(prev => prev.filter(r => r.id !== id));
+  }, []);
+
+  // ---------------------------------------------------------------------------
   // Create new workflow
   // ---------------------------------------------------------------------------
   const createWorkflow = useCallback(
@@ -123,7 +229,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         return data;
       } catch (error) {
         console.error('Failed to create workflow:', error);
-        toast.error('Failed to create workflow');
+        toast.error(i18n.t('toasts:workflow.createFailed'));
         return null;
       }
     },
@@ -143,7 +249,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         setIsDirty(false);
       } catch (error) {
         console.error('Failed to load workflow:', error);
-        toast.error('Failed to load workflow');
+        toast.error(i18n.t('toasts:workflow.loadFailed'));
       } finally {
         setIsLoading(false);
       }
@@ -196,7 +302,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         );
       } catch (error) {
         console.error('Failed to save workflow:', error);
-        toast.error('Failed to save workflow');
+        toast.error(i18n.t('toasts:workflow.saveFailed'));
       }
     },
     [token, currentWorkflow, loadWorkflows]
@@ -224,10 +330,10 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
           setCurrentWorkflow(null);
           setIsDirty(false);
         }
-        toast.success('Workflow deleted');
+        toast.success(i18n.t('toasts:workflow.deleted'));
       } catch (error) {
         console.error('Failed to delete workflow:', error);
-        toast.error('Failed to delete workflow');
+        toast.error(i18n.t('toasts:workflow.deleteFailed'));
       }
     },
     [token, currentWorkflow]
@@ -244,10 +350,10 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         setCurrentWorkflow(newWf);
         setIsDirty(false);
         await loadWorkflows();
-        toast.success('Workflow duplicated');
+        toast.success(i18n.t('toasts:workflow.duplicated'));
       } catch (error) {
         console.error('Failed to duplicate workflow:', error);
-        toast.error('Failed to duplicate workflow');
+        toast.error(i18n.t('toasts:workflow.duplicateFailed'));
       }
     },
     [token, loadWorkflows]
@@ -265,16 +371,20 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
   // Effects
   // ---------------------------------------------------------------------------
 
-  // Load workflows on auth
+  // Load all data on auth — workflows, saved videos, run history
   useEffect(() => {
     if (isAuthenticated && token) {
       loadWorkflows();
+      loadSavedVideos();
+      loadRunHistory();
     } else {
       setWorkflows([]);
       setCurrentWorkflow(null);
       setIsDirty(false);
+      setSavedVideos([]);
+      setRunHistory([]);
     }
-  }, [isAuthenticated, token, loadWorkflows]);
+  }, [isAuthenticated, token, loadWorkflows, loadSavedVideos, loadRunHistory]);
 
   // Cleanup
   useEffect(() => {
@@ -304,6 +414,15 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         closeWorkflow,
         markDirty,
         setCurrentWorkflow,
+        // Preloaded data
+        savedVideos,
+        loadingSaved,
+        runHistory,
+        loadingHistory,
+        loadSavedVideos,
+        loadRunHistory,
+        removeSavedVideo,
+        removeRunHistoryItem,
       }}
     >
       {children}

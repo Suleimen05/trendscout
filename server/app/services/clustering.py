@@ -15,11 +15,11 @@ def cluster_trends_by_visuals(trends_list: list) -> list:
     trends_with_covers = [t for t in trends_list if t.cover_url]
 
     if not trends_with_covers:
-        print("⚠️ No trends with cover images to cluster")
+        print("[WARNING] No trends with cover images to cluster")
         return trends_list
 
     # 3. Генерируем embeddings через ML сервис (batch)
-    print(f"🖼️ Generating embeddings for {len(trends_with_covers)} cover images...")
+    print(f"[IMAGE] Generating embeddings for {len(trends_with_covers)} cover images...")
     cover_urls = [t.cover_url for t in trends_with_covers]
     embeddings = ml_client.get_batch_image_embeddings(cover_urls)
 
@@ -31,7 +31,7 @@ def cluster_trends_by_visuals(trends_list: list) -> list:
             valid_trends.append(trend)
 
     if not valid_trends:
-        print("⚠️ No valid embeddings generated")
+        print("[WARNING] No valid embeddings generated")
         return trends_list
 
     try:
@@ -51,9 +51,9 @@ def cluster_trends_by_visuals(trends_list: list) -> list:
             trend.cluster_id = int(labels[i])
 
         n_clusters = len(set(labels)) - (1 if -1 in labels else 0)
-        print(f"🧩 Visual Clustering: Найдено {n_clusters} визуальных групп среди {len(valid_trends)} видео.")
+        print(f"[CLUSTER] Visual Clustering: Found {n_clusters} visual groups among {len(valid_trends)} videos.")
 
     except Exception as e:
-        print(f"⚠️ Ошибка кластеризации: {e}")
+        print(f"[WARNING] Clustering error: {e}")
 
     return trends_list

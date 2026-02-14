@@ -1,0 +1,33 @@
+{
+  "title": "Account Search",
+  "subtitle": "Search and analyze TikTok accounts by username",
+  "searchTitle": "Search for Accounts",
+  "placeholder": "Enter TikTok username (e.g., @username or username)...",
+  "search": "Search",
+  "searching": "Searching...",
+  "results": "Search Results ({{count}})",
+  "clearAll": "Clear All",
+  "emptyTitle": "No searches yet",
+  "emptyDescription": "Enter a TikTok username above to analyze an account",
+  "addToCompetitors": "Add to Competitors",
+  "recentVideos": "Recent Videos ({{count}})",
+  "showLess": "Show Less",
+  "showAll": "Show All {{count}}",
+  "followers": "Followers",
+  "avgViews": "Avg Views",
+  "engagement": "Engagement",
+  "videos": "Videos",
+  "efficiency": "Efficiency",
+  "viralLift": "Viral Lift",
+  "toasts": {
+    "enterUsername": "Please enter a username or TikTok URL to search",
+    "alreadySearched": "This account is already in the results",
+    "found": "Found account: @{{username}}",
+    "loadFailed": "Failed to load account data",
+    "noData": "No data available for this account",
+    "alreadyCompetitor": "@{{username}} is already in competitors list",
+    "addedCompetitor": "Added @{{username}} to competitors list",
+    "addFailed": "Failed to add as competitor"
+  },
+  "error": "Account not found or error loading data"
+}

@@ -540,6 +540,7 @@ class CreditManager:
     # Credit cost per AI model (per message)
     MODEL_COSTS: Dict[str, int] = {
         "gemini": 1,    # Cheapest - Google's free-tier model
+        "nano-bana": 2, # Image generation via Gemini
         "claude": 5,    # Premium - Anthropic
         "gpt4": 4,      # Premium - OpenAI
     }

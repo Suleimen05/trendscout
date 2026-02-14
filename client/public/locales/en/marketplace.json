@@ -1,0 +1,186 @@
+{
+  "header": {
+    "badge": "Coming Soon",
+    "title": "Marketplace",
+    "subtitle": "Find creators and AI agents to grow your TikTok. The first marketplace where you can hire humans or AI — or both."
+  },
+  "tabs": {
+    "client": "I'm looking to hire",
+    "provider": "I want to offer services"
+  },
+  "stats": {
+    "creators": "Creators",
+    "aiAgents": "AI Agents",
+    "hybrid": "Hybrid"
+  },
+  "search": {
+    "placeholder": "Search providers..."
+  },
+  "filters": {
+    "all": "All",
+    "human": "Human",
+    "ai": "AI",
+    "hybrid": "Hybrid"
+  },
+  "sections": {
+    "allProviders": "All Providers",
+    "humanCreators": "Human Creators",
+    "aiAgents": "AI Agents",
+    "hybridServices": "Hybrid Services",
+    "browseByCategory": "Browse by Category"
+  },
+  "results": "{{count}} results",
+  "providerTypes": {
+    "human": "Human",
+    "ai": "AI Agent",
+    "hybrid": "Hybrid"
+  },
+  "priceLabels": {
+    "perVideo": "/video",
+    "perMonth": "/mo",
+    "perScript": "/script",
+    "perHour": "/hr"
+  },
+  "card": {
+    "viewProfile": "View Profile",
+    "tryFree": "Try Free",
+    "contact": "Contact",
+    "featured": "Featured",
+    "joinWaitlistToUnlock": "Join waitlist to unlock"
+  },
+  "waitlist": {
+    "title": "Join the Waitlist to Unlock",
+    "subtitle": "Be the first to hire creators and AI agents when we launch",
+    "emailPlaceholder": "Enter your email",
+    "joining": "Joining...",
+    "joinButton": "Join Waitlist",
+    "accessTitle": "What you'll get access to:"
+  },
+  "comingSoonFeatures": [
+    "Find verified UGC creators for your niche",
+    "Hire AI agents that work 24/7",
+    "Compare human vs AI pricing instantly",
+    "Book calls directly with creators",
+    "Pay securely through the platform"
+  ],
+  "categories": {
+    "videoCreation": {
+      "title": "Video Creation",
+      "description": "UGC creators and AI video generators"
+    },
+    "scriptWriting": {
+      "title": "Script Writing",
+      "description": "Copywriters and AI script agents"
+    },
+    "smmManagement": {
+      "title": "SMM Management",
+      "description": "Social media managers and AI schedulers"
+    },
+    "designThumbnails": {
+      "title": "Design & Thumbnails",
+      "description": "Designers and AI image generators"
+    }
+  },
+  "categoryOptions": {
+    "video": "Video Creation",
+    "script": "Script Writing",
+    "smm": "SMM Management",
+    "design": "Design & Thumbnails"
+  },
+  "accessCode": {
+    "title": "Have an Access Code?",
+    "subtitle": "Enter your code to start setting up your profile",
+    "placeholder": "Enter access code",
+    "verifying": "Verifying...",
+    "verifyButton": "Verify Code"
+  },
+  "apply": {
+    "title": "Apply for Access",
+    "subtitle": "Join as a creator or AI developer",
+    "providerTypeQuestion": "What type of provider are you?",
+    "creatorSmm": "Creator / SMM",
+    "aiDeveloper": "AI Developer",
+    "applyNow": "Apply Now"
+  },
+  "benefits": {
+    "title": "Why join as a provider?",
+    "creatorsTitle": "For Creators & SMM",
+    "creatorsItems": [
+      "Access to businesses looking for TikTok help",
+      "Set your own rates and availability",
+      "Get paid securely through the platform",
+      "Build your reputation with reviews",
+      "No upfront fees — we only take 15% commission"
+    ],
+    "aiTitle": "For AI Developers",
+    "aiItems": [
+      "Monetize your AI agents",
+      "Access to Rizko.ai API and data",
+      "Reach thousands of potential customers",
+      "We handle payments and support",
+      "70/30 revenue share in your favor"
+    ]
+  },
+  "contact": {
+    "text": "Questions? Contact us at"
+  },
+  "applicationModal": {
+    "applyAsCreator": "Apply as Creator",
+    "applyAsAiDeveloper": "Apply as AI Developer",
+    "formDescription": "Fill out the form below. We'll review and send you an access code within 24-48 hours.",
+    "fullName": "Full Name *",
+    "fullNamePlaceholder": "John Doe",
+    "email": "Email *",
+    "emailPlaceholder": "john@example.com",
+    "tiktokUsername": "TikTok Username *",
+    "tiktokPlaceholder": "@username",
+    "instagram": "Instagram (optional)",
+    "instagramPlaceholder": "@username",
+    "githubUsername": "GitHub Username *",
+    "githubPlaceholder": "username",
+    "demoApiUrl": "Demo / API URL",
+    "demoApiPlaceholder": "https://...",
+    "categoriesLabel": "Categories * (select all that apply)",
+    "yourTitle": "Your Title *",
+    "aiAgentName": "AI Agent Name *",
+    "titlePlaceholderHuman": "e.g. UGC Creator, SMM Manager",
+    "titlePlaceholderAi": "e.g. TrendBot AI, ScriptGenius",
+    "shortBio": "Short Bio",
+    "shortBioMax": "(max 280 chars)",
+    "bioPlaceholderHuman": "Tell us about your experience and what makes you unique...",
+    "bioPlaceholderAi": "Describe what your AI agent does and its key features...",
+    "priceRange": "Price Range",
+    "customPricing": "Custom pricing",
+    "cancel": "Cancel",
+    "submitting": "Submitting...",
+    "submitApplication": "Submit Application"
+  },
+  "success": {
+    "title": "Application Received!",
+    "message": "We'll review your profile and send you an access code to <strong>{{email}}</strong> within 24-48 hours.",
+    "whatHappensNext": "What happens next?",
+    "steps": [
+      "We review your profile and portfolio",
+      "You receive an access code via email",
+      "Enter the code to set up your profile",
+      "Start getting clients!"
+    ],
+    "gotIt": "Got it!"
+  },
+  "toasts": {
+    "enterEmail": "Please enter your email",
+    "waitlistSuccess": "You're on the waitlist! We'll notify you when we launch.",
+    "enterAccessCode": "Please enter your access code",
+    "invalidAccessCode": "Invalid access code. Apply below to get one!",
+    "enterFullName": "Please enter your full name",
+    "enterYourEmail": "Please enter your email",
+    "enterTiktok": "Please enter your TikTok username",
+    "enterGithub": "Please enter your GitHub username",
+    "selectCategory": "Please select at least one category",
+    "enterServiceTitle": "Please enter your service title",
+    "duplicateEmail": "This email has already been submitted",
+    "submitFailed": "Failed to submit application. Please try again.",
+    "applicationSuccess": "Application submitted successfully!",
+    "somethingWrong": "Something went wrong. Please try again."
+  }
+}

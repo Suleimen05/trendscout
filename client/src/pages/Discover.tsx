@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Search, Filter, SlidersHorizontal, X, ChevronDown, Lock, Sparkles, Zap, Clock, TrendingUp, Hash } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,7 +20,22 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { TikTokVideo, SearchFilters, AnalysisMode, Platform } from '@/types';
 import { getEnabledPlatforms, getPlatform } from '@/constants/platforms';
 
+const getSortOptions = (t: TFunction) => [
+  { id: 'viral', label: t('sort.viral'), icon: '\u{1F525}' },
+  { id: 'views', label: t('sort.views'), icon: '\u{1F441}\uFE0F' },
+  { id: 'engagement', label: t('sort.engagement'), icon: '\u2764\uFE0F' },
+  { id: 'recent', label: t('sort.recent'), icon: '\u{1F550}' },
+];
+
+const getDateRangeOptions = (t: TFunction) => [
+  { id: '24h', label: t('dateRange.24h') },
+  { id: '7d', label: t('dateRange.7d') },
+  { id: '30d', label: t('dateRange.30d') },
+  { id: '90d', label: t('dateRange.90d') },
+];
+
 export function Discover() {
+  const { t } = useTranslation('discover');
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
@@ -36,7 +53,7 @@ export function Discover() {
   const [showDeepProgress, setShowDeepProgress] = useState(false);
   const userTier = user?.subscription || 'free';
   const canUseDeep = ['pro', 'agency'].includes(userTier);
-  
+
   const [filters, setFilters] = useState<SearchFilters>({
     sortBy: (searchParams.get('sort') as SearchFilters['sortBy']) || 'viral',
     dateRange: (searchParams.get('time') as SearchFilters['dateRange']) || '7d',
@@ -47,7 +64,7 @@ export function Discover() {
   });
 
   const [searchKeyword, setSearchKeyword] = useState('');
-  
+
   // Search history - stored in localStorage
   const [searchHistory, setSearchHistory] = useState<Array<{
     query: string;
@@ -55,10 +72,10 @@ export function Discover() {
     mode: AnalysisMode;
     resultsCount?: number;
   }>>([]);
-  
+
   // Recent videos - last searched videos stored in localStorage
   const [recentVideos, setRecentVideos] = useState<TikTokVideo[]>([]);
-  
+
   // Load search history and recent videos from localStorage on mount
   useEffect(() => {
     const savedHistory = localStorage.getItem('trendscout_search_history');
@@ -79,7 +96,7 @@ export function Discover() {
         const validVideos = parsed.filter((v: any) => v.play_addr || v.video?.playAddr);
 
         if (validVideos.length !== parsed.length) {
-          console.log(`🧹 Cleaned ${parsed.length - validVideos.length} old recent videos without play_addr`);
+          console.log(`Cleaned ${parsed.length - validVideos.length} old recent videos without play_addr`);
           // Save cleaned list back to localStorage
           localStorage.setItem('trendscout_recent_videos', JSON.stringify(validVideos));
         }
@@ -90,7 +107,7 @@ export function Discover() {
       }
     }
   }, []);
-  
+
   // Save search to history
   const saveToHistory = (query: string, mode: AnalysisMode, resultsCount?: number) => {
     const newEntry = {
@@ -99,17 +116,17 @@ export function Discover() {
       mode,
       resultsCount,
     };
-    
+
     // Remove duplicates and add new entry at the beginning
     const updated = [
       newEntry,
       ...searchHistory.filter(h => h.query.toLowerCase() !== query.toLowerCase())
     ].slice(0, 10);
-    
+
     setSearchHistory(updated);
     localStorage.setItem('trendscout_search_history', JSON.stringify(updated));
   };
-  
+
   // Save recent videos to localStorage (limited data for performance)
   const saveRecentVideos = (newVideos: TikTokVideo[]) => {
     if (newVideos.length > 0) {
@@ -132,17 +149,17 @@ export function Discover() {
         cover_url: v.cover_url,
         play_addr: v.play_addr || v.video?.playAddr || '',  // Also save on top level for VideoCard
       }));
-      
+
       // Merge with existing, remove duplicates
       const existingIds = new Set(recentVideos.map(v => v.id));
       const uniqueNew = minimalVideos.filter(v => !existingIds.has(v.id));
       const updated = [...uniqueNew, ...recentVideos].slice(0, 6);
-      
+
       setRecentVideos(updated as TikTokVideo[]);
       localStorage.setItem('trendscout_recent_videos', JSON.stringify(updated));
     }
   };
-  
+
   // Clear search history and recent videos
   const clearHistory = () => {
     setSearchHistory([]);
@@ -150,7 +167,7 @@ export function Discover() {
     localStorage.removeItem('trendscout_search_history');
     localStorage.removeItem('trendscout_recent_videos');
   };
-  
+
   const { videos, loading, refetch } = useSearchWithFilters({
     ...filters,
     niche: searchQuery || searchKeyword,
@@ -158,7 +175,7 @@ export function Discover() {
     is_deep: analyzeMode === 'deep',
     user_tier: userTier,
   });
-  
+
   const {
     script,
     loading: scriptLoading,
@@ -190,21 +207,20 @@ export function Discover() {
     if (!searchQuery.trim()) {
       return;
     }
-    
+
     setSearchKeyword(searchQuery);
-    
+
     // Show Deep Progress if Deep mode is selected
     if (analyzeMode === 'deep') {
       setShowDeepProgress(true);
     }
-    
+
     try {
-      // Передаём keyword напрямую чтобы избежать race condition с React state
       const results = await refetch(searchQuery);
-      
+
       // Save to search history
       saveToHistory(searchQuery, analyzeMode, results?.length);
-      
+
       // Save videos to recent
       if (results && results.length > 0) {
         saveRecentVideos(results);
@@ -214,7 +230,7 @@ export function Discover() {
       setShowDeepProgress(false);
     }
   };
-  
+
   // Quick search from history
   const handleHistoryClick = (query: string) => {
     setSearchQuery(query);
@@ -277,19 +293,8 @@ export function Discover() {
     }
   };
 
-  const sortOptions = [
-    { id: 'viral', label: 'Viral Score', icon: '🔥' },
-    { id: 'views', label: 'Most Views', icon: '👁️' },
-    { id: 'engagement', label: 'Engagement', icon: '❤️' },
-    { id: 'recent', label: 'Most Recent', icon: '🕐' },
-  ];
-
-  const dateRangeOptions = [
-    { id: '24h', label: 'Last 24 hours' },
-    { id: '7d', label: 'Last 7 days' },
-    { id: '30d', label: 'Last 30 days' },
-    { id: '90d', label: 'Last 90 days' },
-  ];
+  const sortOptions = getSortOptions(t);
+  const dateRangeOptions = getDateRangeOptions(t);
 
   const activeFilterCount = [
     filters.minViews,
@@ -305,10 +310,10 @@ export function Discover() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <Search className="h-7 w-7" />
-            Discover Videos
+            {t('title')}
           </h1>
           <p className="text-muted-foreground">
-            Search and filter through millions of viral videos
+            {t('subtitle')}
           </p>
         </div>
         <Button
@@ -317,7 +322,7 @@ export function Discover() {
           className={cn(showFilters && 'bg-accent')}
         >
           <Filter className="h-4 w-4 mr-2" />
-          Filters
+          {t('filters.button')}
           {activeFilterCount > 0 && (
             <Badge className="ml-2 bg-purple-600 text-white">
               {activeFilterCount}
@@ -331,7 +336,7 @@ export function Discover() {
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <Search className="h-5 w-5" />
-            Platform
+            {t('platform.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -360,7 +365,7 @@ export function Discover() {
         <CardHeader className="pb-3">
           <CardTitle className="text-lg flex items-center gap-2">
             <SlidersHorizontal className="h-5 w-5" />
-            Analysis Mode
+            {t('analysisMode.title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -381,11 +386,11 @@ export function Discover() {
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <Zap className="h-4 w-4 text-blue-500" />
-                    <span className="font-semibold">Light Analyze</span>
-                    <Badge variant="outline" className="text-xs">FREE</Badge>
+                    <span className="font-semibold">{t('analysisMode.light.name')}</span>
+                    <Badge variant="outline" className="text-xs">{t('analysisMode.light.badge')}</Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Fast results with basic metrics (views, likes, engagement rate) - like other tools
+                    {t('analysisMode.light.description')}
                   </p>
                 </Label>
               </div>
@@ -406,18 +411,18 @@ export function Discover() {
                 >
                   <div className="flex items-center gap-2 mb-1">
                     <Sparkles className="h-4 w-4 text-purple-500" />
-                    <span className="font-semibold">Deep Analyze</span>
+                    <span className="font-semibold">{t('analysisMode.deep.name')}</span>
                     <Badge className="text-xs bg-purple-500/10 text-purple-600 border-purple-500/20">
-                      PRO
+                      {t('analysisMode.deep.badge')}
                     </Badge>
                     {!canUseDeep && <Lock className="h-4 w-4 text-muted-foreground ml-auto" />}
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    6-layer UTS breakdown, AI clustering, velocity tracking, saturation indicator
+                    {t('analysisMode.deep.description')}
                   </p>
                   {!canUseDeep && (
                     <p className="text-xs text-purple-600 font-medium mt-1">
-                      Unlock for $49/mo - Unique mathematical analysis no competitor has
+                      {t('analysisMode.deep.unlockCta')}
                     </p>
                   )}
                 </Label>
@@ -431,7 +436,7 @@ export function Discover() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search by keyword, hashtag, or creator..."
+          placeholder={t('searchPlaceholder')}
           className="pl-10 pr-24"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -441,7 +446,7 @@ export function Discover() {
           className="absolute right-1 top-1/2 -translate-y-1/2 h-8"
           onClick={handleSearch}
         >
-          Search
+          {t('searchButton')}
         </Button>
       </div>
 
@@ -451,7 +456,7 @@ export function Discover() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold flex items-center gap-2">
               <SlidersHorizontal className="h-4 w-4" />
-              Advanced Filters
+              {t('filters.title')}
             </h3>
             <Button
               variant="ghost"
@@ -460,14 +465,14 @@ export function Discover() {
               className="text-muted-foreground"
             >
               <X className="h-4 w-4 mr-1" />
-              Clear All
+              {t('filters.clearAll')}
             </Button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Sort By */}
             <div>
-              <label className="text-sm font-medium mb-2 block">Sort By</label>
+              <label className="text-sm font-medium mb-2 block">{t('filters.sortBy')}</label>
               <div className="relative">
                 <select
                   className="w-full appearance-none bg-background border border-input rounded-md px-3 py-2 text-sm"
@@ -486,7 +491,7 @@ export function Discover() {
 
             {/* Date Range */}
             <div>
-              <label className="text-sm font-medium mb-2 block">Time Period</label>
+              <label className="text-sm font-medium mb-2 block">{t('filters.timePeriod')}</label>
               <div className="relative">
                 <select
                   className="w-full appearance-none bg-background border border-input rounded-md px-3 py-2 text-sm"
@@ -505,35 +510,35 @@ export function Discover() {
 
             {/* Views Range */}
             <div>
-              <label className="text-sm font-medium mb-2 block">Min Views</label>
+              <label className="text-sm font-medium mb-2 block">{t('filters.minViews')}</label>
               <select
                 className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
                 value={filters.minViews || ''}
                 onChange={(e) => handleFilterChange('minViews', e.target.value ? Number(e.target.value) : undefined)}
               >
-                <option value="">Any</option>
-                <option value="10000">10K+</option>
-                <option value="50000">50K+</option>
-                <option value="100000">100K+</option>
-                <option value="500000">500K+</option>
-                <option value="1000000">1M+</option>
-                <option value="10000000">10M+</option>
+                <option value="">{t('viewsFilter.any')}</option>
+                <option value="10000">{t('viewsFilter.10k')}</option>
+                <option value="50000">{t('viewsFilter.50k')}</option>
+                <option value="100000">{t('viewsFilter.100k')}</option>
+                <option value="500000">{t('viewsFilter.500k')}</option>
+                <option value="1000000">{t('viewsFilter.1m')}</option>
+                <option value="10000000">{t('viewsFilter.10m')}</option>
               </select>
             </div>
 
             {/* Duration Range */}
             <div>
-              <label className="text-sm font-medium mb-2 block">Duration</label>
+              <label className="text-sm font-medium mb-2 block">{t('filters.duration')}</label>
               <select
                 className="w-full bg-background border border-input rounded-md px-3 py-2 text-sm"
                 value={filters.maxDuration || ''}
                 onChange={(e) => handleFilterChange('maxDuration', e.target.value ? Number(e.target.value) : undefined)}
               >
-                <option value="">Any</option>
-                <option value="15">Under 15s</option>
-                <option value="30">Under 30s</option>
-                <option value="60">Under 1min</option>
-                <option value="180">Under 3min</option>
+                <option value="">{t('durationFilter.any')}</option>
+                <option value="15">{t('durationFilter.under15')}</option>
+                <option value="30">{t('durationFilter.under30')}</option>
+                <option value="60">{t('durationFilter.under60')}</option>
+                <option value="180">{t('durationFilter.under180')}</option>
               </select>
             </div>
           </div>
@@ -543,10 +548,10 @@ export function Discover() {
               onClick={() => refetch(searchQuery || searchKeyword)}
               className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             >
-              Apply Filters
+              {t('filters.applyFilters')}
             </Button>
             <Button variant="outline" onClick={clearFilters}>
-              Reset
+              {t('filters.reset')}
             </Button>
           </div>
         </Card>
@@ -571,7 +576,7 @@ export function Discover() {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <p className="text-muted-foreground">
-            {loading ? 'Loading...' : `${videos.length} videos found`}
+            {loading ? t('results.loading') : t('results.videosFound', { count: videos.length })}
           </p>
           {!loading && videos.length > 0 && (
             <Badge variant="outline" className="flex items-center gap-1">
@@ -581,7 +586,7 @@ export function Discover() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Sort:</span>
+          <span className="text-sm text-muted-foreground">{t('results.sort')}</span>
           <Badge variant="secondary">
             {sortOptions.find(s => s.id === filters.sortBy)?.label}
           </Badge>
@@ -595,7 +600,7 @@ export function Discover() {
 
       {/* Videos Grid */}
       {loading && analyzeMode !== 'deep' ? (
-        // Light Analyze Loading - простой skeleton
+        // Light Analyze Loading
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {Array.from({ length: 15 }).map((_, i) => (
             <div key={i} className="aspect-[9/16] rounded-lg bg-muted animate-pulse" />
@@ -603,18 +608,18 @@ export function Discover() {
         </div>
       ) : videos.length === 0 && !loading ? (
         <div className="space-y-6">
-          {/* Recent Videos Section - показываем карточки как после поиска */}
+          {/* Recent Videos Section */}
           {recentVideos.length > 0 && (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Clock className="h-5 w-5 text-purple-500" />
-                  <h3 className="font-semibold text-lg">Recent Videos</h3>
+                  <h3 className="font-semibold text-lg">{t('recent.title')}</h3>
                   <Badge variant="secondary">{recentVideos.length}</Badge>
                 </div>
                 <Button variant="ghost" size="sm" onClick={clearHistory}>
                   <X className="h-4 w-4 mr-1" />
-                  Clear All
+                  {t('recent.clearAll')}
                 </Button>
               </div>
               {/* Same grid as search results */}
@@ -640,7 +645,7 @@ export function Discover() {
               <Card className="p-5">
                 <div className="flex items-center gap-2 mb-3">
                   <Search className="h-4 w-4 text-muted-foreground" />
-                  <h3 className="font-medium text-sm">Search History</h3>
+                  <h3 className="font-medium text-sm">{t('history.title')}</h3>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   {searchHistory.slice(0, 5).map((item, index) => (
@@ -666,7 +671,7 @@ export function Discover() {
             <Card className="p-5">
               <div className="flex items-center gap-2 mb-3">
                 <TrendingUp className="h-4 w-4 text-orange-500" />
-                <h3 className="font-medium text-sm">Trending</h3>
+                <h3 className="font-medium text-sm">{t('trending.title')}</h3>
               </div>
               <div className="flex flex-wrap gap-2">
                 {['fitness', 'cooking', 'dance', 'fashion', 'comedy', 'beauty'].map((tag) => (
@@ -690,11 +695,11 @@ export function Discover() {
             <Card className="p-12">
               <div className="text-center">
                 <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No videos found for "{searchKeyword}"</h3>
+                <h3 className="text-lg font-semibold mb-2">{t('empty.noResults', { keyword: searchKeyword })}</h3>
                 <p className="text-muted-foreground mb-4">
-                  Try adjusting your search or filters to find more content
+                  {t('empty.noResultsHint')}
                 </p>
-                <Button onClick={clearFilters}>Clear Filters</Button>
+                <Button onClick={clearFilters}>{t('filters.clearFilters')}</Button>
               </div>
             </Card>
           )}
@@ -731,7 +736,7 @@ export function Discover() {
             size="lg"
             onClick={() => refetch(searchQuery || searchKeyword)}
           >
-            Load More Videos
+            {t('results.loadMore')}
           </Button>
         </div>
       )}

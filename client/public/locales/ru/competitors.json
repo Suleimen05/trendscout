@@ -1,0 +1,37 @@
+{
+  "pageTitle": "Конкуренты",
+  "channelsCount": "{{count}} каналов",
+  "pageDescription": "Поиск и отслеживание каналов конкурентов",
+
+  "searchTitle": "Поиск и добавление каналов",
+  "searchPlaceholderTiktok": "Введите @username в TikTok...",
+  "searchPlaceholderInstagram": "Введите @username в Instagram...",
+  "searchButton": "Найти",
+  "searching": "Поиск...",
+  "searchResult": "Результат поиска:",
+  "followers": "подписчиков",
+  "videos": "видео",
+  "adding": "Добавление...",
+  "add": "Добавить",
+
+  "myCompetitors": "Мои конкуренты",
+
+  "newBadge": "НОВОЕ",
+  "statsFollowers": "Подписчики",
+  "statsVideos": "Видео",
+  "statsAvgViews": "Средние просмотры",
+
+  "newVideo": "Новое видео {{time}}",
+  "upToDate": "Актуально • Последняя активность {{time}}",
+
+  "viewFeed": "Смотреть ленту",
+  "untrack": "Отписаться",
+  "removeConfirm": "Удалить @{{username}} из отслеживания?",
+
+  "emptyTitle": "Конкурентов пока нет",
+  "emptyDescription": "Найдите каналы через поиск выше и добавьте их в список",
+
+  "timeAgoMinutes": "{{count}} мин назад",
+  "timeAgoHours": "{{count}} ч назад",
+  "timeAgoDays": "{{count}} дн назад"
+}

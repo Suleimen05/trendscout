@@ -8,7 +8,7 @@ class TikTokCollector:
     def __init__(self):
         token = os.getenv("APIFY_API_TOKEN")
         if not token:
-            print("⚠️ WARNING: APIFY_API_TOKEN not found in .env")
+            print("[WARNING] APIFY_API_TOKEN not found in .env")
             self.client = None
         else:
             self.client = ApifyClient(token)
@@ -31,7 +31,7 @@ class TikTokCollector:
         if mode == "urls":
             final_limit = len(targets) # Для рескана лимит строго равен числу ссылок
         
-        print(f"📡 Collector: Режим '{mode}', Deep: {is_deep}. Целей: {len(targets)}. Лимит: {final_limit}")
+        print(f"[FETCH] Collector: Mode '{mode}', Deep: {is_deep}. Targets: {len(targets)}. Limit: {final_limit}")
 
         # Базовый конфиг
         run_input = {
@@ -42,7 +42,7 @@ class TikTokCollector:
         # 2. Логика формирования инпутов (АДАПТИРОВАНО ПОД STARTURLS)
         if mode == "urls":
             # --- РЕЖИМ РЕСКАНА (Точечные ссылки) ---
-            print(f"🤖 Collector: Сканируем {len(targets)} ссылок через startUrls (String format)...")
+            print(f"[BOT] Collector: Scanning {len(targets)} links via startUrls (String format)...")
             
             # ВАЖНО: Актор требует наличие startUrls или keywords.
             # Мы передаем список строк (URL видео) в startUrls.
@@ -59,10 +59,10 @@ class TikTokCollector:
                 clean_nick = t.strip().replace("@", "").replace("https://www.tiktok.com/", "").strip("/")
                 urls.append(f"https://www.tiktok.com/@{clean_nick}")
             
-            # ❌ ОШИБКА БЫЛА ЗДЕСЬ: Передавали объекты вместо строк
+            # [ERROR] BUG WAS HERE: Passed objects instead of strings
             # run_input["startUrls"] = [{"url": u} for u in urls]
             
-            # ✅ ИСПРАВЛЕНИЕ: Передаем просто список строк
+            # [OK] FIX: Pass just a list of strings
             run_input["startUrls"] = urls
             
         else:
@@ -77,23 +77,23 @@ class TikTokCollector:
             run = self.client.actor(self.actor_id).call(run_input=run_input)
             
             if not run: 
-                print("❌ Actor run failed")
+                print("[ERROR] Actor run failed")
                 return []
 
             # 4. Получение результатов
             dataset = self.client.dataset(run["defaultDatasetId"])
             raw_items = list(dataset.iterate_items())
-            print(f"📦 Apidojo: получено {len(raw_items)} сырых записей.")
+            print(f"[DATA] Apidojo: received {len(raw_items)} raw items.")
 
             # DEBUG: Print first item structure
             if raw_items:
                 import json
                 first = raw_items[0]
-                print("🔍 DEBUG: First item keys:", list(first.keys())[:20])
+                print("[SEARCH] DEBUG: First item keys:", list(first.keys())[:20])
                 if 'video' in first:
-                    print("🔍 DEBUG: video keys:", list(first['video'].keys())[:20] if isinstance(first['video'], dict) else 'not a dict')
+                    print("[SEARCH] DEBUG: video keys:", list(first['video'].keys())[:20] if isinstance(first['video'], dict) else 'not a dict')
                 if 'videoMeta' in first:
-                    print("🔍 DEBUG: videoMeta keys:", list(first['videoMeta'].keys())[:20] if isinstance(first['videoMeta'], dict) else 'not a dict')
+                    print("[SEARCH] DEBUG: videoMeta keys:", list(first['videoMeta'].keys())[:20] if isinstance(first['videoMeta'], dict) else 'not a dict')
                 # Check for cover in different places
                 cover_found = []
                 for key in ['cover', 'coverUrl', 'cover_url', 'videoCover', 'dynamicCover']:
@@ -103,12 +103,12 @@ class TikTokCollector:
                     for key in ['cover', 'coverUrl', 'dynamicCover', 'originCover']:
                         if key in first.get('video', {}):
                             cover_found.append(f"video.{key}={first['video'][key][:50] if first['video'][key] else 'null'}")
-                print(f"🔍 DEBUG: Cover fields found: {cover_found if cover_found else 'NONE!'}")
+                print(f"[SEARCH] DEBUG: Cover fields found: {cover_found if cover_found else 'NONE!'}")
 
             return raw_items
 
         except Exception as exc:
-            print(f"⚠️ Ошибка Apify: {exc}")
+            print(f"[WARNING] Apify error: {exc}")
             return []
 
     async def collect_async(self, targets: List[str], limit: int = 30, mode: str = "search", is_deep: bool = False):

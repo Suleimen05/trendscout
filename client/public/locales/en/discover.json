@@ -1,0 +1,83 @@
+{
+  "title": "Discover Videos",
+  "subtitle": "Search and filter through millions of viral videos",
+  "searchPlaceholder": "Search by keyword, hashtag, or creator...",
+  "searchButton": "Search",
+  "platform": {
+    "title": "Platform"
+  },
+  "analysisMode": {
+    "title": "Analysis Mode",
+    "light": {
+      "name": "Light Analyze",
+      "badge": "FREE",
+      "description": "Fast results with basic metrics (views, likes, engagement rate) - like other tools"
+    },
+    "deep": {
+      "name": "Deep Analyze",
+      "badge": "PRO",
+      "description": "6-layer UTS breakdown, AI clustering, velocity tracking, saturation indicator",
+      "unlockCta": "Unlock for $49/mo - Unique mathematical analysis no competitor has"
+    }
+  },
+  "filters": {
+    "button": "Filters",
+    "title": "Advanced Filters",
+    "clearAll": "Clear All",
+    "sortBy": "Sort By",
+    "timePeriod": "Time Period",
+    "minViews": "Min Views",
+    "duration": "Duration",
+    "applyFilters": "Apply Filters",
+    "reset": "Reset",
+    "clearFilters": "Clear Filters"
+  },
+  "sort": {
+    "viral": "Viral Score",
+    "views": "Most Views",
+    "engagement": "Engagement",
+    "recent": "Most Recent"
+  },
+  "dateRange": {
+    "24h": "Last 24 hours",
+    "7d": "Last 7 days",
+    "30d": "Last 30 days",
+    "90d": "Last 90 days"
+  },
+  "viewsFilter": {
+    "any": "Any",
+    "10k": "10K+",
+    "50k": "50K+",
+    "100k": "100K+",
+    "500k": "500K+",
+    "1m": "1M+",
+    "10m": "10M+"
+  },
+  "durationFilter": {
+    "any": "Any",
+    "under15": "Under 15s",
+    "under30": "Under 30s",
+    "under60": "Under 1min",
+    "under180": "Under 3min"
+  },
+  "results": {
+    "loading": "Loading...",
+    "videosFound": "{{count}} videos found",
+    "sort": "Sort:",
+    "loadMore": "Load More Videos"
+  },
+  "recent": {
+    "title": "Recent Videos",
+    "clearAll": "Clear All"
+  },
+  "history": {
+    "title": "Search History"
+  },
+  "trending": {
+    "title": "Trending"
+  },
+  "empty": {
+    "noResults": "No videos found for \"{{keyword}}\"",
+    "noResultsHint": "Try adjusting your search or filters to find more content"
+  }
+}

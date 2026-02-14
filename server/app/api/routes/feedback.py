@@ -29,20 +29,20 @@ async def send_discord_notification(feedback: Feedback, user_email: Optional[str
 
     # Emoji mapping for feedback types
     type_emoji = {
-        "idea": "💡",
-        "bug": "🐛",
-        "love": "❤️",
-        "other": "📝"
+        "idea": "[IDEA]",
+        "bug": "[BUG]",
+        "love": "[LOVE]",
+        "other": "[NOTE]"
     }
 
     # Rating stars
     rating_str = ""
     if feedback.rating:
-        rating_str = "⭐" * feedback.rating + "☆" * (5 - feedback.rating)
+        rating_str = "*" * feedback.rating + "." * (5 - feedback.rating)
 
     # Build Discord embed
     embed = {
-        "title": f"{type_emoji.get(feedback.feedback_type, '📝')} New Feedback: {feedback.feedback_type.upper()}",
+        "title": f"{type_emoji.get(feedback.feedback_type, '[NOTE]')} New Feedback: {feedback.feedback_type.upper()}",
         "description": feedback.message[:2000],  # Discord limit
         "color": {
             "idea": 0x3498db,   # Blue

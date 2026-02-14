@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Heart, MessageCircle, Share2, Eye, Bookmark, Sparkles, TrendingUp, Music, ExternalLink, Info, Flame, Copy, Wand2, Loader2, Check, Bot, Send, User } from 'lucide-react';
+import { Play, Heart, MessageCircle, Share2, Eye, Bookmark, Sparkles, TrendingUp, Music, ExternalLink, Info, Flame, Copy, Wand2, Loader2, Check, Bot, Send, User, Coins } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +15,7 @@ import { UTSBreakdown } from '@/components/metrics/UTSBreakdown';
 import { UpgradeModal } from '@/components/UpgradeModal';
 import { toast } from 'sonner';
 import { apiService } from '@/services/api';
+import i18n from '@/lib/i18n';
 // TikTok Embed - официальное легальное решение
 import type { TikTokVideo, TikTokVideoDeep, AnalysisMode } from '@/types';
 import { useAIScriptGenerator } from '@/hooks/useTikTok';
@@ -50,6 +51,7 @@ export function VideoCard({
   const [chatMessages, setChatMessages] = useState<Array<{role: 'user' | 'assistant', content: string}>>([]);
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
+  const [chatCreditsUsed, setChatCreditsUsed] = useState(0);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // AI Script Generator hook
@@ -136,48 +138,62 @@ export function VideoCard({
     }
   };
   
-  // AI Chat function
-  const sendChatMessage = async () => {
-    if (!chatInput.trim() || chatLoading) return;
-    
-    const userMessage = chatInput.trim();
+  // AI Chat function — uses apiService with auth + credit tracking
+  const sendChatMessage = async (overrideMessage?: string) => {
+    const userMessage = (overrideMessage || chatInput).trim();
+    if (!userMessage || chatLoading) return;
+
     setChatInput('');
     setChatMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setChatLoading(true);
-    
-    try {
-      // Build context about the video
-      const videoContext = `
-Video: "${video.description || video.title}"
-Author: @${video.author?.uniqueId || video.author_username}
-Views: ${video.stats?.playCount?.toLocaleString() || 0}
-Likes: ${video.stats?.diggCount?.toLocaleString() || 0}
-Comments: ${video.stats?.commentCount?.toLocaleString() || 0}
-Shares: ${video.stats?.shareCount?.toLocaleString() || 0}
-UTS Score: ${video.uts_score || video.viralScore || 0}
-`.trim();
 
-      // Use the same API base URL as other endpoints
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
-      const response = await fetch(`${apiUrl}/ai-scripts/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: userMessage,
-          context: videoContext,
-          history: chatMessages.slice(-6) // Last 6 messages for context
-        })
+    try {
+      const videoContext = [
+        `Video: "${video.description || video.title}"`,
+        `Author: @${video.author?.uniqueId || video.author_username}`,
+        `Views: ${video.stats?.playCount?.toLocaleString() || 0}`,
+        `Likes: ${video.stats?.diggCount?.toLocaleString() || 0}`,
+        `Comments: ${video.stats?.commentCount?.toLocaleString() || 0}`,
+        `Shares: ${video.stats?.shareCount?.toLocaleString() || 0}`,
+        `UTS Score: ${video.uts_score || video.viralScore || 0}`,
+      ].join('\n');
+
+      const data = await apiService.chatWithAI({
+        message: userMessage,
+        context: videoContext,
+        history: chatMessages.slice(-6),
+        mode: 'analysis',
+        language: i18n.language === 'ru' ? 'Russian' : 'English',
       });
-      
-      if (!response.ok) throw new Error('Failed to get AI response');
-      
-      const data = await response.json();
+
       setChatMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
-    } catch (error) {
-      setChatMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: 'Sorry, I encountered an error. Please try again.' 
-      }]);
+      if (data.credits_used > 0) {
+        setChatCreditsUsed(prev => prev + data.credits_used);
+      }
+    } catch (error: any) {
+      const status = error?.response?.status;
+      if (status === 402) {
+        setChatMessages(prev => [...prev, {
+          role: 'assistant',
+          content: i18n.language === 'ru'
+            ? 'Недостаточно кредитов. Пополните баланс для продолжения.'
+            : 'Not enough credits. Please top up to continue.'
+        }]);
+      } else if (status === 401) {
+        setChatMessages(prev => [...prev, {
+          role: 'assistant',
+          content: i18n.language === 'ru'
+            ? 'Войдите в аккаунт для использования AI-аналитика.'
+            : 'Please log in to use AI Video Analyst.'
+        }]);
+      } else {
+        setChatMessages(prev => [...prev, {
+          role: 'assistant',
+          content: i18n.language === 'ru'
+            ? 'Произошла ошибка. Попробуйте снова.'
+            : 'Sorry, I encountered an error. Please try again.'
+        }]);
+      }
     } finally {
       setChatLoading(false);
     }
@@ -784,17 +800,23 @@ UTS Score: ${video.uts_score || video.viralScore || 0}
                     onClick={() => {
                       setShowDetails(false);
                       setShowAIChat(true);
+                      setChatCreditsUsed(0);
                       // Add initial context message
                       if (chatMessages.length === 0) {
+                        const author = video.author?.uniqueId || video.author_username;
+                        const views = video.stats?.playCount?.toLocaleString() || '0';
+                        const uts = video.uts_score || video.viralScore || 0;
                         setChatMessages([{
                           role: 'assistant',
-                          content: `Hi! I'm analyzing this video by @${video.author?.uniqueId || video.author_username}. It has ${video.stats?.playCount?.toLocaleString() || 0} views and a UTS Score of ${video.uts_score || video.viralScore || 0}. What would you like to know about it?`
+                          content: i18n.language === 'ru'
+                            ? `Привет! Анализирую видео от @${author}. Просмотров: ${views}, UTS: ${uts}. Что хотите узнать?`
+                            : `Hi! I'm analyzing this video by @${author}. It has ${views} views and a UTS Score of ${uts}. What would you like to know about it?`
                         }]);
                       }
                     }}
                   >
                     <Bot className="h-4 w-4 mr-2" />
-                    Ask AI
+                    {i18n.language === 'ru' ? 'AI Анализ' : 'Ask AI'}
                   </Button>
                 </div>
               </div>
@@ -950,10 +972,20 @@ Duration: ~${script.duration}s
             <div className="p-2 rounded-full bg-gradient-to-r from-purple-600 to-pink-600">
               <Bot className="h-5 w-5 text-white" />
             </div>
-            <div>
-              <DialogTitle className="text-lg">AI Video Analyst</DialogTitle>
-              <p className="text-xs text-muted-foreground">Ask me anything about this video</p>
+            <div className="flex-1">
+              <DialogTitle className="text-lg">
+                {i18n.language === 'ru' ? 'AI Аналитик Видео' : 'AI Video Analyst'}
+              </DialogTitle>
+              <p className="text-xs text-muted-foreground">
+                {i18n.language === 'ru' ? 'Задайте любой вопрос о видео' : 'Ask me anything about this video'}
+              </p>
             </div>
+            {chatCreditsUsed > 0 && (
+              <Badge variant="secondary" className="flex items-center gap-1 text-xs">
+                <Coins className="h-3 w-3" />
+                {chatCreditsUsed} cr
+              </Badge>
+            )}
           </div>
 
           {/* Video Context Card */}
@@ -1033,16 +1065,16 @@ Duration: ~${script.duration}s
 
           {/* Quick Actions */}
           <div className="px-4 py-2 border-t flex gap-2 overflow-x-auto">
-            {['Why is this viral?', 'How to recreate?', 'Target audience?', 'Best posting time?'].map((q) => (
+            {(i18n.language === 'ru'
+              ? ['Почему это вирусное?', 'Как повторить?', 'Целевая аудитория?', 'Лучшее время публикации?']
+              : ['Why is this viral?', 'How to recreate?', 'Target audience?', 'Best posting time?']
+            ).map((q) => (
               <Button
                 key={q}
                 variant="outline"
                 size="sm"
                 className="text-xs whitespace-nowrap"
-                onClick={() => {
-                  setChatInput(q);
-                  setTimeout(() => sendChatMessage(), 100);
-                }}
+                onClick={() => sendChatMessage(q)}
                 disabled={chatLoading}
               >
                 {q}
@@ -1056,7 +1088,7 @@ Duration: ~${script.duration}s
               <Input
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
-                placeholder="Ask about this video..."
+                placeholder={i18n.language === 'ru' ? 'Спросите о видео...' : 'Ask about this video...'}
                 className="flex-1"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
@@ -1067,7 +1099,7 @@ Duration: ~${script.duration}s
                 disabled={chatLoading}
               />
               <Button
-                onClick={sendChatMessage}
+                onClick={() => sendChatMessage()}
                 disabled={!chatInput.trim() || chatLoading}
                 className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
               >

@@ -31,6 +31,7 @@ def _get_generator() -> GeminiScriptGenerator:
 MODEL_COSTS = {
     "gemini-flash": 0,      # Free tier - unlimited
     "gemini-pro": 3,        # Creator+ tier
+    "nano-bana": 2,         # Image generation
     "gpt-4o": 10,           # Pro+ tier (future)
     "claude-3.5": 8,        # Pro+ tier (future)
 }
@@ -165,6 +166,7 @@ class ChatRequest(BaseModel):
     history: list[Dict[str, str]] = Field(default=[], description="Chat history")
     model: str = Field(default="gemini", description="AI model")
     mode: str = Field(default="script", description="Mode: script, ideas, analysis, improve, hook")
+    language: str = Field(default="English", description="Response language")
 
 
 class ChatResponse(BaseModel):
@@ -208,7 +210,9 @@ Focus on:
 Provide:
 - 5 different hook variations
 - Why each works psychologically
-- Best delivery tips"""
+- Best delivery tips""",
+
+    "chat": """You are a friendly and helpful AI assistant. Have a natural conversation with the user. Answer their questions directly and concisely. Do not format responses as scripts, hooks, or content strategies unless the user specifically asks for that."""
 }
 
 
@@ -276,13 +280,12 @@ async def generate_script(
             hook=script.get("hook", ""),
             body=script.get("body", []),
             call_to_action=script.get("cta", ""),
-            metadata={
-                "tone": request.tone,
-                "niche": request.niche,
-                "duration": request.duration_seconds,
-                "model_used": model_name,
-                "credits_used": cost
-            },
+            tone=request.tone,
+            niche=request.niche,
+            duration_seconds=request.duration_seconds,
+            model_used=model_name,
+            viral_elements=script.get("viralElements", []),
+            tips=script.get("tips", []),
             created_at=datetime.utcnow()
         )
         db.add(db_script)
@@ -329,12 +332,14 @@ async def ai_chat(
             UserSettings.user_id == current_user.id
         ).first()
 
-        # Determine complexity based on message length
-        msg_length = len(request.message.split())
-        task_complexity = "complex" if msg_length > 30 else "simple"
-
-        # Select model
-        model_name, cost = select_model(current_user, settings, task_complexity)
+        # Determine cost based on model
+        if request.model == "nano-bana":
+            model_name = "nano-bana"
+            cost = MODEL_COSTS.get("nano-bana", 2)
+        else:
+            msg_length = len(request.message.split())
+            task_complexity = "complex" if msg_length > 30 else "simple"
+            model_name, cost = select_model(current_user, settings, task_complexity)
 
         # Check credits
         if not check_credits(current_user, cost, db):
@@ -352,7 +357,12 @@ async def ai_chat(
         # Get mode-specific system prompt
         system_prompt = MODE_PROMPTS.get(request.mode, MODE_PROMPTS["script"])
 
-        prompt = f"""{system_prompt}
+        # Add language instruction
+        lang_instruction = ""
+        if request.language and request.language.lower() != "english":
+            lang_instruction = f"IMPORTANT: You MUST respond entirely in {request.language}. All text, headings, and content must be in {request.language}.\n\n"
+
+        prompt = f"""{lang_instruction}{system_prompt}
 
 CONVERSATION HISTORY:
 {history_text}
@@ -360,15 +370,74 @@ CONVERSATION HISTORY:
 USER REQUEST: {request.message}
 
 Respond in a helpful, structured way. Use markdown formatting (bold, bullets, headers) for readability.
-Keep the response focused and actionable. Language: respond in the same language as the user's message."""
+Keep the response focused and actionable."""
 
-        # Generate response
-        response = _get_generator().client.models.generate_content(
-            model="gemini-2.0-flash" if model_name == "gemini-flash" else "gemini-2.0-pro",
-            contents=prompt
-        )
+        # Handle image generation for nano-bana model
+        if request.model == "nano-bana":
+            try:
+                from google.genai import types
+                from pathlib import Path
+                import uuid as _uuid
 
-        ai_response = response.text.strip() if response.text else "I couldn't generate a response. Please try again."
+                gen = _get_generator()
+                if gen.client is None:
+                    raise Exception("Gemini API not initialized")
+
+                uploads_dir = Path(__file__).parent.parent.parent / "uploads" / "generated"
+                uploads_dir.mkdir(parents=True, exist_ok=True)
+
+                # Try image generation models in order of preference
+                image_models = ["gemini-2.0-flash-exp-image-generation", "gemini-2.5-flash-image"]
+                img_response = None
+                for img_model in image_models:
+                    try:
+                        img_response = gen.client.models.generate_content(
+                            model=img_model,
+                            contents=request.message,
+                            config=types.GenerateContentConfig(
+                                response_modalities=["Text", "Image"]
+                            )
+                        )
+                        if img_response.candidates:
+                            print(f"[AI] Image generated with model: {img_model}")
+                            break
+                    except Exception as model_err:
+                        print(f"[AI] Model {img_model} failed: {model_err}")
+                        continue
+
+                if not img_response or not img_response.candidates:
+                    raise Exception("All image models failed")
+
+                result_parts = []
+                for part in img_response.candidates[0].content.parts:
+                    if hasattr(part, 'inline_data') and part.inline_data:
+                        ext = "png" if "png" in (part.inline_data.mime_type or "") else "jpg"
+                        filename = f"{_uuid.uuid4().hex}.{ext}"
+                        filepath = uploads_dir / filename
+                        filepath.write_bytes(part.inline_data.data)
+                        img_url = f"/uploads/generated/{filename}"
+                        result_parts.append(f"![Generated Image]({img_url})")
+                        print(f"[AI] Image saved: {filepath} ({len(part.inline_data.data)} bytes)")
+                    elif hasattr(part, 'text') and part.text:
+                        result_parts.append(part.text.strip())
+
+                # Ensure there's always text with the image
+                has_text = any(not p.startswith("![") for p in result_parts)
+                has_image = any(p.startswith("![") for p in result_parts)
+                if has_image and not has_text:
+                    result_parts.insert(0, "Вот сгенерированное изображение по вашему запросу:")
+                ai_response = "\n\n".join(result_parts) if result_parts else "Не удалось сгенерировать изображение. Попробуйте более подробный запрос."
+            except Exception as img_err:
+                print(f"[AI] Nano Bana error: {img_err}")
+                ai_response = f"Ошибка генерации изображения: {str(img_err)}"
+        else:
+            # Generate text response
+            response = _get_generator().client.models.generate_content(
+                model="gemini-2.0-flash" if model_name == "gemini-flash" else "gemini-2.0-pro",
+                contents=prompt
+            )
+
+            ai_response = response.text.strip() if response.text else "I couldn't generate a response. Please try again."
 
         # Deduct credits
         deduct_credits(current_user, cost, db)
@@ -382,7 +451,7 @@ Keep the response focused and actionable. Language: respond in the same language
             session_id=session_id,
             role="user",
             content=request.message,
-            metadata={"mode": request.mode},
+            mode=request.mode,
             created_at=datetime.utcnow()
         )
         db.add(user_msg)
@@ -393,10 +462,8 @@ Keep the response focused and actionable. Language: respond in the same language
             session_id=session_id,
             role="assistant",
             content=ai_response,
-            metadata={
-                "model_used": model_name,
-                "credits_used": cost
-            },
+            model=model_name,
+            mode=request.mode,
             created_at=datetime.utcnow()
         )
         db.add(assistant_msg)

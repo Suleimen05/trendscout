@@ -1,0 +1,81 @@
+{
+  "title": "Dashboard",
+  "subtitle": "Your personal analytics hub with AI-powered insights",
+  "welcomeBack": "Welcome back,",
+  "defaultUser": "Creator",
+  "todaySummary": "Here's what's happening with your content today",
+  "loading": "Loading dashboard...",
+  "stats": {
+    "connected": "Connected",
+    "followers": "Followers",
+    "totalViews": "Total Views",
+    "videos": "Videos",
+    "avgViews": "Avg Views",
+    "engagement": "Engagement"
+  },
+  "emptyState": {
+    "getStarted": "Get Started",
+    "connectDescription": "Connect your TikTok, Instagram, or YouTube account to unlock personalized AI insights and detailed analytics.",
+    "connectFirstAccount": "Connect Your First Account",
+    "connectYourAccount": "Connect Your Account",
+    "connectTikTok": "Connect your TikTok account to start analyzing your content, discover trends, and grow your audience.",
+    "connectAccount": "Connect Account",
+    "tryDemo": "Try Demo Account",
+    "noVideos": "No videos yet. Connect your account to see your content here."
+  },
+  "actions": {
+    "sync": "Sync",
+    "newSearch": "New Search"
+  },
+  "recentVideos": {
+    "title": "Recent Videos",
+    "subtitle": "Your latest content performance",
+    "viewAll": "View All",
+    "table": {
+      "video": "Video",
+      "views": "Views",
+      "likes": "Likes",
+      "uts": "UTS",
+      "actions": "Actions"
+    }
+  },
+  "aiInsights": {
+    "title": "AI Recommendations",
+    "subtitle": "Personalized for your growth",
+    "insights": {
+      "trendTitle": "Post a video with trend \"gym motivation\"",
+      "trendDescription": "This trend is gaining 340% traction in your niche",
+      "trendAction": "View examples",
+      "engagementTitle": "Reply to 10 comments",
+      "engagementDescription": "Your engagement rate is dropping by 2.1%",
+      "engagementAction": "Check comments",
+      "soundTitle": "Use sound \"Eye of the Tiger remix\"",
+      "soundDescription": "Trending in your niche with high completion rate",
+      "soundAction": "Preview"
+    }
+  },
+  "accountHealth": {
+    "title": "Account Health",
+    "excellent": "Excellent",
+    "description": "Your account is performing well! Keep posting consistently to improve your score."
+  },
+  "credits": {
+    "title": "Available Credits",
+    "upgrade": "Upgrade"
+  },
+  "quickActions": {
+    "trending": "Trending",
+    "aiScripts": "AI Scripts"
+  },
+  "platformBadge": {
+    "soon": "Soon",
+    "active": "Active"
+  },
+  "toast": {
+    "syncSuccess": "Account synced successfully",
+    "syncError": "Failed to sync account",
+    "demoAdded": "Demo account added",
+    "demoError": "Failed to add demo account",
+    "loadError": "Failed to load dashboard data"
+  }
+}

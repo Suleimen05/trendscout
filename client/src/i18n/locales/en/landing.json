@@ -1,0 +1,149 @@
+{
+  "nav": {
+    "features": "Features",
+    "pricing": "Pricing",
+    "support": "Support",
+    "testimonials": "Testimonials",
+    "signIn": "Sign In",
+    "login": "Login",
+    "getStarted": "Get Started"
+  },
+  "hero": {
+    "reviewBadge": "Social Media Analytics Platform",
+    "fullBadge": "AI-Powered Content Intelligence",
+    "reviewTitle": "Track Your Content",
+    "reviewTitleHighlight": "Performance",
+    "fullTitle": "Go Viral with",
+    "fullTitleHighlight": "AI-Powered",
+    "fullTitleEnd": "Analytics",
+    "reviewDescription": "Securely connect your social accounts using official APIs. View detailed analytics and get personalized recommendations to grow your audience.",
+    "fullDescription": "Discover trending content, generate viral scripts, and analyze competitors with the most advanced AI tools for content creators.",
+    "reviewCta": "Get Started Free",
+    "fullCta": "Start Free Trial",
+    "reviewSecondary": "How It Works",
+    "fullSecondary": "Learn More",
+    "trustBadges": {
+      "secureOAuth": "Secure OAuth",
+      "realTimeStats": "Real-time Stats",
+      "aiInsights": "AI Insights"
+    },
+    "creatorsTrust": "creators trust Rizko.ai"
+  },
+  "features": {
+    "reviewTitle": "How Rizko.ai Works",
+    "fullTitle": "Everything You Need to Go Viral",
+    "reviewSubtitle": "Connect your accounts, view your analytics, and get AI-powered recommendations - all in one place.",
+    "fullSubtitle": "Powerful AI tools designed to help content creators identify trends, create engaging content, and grow their audience.",
+    "reviewMode": {
+      "connectAccounts": {
+        "title": "Connect Your Accounts",
+        "description": "Securely link your TikTok, Instagram, and YouTube accounts using official OAuth authentication."
+      },
+      "personalAnalytics": {
+        "title": "Personal Analytics",
+        "description": "View detailed statistics for all your videos including views, likes, comments, and engagement rates."
+      },
+      "aiInsights": {
+        "title": "AI-Powered Insights",
+        "description": "Get personalized recommendations powered by Gemini AI to improve your content strategy and grow your audience."
+      }
+    },
+    "fullMode": {
+      "trendDetection": {
+        "title": "AI Trend Detection",
+        "description": "Advanced AI analyzes millions of videos in real-time to identify emerging trends before they peak."
+      },
+      "viralScore": {
+        "title": "Viral Score Prediction",
+        "description": "Get accurate viral potential scores with our UTS algorithm based on 6-layer scoring system."
+      },
+      "aiScript": {
+        "title": "AI Script Generation",
+        "description": "Generate viral-ready scripts with AI. Choose your niche, tone, and style - get compelling content."
+      },
+      "competitorAnalysis": {
+        "title": "Competitor Analysis",
+        "description": "Track competitors performance, analyze their best content, and discover opportunities."
+      },
+      "visualClustering": {
+        "title": "Visual Clustering",
+        "description": "CLIP-powered visual analysis groups similar content and identifies trending patterns."
+      },
+      "deepScan": {
+        "title": "Deep Scan Analysis",
+        "description": "Comprehensive video insights with auto-rescan to track growth and engagement metrics."
+      }
+    }
+  },
+  "pricing": {
+    "title": "Simple, Transparent Pricing",
+    "subtitle": "Choose the plan that fits your content creation needs. Upgrade or downgrade anytime.",
+    "mostPopular": "Most Popular",
+    "perMonth": "/month",
+    "getStarted": "Get Started",
+    "reviewPlans": {
+      "free": {
+        "name": "Free",
+        "description": "Get started with basic analytics",
+        "features": ["Connect 1 social account", "View video statistics", "Basic performance insights", "Community support"]
+      },
+      "creator": {
+        "name": "Creator",
+        "description": "For growing creators",
+        "features": ["Connect up to 3 accounts", "Full video analytics", "AI-powered recommendations", "Email support"]
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "For serious creators",
+        "features": ["Unlimited accounts", "Advanced AI insights", "Historical data analysis", "Priority support"]
+      }
+    },
+    "fullPlans": {
+      "starter": {
+        "name": "Starter",
+        "description": "Perfect for individual creators",
+        "features": ["50 deep scans/month", "Basic AI scripts", "5 competitors", "Email support"]
+      },
+      "professional": {
+        "name": "Professional",
+        "description": "Best for growing creators",
+        "features": ["Unlimited deep scans", "Advanced AI scripts", "20 competitors", "Priority support", "API access"]
+      },
+      "enterprise": {
+        "name": "Enterprise",
+        "description": "For agencies and teams",
+        "features": ["Everything in Pro", "Unlimited competitors", "Account manager", "White-label reports"]
+      }
+    }
+  },
+  "testimonials": {
+    "reviewTitle": "What Creators Say",
+    "fullTitle": "Loved by Creators Worldwide",
+    "reviewSubtitle": "Hear from creators who use Rizko.ai to track their content performance.",
+    "fullSubtitle": "Join thousands of content creators who have transformed their growth with Rizko.ai."
+  },
+  "cta": {
+    "reviewTitle": "Ready to Grow Your Audience?",
+    "fullTitle": "Ready to Go Viral?",
+    "reviewDescription": "Connect your social accounts and get AI-powered insights to improve your content strategy.",
+    "fullDescription": "Join thousands of creators who are already using Rizko.ai to discover trends, create viral content, and grow their audience.",
+    "reviewButton": "Get Started Free",
+    "fullButton": "Start Your Free Trial",
+    "noCreditCard": "No credit card required. 14-day free trial."
+  },
+  "footer": {
+    "reviewDescription": "Social media analytics platform. Connect your accounts and get personalized insights.",
+    "fullDescription": "AI-powered analytics platform for content creators. Discover trends, generate scripts, and grow your audience.",
+    "product": "Product",
+    "api": "API",
+    "legal": "Legal",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "dataPolicy": "Data Policy",
+    "support": "Support",
+    "contactUs": "Contact Us",
+    "helpCenter": "Help Center",
+    "faq": "FAQ",
+    "copyright": "© 2026 Rizko.ai. All rights reserved."
+  }
+}

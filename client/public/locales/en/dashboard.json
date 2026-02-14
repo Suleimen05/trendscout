@@ -1,0 +1,101 @@
+{
+  "title": "Dashboard",
+  "subtitle": "Your personal analytics hub with AI-powered insights",
+
+  "reviewMode": {
+    "connected": "Connected",
+    "followers": "Followers",
+    "totalViews": "Total Views",
+    "videos": "Videos",
+    "getStarted": "Get Started",
+    "getStartedDescription": "Connect your TikTok, Instagram, or YouTube account to unlock personalized AI insights and detailed analytics.",
+    "connectFirstAccount": "Connect Your First Account"
+  },
+
+  "loading": "Loading dashboard...",
+
+  "emptyState": {
+    "title": "Connect Your Account",
+    "description": "Connect your TikTok account to start analyzing your content, discover trends, and grow your audience.",
+    "connectAccount": "Connect Account",
+    "tryDemo": "Try Demo Account"
+  },
+
+  "header": {
+    "welcomeBack": "Welcome back, ",
+    "fallbackName": "Creator",
+    "subtitle": "Here's what's happening with your content today",
+    "sync": "Sync",
+    "newSearch": "New Search"
+  },
+
+  "platformBadge": {
+    "soon": "Soon"
+  },
+
+  "stats": {
+    "followers": "Followers",
+    "avgViews": "Avg Views",
+    "engagement": "Engagement",
+    "videos": "Videos"
+  },
+
+  "recentVideos": {
+    "title": "Recent Videos",
+    "subtitle": "Your latest content performance",
+    "viewAll": "View All",
+    "tableHeader": {
+      "video": "Video",
+      "views": "Views",
+      "likes": "Likes",
+      "uts": "UTS",
+      "actions": "Actions"
+    },
+    "videoName": "Video {{index}}",
+    "empty": "No videos yet. Connect your account to see your content here."
+  },
+
+  "aiInsights": {
+    "title": "AI Recommendations",
+    "subtitle": "Personalized for your growth",
+    "insight1": {
+      "title": "Post a video with trend \"gym motivation\"",
+      "description": "This trend is gaining 340% traction in your niche",
+      "action": "View examples"
+    },
+    "insight2": {
+      "title": "Reply to 10 comments",
+      "description": "Your engagement rate is dropping by 2.1%",
+      "action": "Check comments"
+    },
+    "insight3": {
+      "title": "Use sound \"Eye of the Tiger remix\"",
+      "description": "Trending in your niche with high completion rate",
+      "action": "Preview"
+    }
+  },
+
+  "accountCard": {
+    "active": "Active",
+    "followers": "Followers",
+    "videos": "Videos",
+    "engagement": "Engagement",
+    "lastSynced": "Last synced: "
+  },
+
+  "health": {
+    "title": "Account Health",
+    "excellent": "Excellent",
+    "description": "Your account is performing well! Keep posting consistently to improve your score."
+  },
+
+  "credits": {
+    "available": "Available Credits",
+    "upgrade": "Upgrade"
+  },
+
+  "quickActions": {
+    "trending": "Trending",
+    "aiScripts": "AI Scripts"
+  }
+}

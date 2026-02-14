@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   BarChart3,
   Search,
@@ -30,6 +31,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import type { TikTokVideo, TikTokVideoDeep } from '@/types';
 
 export function DeepAnalysis() {
+  const { t } = useTranslation('deepanalysis');
   const { user } = useAuth();
   const [keyword, setKeyword] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -80,11 +82,11 @@ export function DeepAnalysis() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
           <BarChart3 className="h-7 w-7 text-purple-500" />
-          Deep Analysis
-          <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20">PRO</Badge>
+          {t('title')}
+          <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20">{t('badge')}</Badge>
         </h1>
         <p className="text-muted-foreground">
-          Advanced 6-layer UTS algorithm for viral trend detection
+          {t('subtitle')}
         </p>
       </div>
 
@@ -95,7 +97,7 @@ export function DeepAnalysis() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Enter keyword, hashtag, or niche to analyze..."
+                placeholder={t('placeholder')}
                 className="pl-10 h-12 text-lg"
                 value={keyword}
                 onChange={(e) => setKeyword(e.target.value)}
@@ -110,12 +112,12 @@ export function DeepAnalysis() {
               {isAnalyzing ? (
                 <>
                   <Brain className="h-5 w-5 mr-2 animate-pulse" />
-                  Analyzing...
+                  {t('analyzing')}
                 </>
               ) : (
                 <>
                   <Zap className="h-5 w-5 mr-2" />
-                  Deep Analyze
+                  {t('analyze')}
                 </>
               )}
             </Button>
@@ -125,27 +127,27 @@ export function DeepAnalysis() {
           <div className="mt-4 flex flex-wrap gap-2">
             <Badge variant="outline" className="bg-background">
               <Layers className="h-3 w-3 mr-1" />
-              6-Layer UTS
+              {t('algorithms.uts')}
             </Badge>
             <Badge variant="outline" className="bg-background">
               <TrendingUp className="h-3 w-3 mr-1" />
-              Viral Lift
+              {t('algorithms.viralLift')}
             </Badge>
             <Badge variant="outline" className="bg-background">
               <Zap className="h-3 w-3 mr-1" />
-              Velocity
+              {t('algorithms.velocity')}
             </Badge>
             <Badge variant="outline" className="bg-background">
               <Clock className="h-3 w-3 mr-1" />
-              Retention
+              {t('algorithms.retention')}
             </Badge>
             <Badge variant="outline" className="bg-background">
               <Share2 className="h-3 w-3 mr-1" />
-              Cascade
+              {t('algorithms.cascade')}
             </Badge>
             <Badge variant="outline" className="bg-background">
               <Filter className="h-3 w-3 mr-1" />
-              Saturation
+              {t('algorithms.saturation')}
             </Badge>
           </div>
         </CardContent>
@@ -167,7 +169,7 @@ export function DeepAnalysis() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{videos.length}</p>
-                    <p className="text-xs text-muted-foreground">Videos Analyzed</p>
+                    <p className="text-xs text-muted-foreground">{t('stats.videosAnalyzed')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -183,7 +185,7 @@ export function DeepAnalysis() {
                     <p className="text-2xl font-bold">
                       {videos.filter(v => (v.uts_score || 0) >= 70).length}
                     </p>
-                    <p className="text-xs text-muted-foreground">High Viral Potential</p>
+                    <p className="text-xs text-muted-foreground">{t('stats.highViral')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -199,7 +201,7 @@ export function DeepAnalysis() {
                     <p className="text-2xl font-bold">
                       {formatNumber(videos.reduce((acc, v) => acc + (v.stats?.playCount || 0), 0))}
                     </p>
-                    <p className="text-xs text-muted-foreground">Total Views</p>
+                    <p className="text-xs text-muted-foreground">{t('stats.totalViews')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -213,7 +215,7 @@ export function DeepAnalysis() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold">{clusters?.length || 0}</p>
-                    <p className="text-xs text-muted-foreground">Visual Clusters</p>
+                    <p className="text-xs text-muted-foreground">{t('stats.visualClusters')}</p>
                   </div>
                 </div>
               </CardContent>
@@ -228,11 +230,11 @@ export function DeepAnalysis() {
                 ? "bg-purple-500/10 text-purple-600 border-purple-500/20"
                 : "bg-blue-500/10 text-blue-600 border-blue-500/20"
             )}>
-              {mode === 'deep' ? '🔬 Deep Analysis Mode' : '⚡ Light Analysis Mode'}
+              {mode === 'deep' ? `🔬 ${t('modes.deep')}` : `⚡ ${t('modes.light')}`}
             </Badge>
             {mode === 'deep' && (
               <span className="text-sm text-muted-foreground">
-                6-layer UTS algorithm applied
+                {t('modes.deepApplied')}
               </span>
             )}
           </div>
@@ -240,12 +242,12 @@ export function DeepAnalysis() {
           {/* Video Results */}
           <Tabs defaultValue="all" className="w-full">
             <TabsList>
-              <TabsTrigger value="all">All Results ({videos.length})</TabsTrigger>
+              <TabsTrigger value="all">{t('tabs.all', { count: videos.length })}</TabsTrigger>
               <TabsTrigger value="viral">
-                High Viral ({videos.filter(v => (v.uts_score || 0) >= 70).length})
+                {t('tabs.viral', { count: videos.filter(v => (v.uts_score || 0) >= 70).length })}
               </TabsTrigger>
               <TabsTrigger value="trending">
-                Trending ({videos.filter(v => (v.uts_score || 0) >= 50 && (v.uts_score || 0) < 70).length})
+                {t('tabs.trending', { count: videos.filter(v => (v.uts_score || 0) >= 50 && (v.uts_score || 0) < 70).length })}
               </TabsTrigger>
             </TabsList>
 
@@ -301,10 +303,9 @@ export function DeepAnalysis() {
             <div className="w-16 h-16 rounded-full bg-purple-500/10 flex items-center justify-center mb-4">
               <Brain className="h-8 w-8 text-purple-500" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">Ready to Analyze</h3>
+            <h3 className="text-xl font-semibold mb-2">{t('empty.readyTitle')}</h3>
             <p className="text-muted-foreground text-center max-w-md">
-              Enter a keyword, hashtag, or niche above to run deep analysis with our
-              6-layer UTS algorithm. Discover viral patterns and trending content.
+              {t('empty.readyDescription')}
             </p>
           </CardContent>
         </Card>
@@ -317,10 +318,9 @@ export function DeepAnalysis() {
             <div className="w-16 h-16 rounded-full bg-yellow-500/10 flex items-center justify-center mb-4">
               <Search className="h-8 w-8 text-yellow-500" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">No Results Found</h3>
+            <h3 className="text-xl font-semibold mb-2">{t('empty.noResultsTitle')}</h3>
             <p className="text-muted-foreground text-center max-w-md">
-              Try a different keyword or hashtag. Make sure to use popular terms
-              that have recent activity on TikTok.
+              {t('empty.noResultsDescription')}
             </p>
           </CardContent>
         </Card>
@@ -339,7 +339,7 @@ export function DeepAnalysis() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-purple-500" />
-                UTS Score Breakdown
+                {t('modal.utsBreakdown')}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -352,7 +352,7 @@ export function DeepAnalysis() {
                 variant="outline"
                 onClick={() => setSelectedVideo(null)}
               >
-                Close
+                {t('modal.close')}
               </Button>
             </CardContent>
           </Card>
@@ -378,6 +378,7 @@ interface VideoAnalysisCardProps {
 }
 
 function VideoAnalysisCard({ video, onSelect, formatNumber, getUTSColor }: VideoAnalysisCardProps) {
+  const { t } = useTranslation('deepanalysis');
   const utsScore = video.uts_score || video.viralScore || 0;
 
   return (
@@ -417,7 +418,7 @@ function VideoAnalysisCard({ video, onSelect, formatNumber, getUTSColor }: Video
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
           <Button variant="secondary" size="sm">
             <BarChart3 className="h-4 w-4 mr-1" />
-            View Breakdown
+            {t('card.viewBreakdown')}
           </Button>
         </div>
       </div>
@@ -425,7 +426,7 @@ function VideoAnalysisCard({ video, onSelect, formatNumber, getUTSColor }: Video
       {/* Content */}
       <CardContent className="p-3">
         <p className="text-sm font-medium line-clamp-2 mb-2">
-          {video.title || video.description || 'No description'}
+          {video.title || video.description || t('card.noDescription')}
         </p>
 
         <p className="text-xs text-muted-foreground mb-2">
@@ -451,7 +452,7 @@ function VideoAnalysisCard({ video, onSelect, formatNumber, getUTSColor }: Video
         {/* UTS Progress Bar */}
         <div className="mt-3">
           <div className="flex justify-between text-xs mb-1">
-            <span className="text-muted-foreground">Viral Potential</span>
+            <span className="text-muted-foreground">{t('card.viralPotential')}</span>
             <span className={getUTSColor(utsScore)}>{utsScore.toFixed(0)}%</span>
           </div>
           <Progress value={utsScore} className="h-1.5" />

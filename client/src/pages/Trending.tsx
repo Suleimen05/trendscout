@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Search, TrendingUp, Calendar, Hash, Flame, Clock, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -11,12 +13,19 @@ import { useTrendAnalysis } from '@/hooks/useTikTok';
 import type { Hashtag, TrendAnalysis } from '@/types';
 import { DevAccessGate } from '@/components/DevAccessGate';
 
+const getTimeRangeOptions = (t: TFunction) => [
+  { id: '24h', label: t('timeRange.24h'), icon: Clock },
+  { id: '7d', label: t('timeRange.7d'), icon: Calendar },
+  { id: '30d', label: t('timeRange.30d'), icon: Calendar },
+];
+
 interface TrendingHashtagCardProps {
   hashtag: Hashtag;
   onAnalyze: (hashtag: string) => void;
+  t: TFunction;
 }
 
-function TrendingHashtagCard({ hashtag, onAnalyze }: TrendingHashtagCardProps) {
+function TrendingHashtagCard({ hashtag, onAnalyze, t }: TrendingHashtagCardProps) {
   const isTrending = hashtag.trending;
   const growthIcon = (hashtag.growthRate || 0) > 20 ? ArrowUpRight : (hashtag.growthRate || 0) < -10 ? ArrowDownRight : Minus;
   const GrowthIcon = growthIcon;
@@ -44,7 +53,7 @@ function TrendingHashtagCard({ hashtag, onAnalyze }: TrendingHashtagCardProps) {
           {isTrending && (
             <Badge className="bg-gradient-to-r from-orange-500 to-red-500 text-white border-0">
               <Flame className="h-3 w-3 mr-1" />
-              Hot
+              {t('card.hot')}
             </Badge>
           )}
         </div>
@@ -54,13 +63,13 @@ function TrendingHashtagCard({ hashtag, onAnalyze }: TrendingHashtagCardProps) {
             <p className="text-2xl font-bold">
               {formatNumber(hashtag.stats.viewCount)}
             </p>
-            <p className="text-xs text-muted-foreground">Total Views</p>
+            <p className="text-xs text-muted-foreground">{t('card.totalViews')}</p>
           </div>
           <div>
             <p className="text-2xl font-bold">
               {formatNumber(hashtag.stats.videoCount)}
             </p>
-            <p className="text-xs text-muted-foreground">Videos</p>
+            <p className="text-xs text-muted-foreground">{t('card.videos')}</p>
           </div>
         </div>
 
@@ -91,7 +100,7 @@ function TrendingHashtagCard({ hashtag, onAnalyze }: TrendingHashtagCardProps) {
             </span>
           </div>
           <Button variant="ghost" size="sm" className="group-hover:bg-accent">
-            Analyze
+            {t('card.analyze')}
           </Button>
         </div>
       </CardContent>
@@ -102,9 +111,10 @@ function TrendingHashtagCard({ hashtag, onAnalyze }: TrendingHashtagCardProps) {
 interface TrendAnalysisCardProps {
   analysis: TrendAnalysis | null;
   loading: boolean;
+  t: TFunction;
 }
 
-function TrendAnalysisCard({ analysis, loading }: TrendAnalysisCardProps) {
+function TrendAnalysisCard({ analysis, loading, t }: TrendAnalysisCardProps) {
   if (loading) {
     return (
       <Card className="col-span-full">
@@ -120,7 +130,7 @@ function TrendAnalysisCard({ analysis, loading }: TrendAnalysisCardProps) {
       <Card className="col-span-full">
         <CardContent className="text-center py-12">
           <TrendingUp className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">Select a hashtag to see detailed analysis</p>
+          <p className="text-muted-foreground">{t('analysis.selectHashtag')}</p>
         </CardContent>
       </Card>
     );
@@ -137,7 +147,7 @@ function TrendAnalysisCard({ analysis, loading }: TrendAnalysisCardProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <TrendingUp className="h-5 w-5" />
-          Trend Analysis: #{analysis.hashtag}
+          {t('analysis.title', { hashtag: analysis.hashtag })}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -145,21 +155,21 @@ function TrendAnalysisCard({ analysis, loading }: TrendAnalysisCardProps) {
           {/* Stats */}
           <div className="space-y-4">
             <div className="p-4 rounded-lg bg-muted">
-              <p className="text-sm text-muted-foreground">Current Views</p>
+              <p className="text-sm text-muted-foreground">{t('analysis.currentViews')}</p>
               <p className="text-2xl font-bold">
                 {(analysis.currentViews / 1000000).toFixed(1)}M
               </p>
             </div>
             <div className="p-4 rounded-lg bg-muted">
-              <p className="text-sm text-muted-foreground">Growth Rate</p>
+              <p className="text-sm text-muted-foreground">{t('analysis.growthRate')}</p>
               <p className="text-2xl font-bold text-green-600">
                 +{analysis.growthRate.toFixed(1)}%
               </p>
             </div>
             <div className="p-4 rounded-lg bg-muted">
-              <p className="text-sm text-muted-foreground">Prediction</p>
+              <p className="text-sm text-muted-foreground">{t('analysis.prediction')}</p>
               <Badge className={predictionColor || ''}>
-                {analysis.prediction.charAt(0).toUpperCase() + analysis.prediction.slice(1)}
+                {t(`analysis.predictions.${analysis.prediction}`)}
               </Badge>
             </div>
           </div>
@@ -169,8 +179,8 @@ function TrendAnalysisCard({ analysis, loading }: TrendAnalysisCardProps) {
             <div className="h-48 rounded-lg bg-gradient-to-br from-purple-100 to-pink-100 flex items-center justify-center">
               <div className="text-center">
                 <TrendingUp className="h-12 w-12 text-purple-500 mx-auto mb-2" />
-                <p className="font-medium">Trend Growth Visualization</p>
-                <p className="text-sm text-muted-foreground">Peak: {new Date(analysis.peakTime || '').toLocaleDateString()}</p>
+                <p className="font-medium">{t('analysis.chartTitle')}</p>
+                <p className="text-sm text-muted-foreground">{t('analysis.chartPeak', { date: new Date(analysis.peakTime || '').toLocaleDateString() })}</p>
               </div>
             </div>
           </div>
@@ -178,7 +188,7 @@ function TrendAnalysisCard({ analysis, loading }: TrendAnalysisCardProps) {
 
         {/* Related Videos */}
         <div className="mt-6">
-          <h4 className="font-semibold mb-3">Top Videos with this hashtag</h4>
+          <h4 className="font-semibold mb-3">{t('analysis.topVideos')}</h4>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {analysis.relatedVideos.slice(0, 4).map((video) => (
               <div key={video.id} className="aspect-[9/16] rounded-lg overflow-hidden bg-muted">
@@ -197,10 +207,11 @@ function TrendAnalysisCard({ analysis, loading }: TrendAnalysisCardProps) {
 }
 
 export function Trending() {
+  const { t } = useTranslation('trending');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHashtag, setSelectedHashtag] = useState('');
   const [timeRange, setTimeRange] = useState('24h');
-  
+
   const { hashtags, loading } = useTrendingHashtags('US', 50);
   const { analysis, loading: analysisLoading, analyze } = useTrendAnalysis(selectedHashtag);
 
@@ -215,11 +226,7 @@ export function Trending() {
     await analyze();
   };
 
-  const timeRangeOptions = [
-    { id: '24h', label: '24 Hours', icon: Clock },
-    { id: '7d', label: '7 Days', icon: Calendar },
-    { id: '30d', label: '30 Days', icon: Calendar },
-  ];
+  const timeRangeOptions = getTimeRangeOptions(t);
 
   return (
     <DevAccessGate>
@@ -229,13 +236,13 @@ export function Trending() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <TrendingUp className="h-7 w-7 text-orange-500" />
-            Trending Hashtags
+            {t('title')}
           </h1>
           <p className="text-muted-foreground">
-            Discover the hottest trends and viral hashtags on TikTok
+            {t('subtitle')}
           </p>
         </div>
-        
+
         {/* Time Range Selector */}
         <div className="flex items-center gap-2">
           {timeRangeOptions.map((option) => {
@@ -260,7 +267,7 @@ export function Trending() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search hashtags..."
+          placeholder={t('searchPlaceholder')}
           className="pl-10"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
@@ -270,28 +277,28 @@ export function Trending() {
       {/* Quick Filters */}
       <div className="flex flex-wrap gap-2">
         <Badge variant="outline" className="cursor-pointer hover:bg-accent">
-          All
+          {t('filters.all')}
         </Badge>
         <Badge variant="outline" className="cursor-pointer hover:bg-accent">
-          Entertainment
+          {t('filters.entertainment')}
         </Badge>
         <Badge variant="outline" className="cursor-pointer hover:bg-accent">
-          Education
+          {t('filters.education')}
         </Badge>
         <Badge variant="outline" className="cursor-pointer hover:bg-accent">
-          Lifestyle
+          {t('filters.lifestyle')}
         </Badge>
         <Badge variant="outline" className="cursor-pointer hover:bg-accent">
-          Business
+          {t('filters.business')}
         </Badge>
       </div>
 
       {/* Content */}
       <Tabs defaultValue="trending" className="w-full">
         <TabsList>
-          <TabsTrigger value="trending">Trending Now</TabsTrigger>
-          <TabsTrigger value="rising">Rising</TabsTrigger>
-          <TabsTrigger value="analysis">Analysis</TabsTrigger>
+          <TabsTrigger value="trending">{t('tabs.trending')}</TabsTrigger>
+          <TabsTrigger value="rising">{t('tabs.rising')}</TabsTrigger>
+          <TabsTrigger value="analysis">{t('tabs.analysis')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="trending" className="space-y-4">
@@ -317,6 +324,7 @@ export function Trending() {
                   key={hashtag.id}
                   hashtag={hashtag}
                   onAnalyze={handleAnalyze}
+                  t={t}
                 />
               ))}
             </div>
@@ -332,13 +340,14 @@ export function Trending() {
                   key={hashtag.id}
                   hashtag={hashtag}
                   onAnalyze={handleAnalyze}
+                  t={t}
                 />
               ))}
           </div>
         </TabsContent>
 
         <TabsContent value="analysis" className="space-y-4">
-          <TrendAnalysisCard analysis={analysis} loading={analysisLoading} />
+          <TrendAnalysisCard analysis={analysis} loading={analysisLoading} t={t} />
         </TabsContent>
       </Tabs>
       </div>

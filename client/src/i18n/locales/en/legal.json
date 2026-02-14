@@ -1,0 +1,283 @@
+{
+  "privacyPolicy": {
+    "title": "Privacy Policy",
+    "effectiveDate": "Effective Date: January 15, 2026",
+    "lastUpdated": "Last Updated: January 15, 2026",
+    "intro": "Rizko.ai (\"we,\" \"us,\" or \"our\") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our social media analytics platform and services.",
+    "summary": "We only access data you explicitly authorize through OAuth. We never post on your behalf, sell your data, or share it with advertisers. You can disconnect your accounts and delete your data at any time.",
+    "sections": {
+      "informationWeCollect": "1. Information We Collect",
+      "directInfo": "1.1 Information You Provide Directly",
+      "socialMediaInfo": "1.2 Information from Connected Social Media Accounts",
+      "autoCollectedInfo": "1.3 Information Collected Automatically",
+      "howWeUse": "2. How We Use Your Information",
+      "serviceDelivery": "2.1 Service Delivery",
+      "serviceImprovement": "2.2 Service Improvement",
+      "communications": "2.3 Communications",
+      "legalBasis": "3. Legal Basis for Processing (GDPR)",
+      "dataSharing": "4. Data Sharing and Disclosure",
+      "serviceProviders": "4.1 Service Providers",
+      "legalRequirements": "4.2 Legal Requirements",
+      "businessTransfers": "4.3 Business Transfers",
+      "internationalTransfers": "5. International Data Transfers",
+      "dataRetention": "6. Data Retention",
+      "cookies": "7. Cookies and Tracking Technologies",
+      "privacyRights": "8. Your Privacy Rights",
+      "allUsersRights": "8.1 Rights for All Users",
+      "gdprRights": "8.2 Additional Rights for EEA/UK Residents (GDPR)",
+      "ccpaRights": "8.3 Rights for California Residents (CCPA/CPRA)",
+      "dataSecurity": "9. Data Security",
+      "childrensPrivacy": "10. Children's Privacy",
+      "thirdPartyPolicies": "11. Third-Party Platform Policies",
+      "changesToPolicy": "12. Changes to This Privacy Policy",
+      "contactUs": "13. Contact Us"
+    },
+    "whatWeNeverDo": "What We Never Do:",
+    "neverDoList": [
+      "Post, modify, or delete content on your social media accounts",
+      "Sell your personal data to third parties",
+      "Use your data for advertising purposes",
+      "Share your analytics with other users without your consent"
+    ],
+    "importantNote": "We do NOT access your private messages, passwords, payment information from social platforms, or any data from accounts you haven't explicitly connected.",
+    "socialDataIntro": "When you connect your social media accounts via OAuth, we access only the following data with your explicit consent:",
+    "platformTable": {
+      "platform": "Platform",
+      "dataWeAccess": "Data We Access",
+      "tiktok": "Public profile info, video list, video statistics (views, likes, comments, shares)",
+      "instagram": "Business/Creator account profile, media list, engagement metrics",
+      "youtube": "Channel information, video list, video analytics (via YouTube Data API)"
+    },
+    "acknowledgment": "By using Rizko.ai, you acknowledge that you have read and understood this Privacy Policy.",
+    "relatedLinks": {
+      "termsOfService": "Terms of Service",
+      "dataPolicy": "Data Policy",
+      "backToHome": "Back to Home"
+    }
+  },
+  "termsOfService": {
+    "title": "Terms of Service",
+    "effectiveDate": "Effective Date: January 15, 2026",
+    "lastUpdated": "Last Updated: January 15, 2026",
+    "intro": "Welcome to Rizko.ai. These Terms of Service (\"Terms\") govern your access to and use of our social media analytics platform, website, and services (collectively, the \"Service\"). By accessing or using our Service, you agree to be bound by these Terms.",
+    "importantNotice": "Please read these Terms carefully before using our Service. If you do not agree to these Terms, you may not access or use the Service.",
+    "sections": {
+      "acceptance": "1. Acceptance of Terms",
+      "description": "2. Description of Service",
+      "userAccounts": "3. User Accounts",
+      "accountCreation": "3.1 Account Creation",
+      "accountSecurity": "3.2 Account Security",
+      "accountTermination": "3.3 Account Termination",
+      "connectedAccounts": "4. Connected Social Media Accounts",
+      "oauthAuth": "4.1 OAuth Authorization",
+      "thirdPartyTerms": "4.2 Third-Party Terms",
+      "acceptableUse": "5. Acceptable Use Policy",
+      "permittedUses": "5.1 Permitted Uses",
+      "prohibitedUses": "5.2 Prohibited Uses",
+      "subscription": "6. Subscription and Payment",
+      "freePaidPlans": "6.1 Free and Paid Plans",
+      "billing": "6.2 Billing",
+      "cancellation": "6.3 Cancellation and Refunds",
+      "priceChanges": "6.4 Price Changes",
+      "intellectualProperty": "7. Intellectual Property",
+      "ourIP": "7.1 Our Intellectual Property",
+      "yourContent": "7.2 Your Content",
+      "feedback": "7.3 Feedback",
+      "aiContent": "8. AI-Generated Content",
+      "warranties": "9. Disclaimer of Warranties",
+      "liability": "10. Limitation of Liability",
+      "indemnification": "11. Indemnification",
+      "disputeResolution": "12. Dispute Resolution",
+      "informalResolution": "12.1 Informal Resolution",
+      "arbitration": "12.2 Arbitration Agreement",
+      "optOutRight": "12.3 Opt-Out Right",
+      "governingLaw": "13. Governing Law",
+      "termination": "14. Termination",
+      "terminationByYou": "14.1 Termination by You",
+      "terminationByUs": "14.2 Termination by Us",
+      "effectOfTermination": "14.3 Effect of Termination",
+      "changesToTerms": "15. Changes to Terms",
+      "generalProvisions": "16. General Provisions",
+      "entireAgreement": "16.1 Entire Agreement",
+      "severability": "16.2 Severability",
+      "waiver": "16.3 Waiver",
+      "assignment": "16.4 Assignment",
+      "forceMajeure": "16.5 Force Majeure",
+      "contactUs": "17. Contact Us"
+    },
+    "acknowledgment": "By using Rizko.ai, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.",
+    "relatedLinks": {
+      "privacyPolicy": "Privacy Policy",
+      "dataPolicy": "Data Policy",
+      "backToHome": "Back to Home"
+    }
+  },
+  "dataPolicy": {
+    "title": "Data Policy",
+    "effectiveDate": "Effective Date: January 15, 2026",
+    "lastUpdated": "Last Updated: January 15, 2026",
+    "intro": "This Data Policy explains how Rizko.ai collects, processes, stores, and protects data from your connected social media accounts. We are committed to transparency about our data practices and compliance with platform-specific API requirements.",
+    "commitment": "We only access data you explicitly authorize. We use official platform APIs with OAuth authentication. We never post on your behalf or access private messages.",
+    "quickReference": {
+      "readOnly": {
+        "title": "Read-Only Access",
+        "description": "We never post, modify, or delete content on your accounts"
+      },
+      "encrypted": {
+        "title": "Encrypted Storage",
+        "description": "OAuth tokens and data are encrypted at rest"
+      },
+      "deletion": {
+        "title": "7-Day Deletion",
+        "description": "Data from disconnected accounts deleted within 7 days"
+      },
+      "export": {
+        "title": "Data Export",
+        "description": "Request a copy of your data at any time"
+      }
+    },
+    "sections": {
+      "dataWeCollect": "1. Data We Collect from Connected Accounts",
+      "tiktok": "1.1 TikTok",
+      "instagram": "1.2 Instagram",
+      "youtube": "1.3 YouTube",
+      "howWeUse": "2. How We Use Your Data",
+      "primaryUses": "2.1 Primary Uses",
+      "whatWeNeverDo": "2.2 What We Never Do",
+      "storage": "3. Data Storage and Security",
+      "howWeStore": "3.1 How We Store Your Data",
+      "securityMeasures": "3.2 Security Measures",
+      "thirdPartyProcessors": "3.3 Third-Party Processors",
+      "retention": "4. Data Retention",
+      "yourRights": "5. Your Data Rights",
+      "disconnect": "5.1 Disconnect Accounts",
+      "dataExport": "5.2 Data Export",
+      "dataDeletion": "5.3 Data Deletion",
+      "revokeFromPlatform": "5.4 Revoke from Platform",
+      "apiCompliance": "6. Platform API Compliance",
+      "tiktokTerms": "6.1 TikTok Developer Terms",
+      "metaTerms": "6.2 Meta (Instagram) Platform Terms",
+      "youtubeTerms": "6.3 YouTube API Services",
+      "aiProcessing": "7. Data Processing for AI Features",
+      "internationalTransfers": "8. International Data Transfers",
+      "childrensData": "9. Children's Data",
+      "updates": "10. Updates to This Policy",
+      "contactUs": "11. Contact Us",
+      "relatedPolicies": "12. Related Policies"
+    },
+    "dataTable": {
+      "dataType": "Data Type",
+      "purpose": "Purpose"
+    },
+    "retentionTable": {
+      "scenario": "Scenario",
+      "retentionPeriod": "Retention Period",
+      "activeAccount": "Data retained while account is active",
+      "accountDeletion": "All data deleted within 30 days",
+      "platformDisconnected": "Platform data deleted within 7 days",
+      "tokenExpiry": "Tokens refreshed automatically or deleted if refresh fails",
+      "backupData": "Purged within 90 days of deletion request"
+    },
+    "weDoNotAccess": "We do NOT access:",
+    "tiktokNotAccess": "Private messages, drafts, followers list, or any content from other accounts.",
+    "instagramNotAccess": "Direct messages, comments (as separate entity), or personal profile data.",
+    "instagramNote": "Instagram integration requires a Business or Creator account linked to a Facebook Page.",
+    "youtubeNotAccess": "Private videos, unlisted videos, comment content, or subscriber identities.",
+    "whatWeNeverDoList": [
+      "Post, edit, or delete any content on your social media accounts",
+      "Access your private messages or conversations",
+      "Sell your data to third parties",
+      "Share your individual analytics with other users",
+      "Use your data for advertising purposes",
+      "Build profiles or databases of your followers",
+      "Collect data from accounts you haven't connected"
+    ],
+    "acknowledgment": "By connecting your social media accounts to Rizko.ai, you acknowledge that you have read and understood this Data Policy.",
+    "platformPrivacyPolicies": "Platform Privacy Policies",
+    "relatedLinks": {
+      "privacyPolicy": "Privacy Policy",
+      "termsOfService": "Terms of Service",
+      "backToHome": "Back to Home"
+    }
+  },
+  "usagePolicy": {
+    "title": "Usage Policy",
+    "lastUpdated": "Last updated: January 2026",
+    "sections": {
+      "acceptableUse": "1. Acceptable Use",
+      "acceptableUseText": "Rizko.ai is designed for legitimate content creation and trend analysis. Users agree to use the platform responsibly and in compliance with all applicable laws.",
+      "prohibitedActivities": "2. Prohibited Activities",
+      "prohibitedList": [
+        "Automated scraping or data harvesting beyond platform limits",
+        "Sharing account credentials with third parties",
+        "Using the service for spam or misleading content",
+        "Attempting to reverse engineer our algorithms"
+      ],
+      "aiContent": "3. AI-Generated Content",
+      "aiContentText": "Scripts and content generated by our AI are provided as suggestions. Users are responsible for reviewing and editing content before publishing.",
+      "rateLimits": "4. Rate Limits",
+      "rateLimitsText": "Each plan has specific usage limits. Exceeding these limits may result in temporary restrictions or account suspension.",
+      "termination": "5. Account Termination",
+      "terminationText": "We reserve the right to suspend or terminate accounts that violate this policy."
+    },
+    "disclaimer": "This policy is subject to change. Full terms coming soon."
+  },
+  "dataDeletion": {
+    "title": "Data Deletion Request",
+    "subtitle": "Request deletion of your personal data from Rizko.ai",
+    "privacyRights": {
+      "title": "Your Privacy Rights",
+      "description": "Under GDPR, CCPA, and other privacy regulations, you have the right to request deletion of your personal data. We will process your request within 30 days."
+    },
+    "whatGetsDeleted": {
+      "title": "What data will be deleted?",
+      "description": "Upon processing your request, we will permanently delete:",
+      "items": [
+        "Your account information (email, name, profile)",
+        "Connected social media account data and OAuth tokens",
+        "Saved videos, analytics history, and preferences",
+        "Usage logs and activity data"
+      ],
+      "retentionNote": "Some data may be retained for legal or compliance purposes (e.g., payment records for tax purposes). This retained data will be anonymized where possible."
+    },
+    "form": {
+      "title": "Submit Deletion Request",
+      "description": "Enter the email address associated with your Rizko.ai account",
+      "emailLabel": "Email Address",
+      "emailPlaceholder": "your@email.com",
+      "error": "Something went wrong. Please try again.",
+      "confirmationText": "By submitting this request, you confirm that you are the owner of this account and understand that this action is irreversible.",
+      "processing": "Processing...",
+      "submitButton": "Request Data Deletion"
+    },
+    "success": {
+      "title": "Request Submitted Successfully",
+      "description": "We've received your data deletion request. You will receive a confirmation email at <strong>{{email}}</strong>.",
+      "confirmationCode": "Your confirmation code:",
+      "saveCode": "Please save this code for your records",
+      "processedWithin": "Your request will be processed within 30 days",
+      "emailConfirmation": "You will receive email confirmation when deletion is complete",
+      "questionsContact": "For questions, contact"
+    },
+    "alternativeMethods": {
+      "title": "Alternative Methods",
+      "emailRequest": {
+        "title": "Email Request",
+        "description": "Send an email to {{email}} with subject \"Data Deletion Request\" and include your account email."
+      },
+      "selfService": {
+        "title": "Self-Service (Logged-in Users)",
+        "description": "If you can access your account, go to Settings -> Account -> Delete Account"
+      }
+    },
+    "instagramMeta": {
+      "title": "Instagram/Meta Users",
+      "description": "If you connected your Instagram account and want to delete data through Meta's system, you can also use the Data Deletion callback that Meta provides. When you disconnect Rizko.ai from your Instagram settings, we automatically receive a deletion callback and process your data removal.",
+      "callbackUrl": "Callback URL:"
+    },
+    "relatedLinks": {
+      "privacyPolicy": "Privacy Policy",
+      "termsOfService": "Terms of Service"
+    }
+  }
+}

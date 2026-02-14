@@ -1,0 +1,192 @@
+{
+  "title": "Маркетплейс",
+  "subtitle": "Найдите авторов и ИИ-агентов для роста вашего TikTok.",
+  "subtitleLine2": "Первый маркетплейс, где можно нанять людей, ИИ — или обоих.",
+  "comingSoon": "Скоро",
+  "tabs": {
+    "client": "Я ищу исполнителя",
+    "provider": "Я хочу предложить услуги"
+  },
+  "stats": {
+    "creators": "Авторы",
+    "aiAgents": "ИИ-агенты",
+    "hybrid": "Гибрид"
+  },
+  "search": {
+    "placeholder": "Поиск провайдеров..."
+  },
+  "filters": {
+    "all": "Все",
+    "human": "Люди",
+    "ai": "ИИ",
+    "hybrid": "Гибрид"
+  },
+  "providerTypes": {
+    "human": "Человек",
+    "ai": "ИИ-агент",
+    "hybrid": "Гибрид"
+  },
+  "providerGrid": {
+    "allProviders": "Все провайдеры",
+    "humanCreators": "Авторы",
+    "aiAgents": "ИИ-агенты",
+    "hybridServices": "Гибридные сервисы",
+    "results": "{{count}} результатов"
+  },
+  "card": {
+    "featured": "Рекомендуемый",
+    "joinWaitlistToUnlock": "Присоединитесь к листу ожидания",
+    "viewProfile": "Профиль",
+    "tryFree": "Попробовать",
+    "contact": "Связаться"
+  },
+  "priceLabels": {
+    "perVideo": "/видео",
+    "perMonth": "/мес",
+    "perScript": "/сценарий",
+    "perHour": "/час"
+  },
+  "categories": {
+    "title": "Просмотр по категориям",
+    "videoCreation": {
+      "title": "Создание видео",
+      "description": "UGC-авторы и ИИ-генераторы видео"
+    },
+    "scriptWriting": {
+      "title": "Написание сценариев",
+      "description": "Копирайтеры и ИИ-агенты для сценариев"
+    },
+    "smmManagement": {
+      "title": "SMM-управление",
+      "description": "SMM-менеджеры и ИИ-планировщики"
+    },
+    "designThumbnails": {
+      "title": "Дизайн и обложки",
+      "description": "Дизайнеры и ИИ-генераторы изображений"
+    }
+  },
+  "categoryOptions": {
+    "video": "Создание видео",
+    "script": "Написание сценариев",
+    "smm": "SMM-управление",
+    "design": "Дизайн и обложки"
+  },
+  "waitlist": {
+    "title": "Присоединитесь к листу ожидания",
+    "description": "Будьте первыми, кто наймёт авторов и ИИ-агентов после запуска",
+    "emailPlaceholder": "Введите ваш email",
+    "joining": "Присоединение...",
+    "joinButton": "В лист ожидания",
+    "whatYouGet": "Что вы получите:",
+    "features": [
+      "Найдите проверенных UGC-авторов для вашей ниши",
+      "Нанимайте ИИ-агентов, работающих 24/7",
+      "Сравнивайте цены людей и ИИ мгновенно",
+      "Бронируйте звонки напрямую с авторами",
+      "Платите безопасно через платформу"
+    ]
+  },
+  "provider": {
+    "accessCode": {
+      "title": "Есть код доступа?",
+      "description": "Введите код, чтобы начать настройку профиля",
+      "placeholder": "Введите код доступа",
+      "verifying": "Проверка...",
+      "verifyButton": "Проверить код"
+    },
+    "apply": {
+      "title": "Подать заявку",
+      "description": "Присоединитесь как автор или ИИ-разработчик",
+      "providerTypeQuestion": "Какой тип провайдера вы?",
+      "creatorSmm": "Автор / SMM",
+      "aiDeveloper": "ИИ-разработчик",
+      "applyNow": "Подать заявку"
+    },
+    "benefits": {
+      "title": "Почему стоит стать провайдером?",
+      "forCreators": "Для авторов и SMM",
+      "forAiDevelopers": "Для ИИ-разработчиков",
+      "creatorBenefits": [
+        "Доступ к компаниям, ищущим помощь с TikTok",
+        "Устанавливайте свои цены и доступность",
+        "Получайте оплату безопасно через платформу",
+        "Стройте репутацию с помощью отзывов",
+        "Без предоплаты — мы берём только 15% комиссии"
+      ],
+      "aiDeveloperBenefits": [
+        "Монетизируйте ваших ИИ-агентов",
+        "Доступ к API и данным Rizko.ai",
+        "Охват тысяч потенциальных клиентов",
+        "Мы обрабатываем платежи и поддержку",
+        "Распределение доходов 70/30 в вашу пользу"
+      ]
+    }
+  },
+  "applicationModal": {
+    "applyAsCreator": "Заявка как автор",
+    "applyAsAiDeveloper": "Заявка как ИИ-разработчик",
+    "formDescription": "Заполните форму ниже. Мы рассмотрим и отправим вам код доступа в течение 24-48 часов.",
+    "fullName": "Полное имя *",
+    "fullNamePlaceholder": "Иван Иванов",
+    "email": "Email *",
+    "emailPlaceholder": "ivan@example.com",
+    "tiktokUsername": "Имя пользователя TikTok *",
+    "instagramOptional": "Instagram (необязательно)",
+    "usernamePlaceholder": "@username",
+    "githubUsername": "Имя пользователя GitHub *",
+    "githubPlaceholder": "username",
+    "demoApiUrl": "Демо / API URL",
+    "demoApiPlaceholder": "https://...",
+    "categoriesLabel": "Категории * (выберите все подходящие)",
+    "titleHuman": "Ваш заголовок *",
+    "titleAi": "Название ИИ-агента *",
+    "titlePlaceholderHuman": "напр. UGC-автор, SMM-менеджер",
+    "titlePlaceholderAi": "напр. TrendBot AI, ScriptGenius",
+    "shortBio": "Краткое описание",
+    "shortBioMax": "(макс. 280 символов)",
+    "bioPlaceholderHuman": "Расскажите о вашем опыте и что делает вас уникальным...",
+    "bioPlaceholderAi": "Опишите, что делает ваш ИИ-агент и его ключевые функции...",
+    "charCount": "{{count}}/280",
+    "priceRange": "Ценовой диапазон",
+    "cancel": "Отмена",
+    "submitting": "Отправка...",
+    "submitApplication": "Отправить заявку",
+    "success": {
+      "title": "Заявка получена!",
+      "description": "Мы рассмотрим ваш профиль и отправим код доступа на <strong>{{email}}</strong> в течение 24-48 часов.",
+      "whatHappensNext": "Что дальше?",
+      "steps": [
+        "Мы рассмотрим ваш профиль и портфолио",
+        "Вы получите код доступа по email",
+        "Введите код для настройки профиля",
+        "Начните получать клиентов!"
+      ],
+      "gotIt": "Понятно!"
+    }
+  },
+  "priceRangeOptions": [
+    "$25-50",
+    "$50-100",
+    "$100-200",
+    "$200-500",
+    "$500+",
+    "Договорная"
+  ],
+  "contactEmail": "Вопросы? Свяжитесь с нами по адресу",
+  "toast": {
+    "waitlistEmailRequired": "Пожалуйста, введите ваш email",
+    "waitlistSuccess": "Вы в листе ожидания! Мы уведомим вас о запуске.",
+    "accessCodeRequired": "Пожалуйста, введите код доступа",
+    "accessCodeInvalid": "Неверный код доступа. Подайте заявку ниже, чтобы получить его!",
+    "validationFullName": "Пожалуйста, введите полное имя",
+    "validationEmail": "Пожалуйста, введите email",
+    "validationTiktok": "Пожалуйста, введите имя пользователя TikTok",
+    "validationGithub": "Пожалуйста, введите имя пользователя GitHub",
+    "validationCategories": "Пожалуйста, выберите хотя бы одну категорию",
+    "validationTitle": "Пожалуйста, введите название услуги",
+    "applicationSuccess": "Заявка успешно отправлена!",
+    "applicationDuplicateEmail": "Этот email уже был отправлен",
+    "applicationError": "Не удалось отправить заявку. Попробуйте ещё раз.",
+    "applicationGenericError": "Что-то пошло не так. Попробуйте ещё раз."
+  }
+}

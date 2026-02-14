@@ -1,0 +1,105 @@
+{
+  "connect": {
+    "title": "Connect Accounts",
+    "subtitle": "Link your social media accounts to see all your analytics in one place.",
+    "connectedAccounts": "Connected Accounts",
+    "countOf": "{{count}} of 4",
+    "loading": "Loading connected accounts...",
+    "connected": "Connected",
+    "notConnected": "Not connected",
+    "account": "Account",
+    "followers": "Followers",
+    "lastSynced": "Last synced",
+    "never": "Never",
+    "sync": "Sync",
+    "disconnect": "Disconnect",
+    "connecting": "Connecting...",
+    "securityTitle": "Your data is secure",
+    "securityDescription": "We only access your public profile information and video statistics. We never post on your behalf or access private messages. You can disconnect at any time.",
+    "platforms": {
+      "tiktok": {
+        "name": "TikTok",
+        "description": "Connect your TikTok account to see video analytics and performance metrics."
+      },
+      "instagram": {
+        "name": "Instagram",
+        "description": "Connect your Instagram Business account to track posts, reels and stories."
+      },
+      "youtube": {
+        "name": "YouTube",
+        "description": "Connect your YouTube channel to analyze videos and shorts performance."
+      },
+      "twitter": {
+        "name": "X (Twitter)",
+        "description": "Connect your X account to track tweets and engagement metrics."
+      }
+    },
+    "toasts": {
+      "connected": "Your {{platform}} account has been connected successfully!",
+      "disconnected": "Your {{platform}} account has been disconnected.",
+      "loginRequired": "Please log in to connect your account",
+      "connectFailed": "Failed to connect. Please try again.",
+      "disconnectFailed": "Failed to disconnect account. Please try again."
+    }
+  },
+  "oauth": {
+    "connecting": "Connecting your account...",
+    "pleaseWait": "Please wait while we complete the connection.",
+    "success": "Successfully Connected!",
+    "redirecting": "Redirecting you back...",
+    "failed": "Connection Failed",
+    "invalidCallback": "Invalid callback. Please try connecting again.",
+    "tryAgain": "Try Again"
+  },
+  "billing": {
+    "title": "Billing",
+    "subtitle": "Manage your subscription and billing information",
+    "currentPlan": "Current Plan",
+    "plan": "{{name}} Plan",
+    "freeForever": "Free forever",
+    "perMonth": "${{price}}/month",
+    "active": "Active",
+    "canceling": "Canceling",
+    "renewsOn": "Renews on {{date}}",
+    "accessUntil": "Access until {{date}}",
+    "canceledTitle": "Subscription Canceled",
+    "canceledDescription": "Your subscription will end on {{date}}. You can resubscribe anytime.",
+    "manageSubscription": "Manage Subscription",
+    "upgradeDescription": "Upgrade to unlock premium features like advanced analytics, unlimited AI scripts, and more.",
+    "viewPlans": "View Plans & Upgrade",
+    "manageDescription": "Manage your subscription, update payment method, view invoices, or cancel your plan.",
+    "manageBilling": "Manage Billing",
+    "changePlan": "Change Plan",
+    "whatsIncluded": "What's Included",
+    "features": {
+      "free": [
+        "Connect up to 3 accounts",
+        "Basic analytics dashboard",
+        "AI-powered insights",
+        "Video library access"
+      ],
+      "creator": [
+        "Everything in Free",
+        "Unlimited trend views",
+        "50 AI scripts per month",
+        "7-day historical data",
+        "Export to CSV"
+      ],
+      "pro": [
+        "Everything in Creator",
+        "Deep Analyze (6-layer UTS)",
+        "Unlimited AI scripts",
+        "30-day historical data",
+        "Visual clustering (AI)",
+        "Priority support"
+      ],
+      "agency": [
+        "Everything in Pro",
+        "5 team members",
+        "90-day historical data",
+        "API access (10K/mo)",
+        "Dedicated support"
+      ]
+    }
+  }
+}

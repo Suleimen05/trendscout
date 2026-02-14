@@ -21,7 +21,7 @@ def _get_fernet():
     if _fernet is not None:
         return _fernet
     if not _ENCRYPTION_KEY:
-        logger.warning("ENCRYPTION_KEY not set — OAuth tokens will be stored in plaintext")
+        logger.warning("ENCRYPTION_KEY not set -- OAuth tokens will be stored in plaintext")
         return None
     try:
         from cryptography.fernet import Fernet
@@ -52,6 +52,6 @@ def decrypt_token(ciphertext: Optional[str]) -> Optional[str]:
     try:
         return f.decrypt(ciphertext.encode()).decode()
     except Exception:
-        # Legacy plaintext token — return as-is for backward compatibility
-        logger.warning("Failed to decrypt token — returning as plaintext (legacy data)")
+        # Legacy plaintext token -- return as-is for backward compatibility
+        logger.warning("Failed to decrypt token -- returning as plaintext (legacy data)")
         return ciphertext

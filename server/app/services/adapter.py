@@ -74,5 +74,5 @@ def adapt_apidojo_to_standard(item: dict) -> dict:
         return None
 
     except Exception as e:
-        print(f"⚠️ Ошибка адаптации элемента: {e}")
+        print(f"[WARNING] Adaptation error: {e}")
         return None

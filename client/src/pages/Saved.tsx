@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Bookmark, Search, Tag, Loader2, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,6 +53,7 @@ interface SavedTrend {
 
 export function Saved() {
   const { user: _user } = useAuth();
+  const { t } = useTranslation('videos');
   const [favorites, setFavorites] = useState<SavedTrend[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -87,11 +89,11 @@ export function Saved() {
       setPage(pageNum);
     } catch (error) {
       console.error('Failed to load favorites:', error);
-      toast.error('Failed to load saved videos');
+      toast.error(t('saved.toast.loadError'));
     } finally {
       setLoading(false);
     }
-  }, [selectedTag]);
+  }, [selectedTag, t]);
 
   const loadTags = useCallback(async () => {
     try {
@@ -116,10 +118,10 @@ export function Saved() {
       await apiService.removeFavorite(favoriteId);
       setFavorites(prev => prev.filter(f => f.id !== favoriteId));
       setTotal(prev => prev - 1);
-      toast.success('Video removed from saved');
+      toast.success(t('saved.toast.removeSuccess'));
     } catch (error) {
       console.error('Failed to remove favorite:', error);
-      toast.error('Failed to remove video');
+      toast.error(t('saved.toast.removeError'));
     } finally {
       setDeleteId(null);
     }
@@ -191,10 +193,12 @@ export function Saved() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Bookmark className="h-6 w-6 text-purple-600" />
-            Saved Videos
+            {t('saved.title')}
           </h1>
           <p className="text-muted-foreground mt-1">
-            {total} saved video{total !== 1 ? 's' : ''} in your collection
+            {total !== 1
+              ? t('saved.subtitlePlural', { count: total })
+              : t('saved.subtitle', { count: total })}
           </p>
         </div>
       </div>
@@ -204,7 +208,7 @@ export function Saved() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search saved videos..."
+            placeholder={t('saved.search.placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-9"
@@ -214,10 +218,10 @@ export function Saved() {
         <Select value={selectedTag} onValueChange={setSelectedTag}>
           <SelectTrigger className="w-[180px]">
             <Tag className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Filter by tag" />
+            <SelectValue placeholder={t('saved.filterByTag')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All tags</SelectItem>
+            <SelectItem value="all">{t('saved.allTags')}</SelectItem>
             {allTags.map(tag => (
               <SelectItem key={tag} value={tag}>{tag}</SelectItem>
             ))}
@@ -234,11 +238,11 @@ export function Saved() {
         <Card className="border-dashed">
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FolderOpen className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No saved videos yet</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('saved.emptyState.title')}</h3>
             <p className="text-muted-foreground text-center max-w-md">
               {searchQuery || selectedTag !== 'all'
-                ? 'No videos match your filters. Try adjusting your search.'
-                : 'Start saving videos from Discover or Deep Analysis to build your collection.'}
+                ? t('saved.emptyState.noResults')
+                : t('saved.emptyState.noVideos')}
             </p>
           </CardContent>
         </Card>
@@ -268,10 +272,10 @@ export function Saved() {
                 {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Loading...
+                    {t('saved.loading')}
                   </>
                 ) : (
-                  'Load More'
+                  t('saved.loadMore')
                 )}
               </Button>
             </div>
@@ -283,18 +287,18 @@ export function Saved() {
       <AlertDialog open={deleteId !== null} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remove from saved?</AlertDialogTitle>
+            <AlertDialogTitle>{t('saved.deleteDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This video will be removed from your saved collection. You can always save it again later.
+              {t('saved.deleteDialog.description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{t('saved.deleteDialog.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => deleteId && handleDelete(deleteId)}
               className="bg-red-500 hover:bg-red-600"
             >
-              Remove
+              {t('saved.deleteDialog.remove')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

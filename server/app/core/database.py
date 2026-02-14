@@ -31,7 +31,7 @@ def get_db():
         yield db
     except Exception as e:
         db.rollback()
-        print(f"❌ Database error in get_db(): {e}")
+        print(f"Database error in get_db(): {e}")
         raise
     finally:
         db.close()

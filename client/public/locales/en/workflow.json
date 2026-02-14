@@ -1,0 +1,313 @@
+{
+  "models": {
+    "gemini": { "name": "Gemini 2.0 Flash", "description": "Fast & efficient" },
+    "nano-bana": { "name": "Nano Bana", "description": "Image generation" },
+    "claude": { "name": "Claude 3.5 Sonnet", "description": "Best for writing" },
+    "gpt4": { "name": "GPT-4o", "description": "Most capable" }
+  },
+  "modes": {
+    "chat": { "name": "Chat", "description": "General conversation" },
+    "script": { "name": "Script Writer", "description": "Create viral scripts" },
+    "ideas": { "name": "Idea Generator", "description": "Generate content ideas" },
+    "analysis": { "name": "Trend Analyst", "description": "Analyze content" },
+    "improve": { "name": "Content Improver", "description": "Enhance existing content" },
+    "hook": { "name": "Hook Master", "description": "Create attention hooks" }
+  },
+  "prompts": {
+    "script": "Write a viral TikTok script about...",
+    "ideas": "Give me 5 content ideas for...",
+    "analysis": "Analyze this trending video concept",
+    "hook": "Create 3 hooks for my video about..."
+  },
+  "nodes": {
+    "video": { "title": "Video Input", "description": "Drop saved video here" },
+    "brand": { "title": "Brand Brief", "description": "Your brand context" },
+    "analyze": { "title": "Analyze", "description": "Deep content analysis" },
+    "extract": { "title": "Extract", "description": "Extract key elements" },
+    "style": { "title": "Style Match", "description": "Match visual style" },
+    "generate": { "title": "Generate", "description": "AI script creation" },
+    "refine": { "title": "Refine", "description": "Polish & improve" },
+    "script": { "title": "Script Output", "description": "Final script" },
+    "storyboard": { "title": "Storyboard", "description": "Visual breakdown" }
+  },
+  "templates": {
+    "video-analysis": "Video Analysis Pipeline",
+    "script-generator": "Script Generator",
+    "full-pipeline": "Full Content Pipeline"
+  },
+  "sidebar": {
+    "nodesTab": "Nodes",
+    "savedTab": "Saved",
+    "historyTab": "History",
+    "aiChat": "AI Chat",
+    "aiAssistant": "AI Assistant",
+    "newChat": "New chat",
+    "workflows": "workflows",
+    "videos": "videos",
+    "runs": "runs",
+    "chats": "chats",
+    "quickStart": "Quick Start",
+    "dragToCanvas": "Drag to canvas",
+    "nodeGroupInput": "Input",
+    "nodeGroupProcess": "Process",
+    "nodeGroupAI": "AI",
+    "nodeGroupOutput": "Output",
+    "nodesCount": "{{count}} nodes",
+    "creditsEstimate": "~{{credits}} cr",
+    "noSavedWorkflows": "No saved workflows",
+    "saveFirstWorkflow": "Save your first workflow",
+    "noSavedVideos": "No saved videos",
+    "saveFromTrends": "Save videos from Trends",
+    "all": "All",
+    "removeVideo": "Remove video",
+    "runHistory": "Run History",
+    "noWorkflowRuns": "No workflow runs yet",
+    "runWorkflowHint": "Run a workflow to see history",
+    "runDetails": "Run Details",
+    "status": "Status",
+    "nodesLabel": "Nodes",
+    "credits": "Credits",
+    "duration": "Duration",
+    "viewFullResults": "View Full Results",
+    "nodesSuccessful": "{{success}}/{{total}} nodes successful",
+    "scriptPreview": "Script Preview:",
+    "failedToLoadDetails": "Failed to load details",
+    "chatHistory": "Chat History",
+    "noChatSessions": "No chat sessions yet",
+    "startChatHint": "Start a chat to see history",
+    "untitledChat": "Untitled Chat",
+    "msgsCount": "{{count}} msgs",
+    "loadedOnCanvas": "Loaded on canvas"
+  },
+  "chat": {
+    "whatCanIHelp": "What can I help you create?",
+    "chatSubtitle": "Write scripts, generate ideas, analyze trends...",
+    "askMeTo": "Ask me to {{action}}...",
+    "copy": "Copy",
+    "regenerate": "Regenerate",
+    "modelLabel": "Model",
+    "fullSize": "View full size",
+    "downloadImage": "Download image"
+  },
+  "toolbar": {
+    "backToDashboard": "Back to Dashboard",
+    "unsavedChanges": "Unsaved changes",
+    "clearCanvas": "Clear canvas",
+    "resetView": "Reset view",
+    "save": "Save",
+    "new": "New",
+    "run": "Run",
+    "runWithCost": "Run ({{cost}} cr)",
+    "running": "Running..."
+  },
+  "canvas": {
+    "buildYourWorkflow": "Build Your Workflow",
+    "dragNodesHint": "Drag nodes from the left panel to create a script generation pipeline",
+    "input": "Input",
+    "output": "Output",
+    "dragToConnect": "Drag to connect"
+  },
+  "nodeConfig": {
+    "prompt": "Prompt",
+    "custom": "Custom",
+    "model": "Model",
+    "ready": "Ready",
+    "aiModel": "AI Model",
+    "customPrompt": "Custom Prompt",
+    "optional": "(optional)",
+    "customPromptPlaceholder": "Enter a custom prompt for this node...",
+    "customPromptHint": "Leave empty to use the default prompt. The input from connected nodes is automatically prepended.",
+    "outputFormat": "Output Format",
+    "output": "Output",
+    "copied": "Copied",
+    "copy": "Copy",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "cr": "cr",
+    "views": "views",
+    "openOriginal": "Open original",
+    "changeVideo": "Change Video",
+    "noVideoAttached": "No video attached",
+    "selectVideoOrDrag": "Select a video below or drag from the sidebar",
+    "dragVideoFromSidebar": "Drag a video from the sidebar onto this node",
+    "browseSavedVideos": "Browse Saved Videos",
+    "selectVideo": "Select Video",
+    "uploadFromDevice": "Upload from Device",
+    "uploadingVideo": "Uploading...",
+    "uploadedVideo": "Uploaded Video",
+    "uploadFailed": "Upload failed",
+    "maxFileSize": "Max 100MB. MP4, MOV, AVI, WebM",
+    "orUploadFromDevice": "or upload from your device",
+    "brandContext": "Brand Context",
+    "brandPlaceholder": "Example:\nBrand: FitLife App - fitness tracking for busy professionals\nAudience: 25-40 year olds, health-conscious, time-poor\nVoice: Motivational but not preachy, casual, data-driven\nValues: Simplicity, progress over perfection, community\nAvoid: Extreme diet talk, unrealistic promises",
+    "brandProTip": "Pro tip:",
+    "brandProTipText": "The more specific your brand context, the better aligned your generated content will be. Include what makes you unique!",
+    "promptHints": {
+      "analyze": "e.g., \"Focus on hook techniques and emotional triggers for fitness content\"",
+      "extract": "e.g., \"Extract only hooks and CTAs suitable for beauty niche\"",
+      "style": "e.g., \"Match the fast-paced, text-heavy style with trending sounds\"",
+      "generate": "e.g., \"Create a 30-second script about productivity tips for students\"",
+      "refine": "e.g., \"Make it more conversational and add humor\"",
+      "script": "e.g., \"Format for teleprompter use with clear timing cues\"",
+      "storyboard": "e.g., \"Include B-roll suggestions and specific camera angles\""
+    },
+    "nodeInfo": {
+      "video": {
+        "description": "Source video for analysis. Drag saved videos from the sidebar.",
+        "tips": [
+          "Higher UTS score = better viral potential",
+          "Video description is used for content analysis",
+          "Connect to Analyze or Extract nodes"
+        ]
+      },
+      "brand": {
+        "description": "Define your brand identity to align all generated content.",
+        "tips": [
+          "Include target audience demographics",
+          "Specify tone of voice (casual, professional, etc.)",
+          "Add any content restrictions or guidelines",
+          "Mention key messages or values"
+        ]
+      },
+      "analyze": {
+        "description": "AI analyzes content for viral mechanics, hooks, and engagement patterns.",
+        "tips": [
+          "Identifies why content works",
+          "Extracts replicable patterns",
+          "Best for understanding viral mechanics"
+        ]
+      },
+      "extract": {
+        "description": "Pulls out reusable components: hooks, CTAs, hashtags, and templates.",
+        "tips": [
+          "Creates copy-paste ready hooks",
+          "Generates hashtag strategy",
+          "Outputs CTA templates"
+        ]
+      },
+      "style": {
+        "description": "Creates detailed style guidelines for consistent content replication.",
+        "tips": [
+          "Defines visual aesthetic",
+          "Specifies editing patterns",
+          "Includes audio/music direction"
+        ]
+      },
+      "generate": {
+        "description": "AI creates complete, production-ready TikTok scripts.",
+        "tips": [
+          "Generates hook, body, and CTA",
+          "Includes visual directions",
+          "Adds hashtag recommendations"
+        ]
+      },
+      "refine": {
+        "description": "Optimizes existing scripts for maximum viral potential.",
+        "tips": [
+          "Strengthens hooks",
+          "Adds viral mechanics",
+          "Improves engagement triggers"
+        ]
+      },
+      "script": {
+        "description": "Formats script for production use - ready to film.",
+        "tips": [
+          "Clean, professional format",
+          "Includes timing markers",
+          "Choose output format (Markdown/Plain/JSON)"
+        ]
+      },
+      "storyboard": {
+        "description": "Scene-by-scene breakdown with visuals, actions, and timing.",
+        "tips": [
+          "Shot-by-shot guide",
+          "Includes transitions",
+          "Equipment/prop checklist"
+        ]
+      }
+    }
+  },
+  "results": {
+    "workflowResults": "Workflow Results",
+    "workflowFailed": "Workflow Failed",
+    "backToCanvas": "Back to Canvas",
+    "overview": "Overview",
+    "scriptTab": "Script",
+    "storyboardTab": "Storyboard",
+    "allNodes": "All Nodes",
+    "executionError": "Execution Error",
+    "successfulNodes": "Successful Nodes",
+    "creditsUsed": "Credits Used",
+    "creditsCount": "{{count}} credits",
+    "executionTime": "Execution Time",
+    "totalNodes": "Total Nodes",
+    "generatedScript": "Generated Script",
+    "storyboard": "Storyboard",
+    "copied": "Copied!",
+    "copy": "Copy",
+    "copyScript": "Copy Script",
+    "copyStoryboard": "Copy Storyboard",
+    "viewFull": "View Full",
+    "download": "Download",
+    "processingPipeline": "Processing Pipeline",
+    "viewDetails": "View Details",
+    "noOutput": "No output",
+    "nodeResults": "Node Results",
+    "nodesCount": "{{success}}/{{total}} nodes",
+    "success": "Success",
+    "failed": "Failed",
+    "noResultsAvailable": "No Results Available",
+    "noResultsHint": "The workflow didn't produce any output. Check your node connections and try again.",
+    "continueEditing": "Continue Editing",
+    "copiedAll": "Copied All!",
+    "copyAll": "Copy All",
+    "script": "Script",
+    "nodeId": "Node #{{id}}"
+  },
+  "history": {
+    "justNow": "just now",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
+  },
+  "modal": {
+    "finalScript": "Final Script",
+    "storyboard": "Storyboard",
+    "nodeResults": "Node Results",
+    "nodeResultsCount": "Node Results ({{success}}/{{total}} successful)",
+    "noResultsForRun": "No results available for this run",
+    "close": "Close",
+    "error": "Error",
+    "run": "Run #{{number}}",
+    "creditsLabel": "{{count}} credits",
+    "nodesLabel": "{{count}} nodes"
+  },
+  "toasts": {
+    "videoAttached": "Video attached to node #{{id}}",
+    "videoUploaded": "Video uploaded successfully",
+    "addNodesFirst": "Add nodes to the canvas first",
+    "connectNodes": "Connect nodes together to create a workflow",
+    "loginToRun": "Please login to run workflows",
+    "loginToSave": "Please login to save workflows",
+    "loginToChat": "Please login to use AI chat",
+    "loginToTemplates": "Please login to use templates",
+    "createdFromTemplate": "Workflow created from template",
+    "failedCreateTemplate": "Failed to create from template",
+    "failedToCopy": "Failed to copy",
+    "videoRemoved": "Video removed",
+    "failedRemoveVideo": "Failed to remove video",
+    "runDeleted": "Run deleted",
+    "failedDeleteRun": "Failed to delete run",
+    "failedLoadRunDetails": "Failed to load run details",
+    "noGraphData": "No workflow data found in this run",
+    "runLoadedOnCanvas": "Workflow loaded with results",
+    "scriptCopied": "Script copied to clipboard",
+    "storyboardCopied": "Storyboard copied to clipboard",
+    "workflowSaved": "Workflow saved",
+    "workflowCompleted": "Workflow completed!{{credits}}",
+    "creditsUsedSuffix": " ({{count}} credits used)",
+    "notEnoughCredits": "Not enough credits. Need ~{{need}}, have {{have}}",
+    "failedExecute": "Failed to execute workflow. Please try again."
+  },
+  "untitledWorkflow": "Untitled Workflow"
+}

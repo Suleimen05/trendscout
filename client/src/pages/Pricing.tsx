@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation, Trans } from 'react-i18next';
 import {
   Check,
   X,
@@ -42,96 +43,10 @@ interface PlanFeature {
   agency: boolean | string;
 }
 
-const features: PlanFeature[] = [
-  { name: 'Light Analyze (basic metrics)', free: true, creator: true, pro: true, agency: true },
-  { name: 'Deep Analyze (6-layer UTS)', free: false, creator: false, pro: true, agency: true },
-  { name: 'Daily trend views', free: '10', creator: 'Unlimited', pro: 'Unlimited', agency: 'Unlimited' },
-  { name: 'Deep Scan videos per month', free: '0', creator: '100', pro: '500', agency: '2,000' },
-  { name: 'UTS Score breakdown', free: false, creator: false, pro: true, agency: true },
-  { name: 'Visual clustering (AI)', free: false, creator: false, pro: true, agency: true },
-  { name: 'Growth velocity tracking', free: false, creator: false, pro: true, agency: true },
-  { name: 'Saturation indicator', free: false, creator: false, pro: true, agency: true },
-  { name: 'Sound cascade analysis', free: false, creator: false, pro: true, agency: true },
-  { name: 'Auto-rescan (24h)', free: false, creator: false, pro: true, agency: true },
-  { name: 'Historical data', free: false, creator: '7 days', pro: '30 days', agency: '90 days' },
-  { name: 'Export data (CSV)', free: false, creator: true, pro: true, agency: true },
-  { name: 'Daily searches', free: '10', creator: 'Unlimited', pro: 'Unlimited', agency: 'Unlimited' },
-  { name: 'Advanced filters', free: false, creator: true, pro: true, agency: true },
-  { name: 'AI scripts per month', free: '5', creator: '50', pro: 'Unlimited', agency: 'Unlimited' },
-  { name: 'Choose AI model', free: false, creator: true, pro: true, agency: true },
-  { name: 'All 5 generation modes', free: false, creator: true, pro: true, agency: true },
-  { name: 'Bulk generation', free: false, creator: false, pro: '10 at once', agency: '25 at once' },
-  { name: 'Custom templates', free: false, creator: false, pro: true, agency: true },
-  { name: 'Voice AI minutes/day', free: false, creator: '10 min', pro: '60 min', agency: '180 min' },
-  { name: 'Voice selection (16 voices)', free: false, creator: false, pro: true, agency: true },
-  { name: 'Custom persona', free: false, creator: false, pro: true, agency: true },
-  { name: 'Priority queue', free: false, creator: false, pro: true, agency: true },
-  { name: 'Track competitors', free: '3', creator: '10', pro: '25', agency: '100' },
-  { name: 'Competitor alerts', free: false, creator: false, pro: true, agency: true },
-  { name: 'Strategy analysis', free: false, creator: false, pro: true, agency: true },
-  { name: 'Team members', free: '1', creator: '1', pro: '1', agency: '5' },
-  { name: 'API access', free: false, creator: false, pro: false, agency: '10K/mo' },
-  { name: 'Support', free: 'Email', creator: 'Email', pro: 'Priority', agency: 'Dedicated' },
-  { name: 'Weekly reports', free: false, creator: false, pro: true, agency: true },
-];
-
-const plans = [
-  {
-    id: 'free',
-    name: 'Free',
-    description: 'Get started with basic features',
-    price: { monthly: 0, yearly: 0 },
-    icon: Zap,
-    color: 'from-gray-500 to-gray-600',
-    popular: false,
-    cta: 'Current Plan',
-    ctaVariant: 'outline' as const,
-  },
-  {
-    id: 'creator',
-    name: 'Creator',
-    description: 'For content creators ready to grow',
-    price: { monthly: 19, yearly: 144 },
-    icon: Crown,
-    color: 'from-blue-500 to-cyan-500',
-    popular: false,
-    cta: 'Upgrade to Creator',
-    ctaVariant: 'default' as const,
-  },
-  {
-    id: 'pro',
-    name: 'Pro',
-    description: 'For serious creators & marketers',
-    price: { monthly: 49, yearly: 348 },
-    icon: Rocket,
-    color: 'from-purple-500 to-pink-500',
-    popular: true,
-    cta: 'Upgrade to Pro',
-    ctaVariant: 'default' as const,
-  },
-  {
-    id: 'agency',
-    name: 'Agency',
-    description: 'For teams and agencies',
-    price: { monthly: 149, yearly: 1068 },
-    icon: Building2,
-    color: 'from-orange-500 to-red-500',
-    popular: false,
-    cta: 'Contact Sales',
-    ctaVariant: 'default' as const,
-  },
-];
-
-const highlights = [
-  { icon: TrendingUp, title: 'Real-time Trends', description: 'Track TikTok trends as they emerge' },
-  { icon: Sparkles, title: 'AI Script Generation', description: 'Create viral scripts with GPT-5, Claude & more' },
-  { icon: Mic, title: 'Voice AI Assistant', description: 'Talk to AI in real-time with PersonaPlex' },
-  { icon: Users, title: 'Competitor Analysis', description: 'Track and analyze your competition' },
-];
-
 export function Pricing() {
   const navigate = useNavigate();
   const { user, refreshUser } = useAuth();
+  const { t } = useTranslation('pricing');
   const [isYearly, setIsYearly] = useState(false);
   const currentPlan = user?.subscription || 'free';
 
@@ -140,6 +55,65 @@ export function Pricing() {
   const [selectedPlan, setSelectedPlan] = useState<string>('');
   const [devCode, setDevCode] = useState('');
   const [isUpgrading, setIsUpgrading] = useState(false);
+
+  // Localized features comparison table from JSON
+  const features: PlanFeature[] = t('features', { returnObjects: true }) as PlanFeature[];
+
+  // Plans with translatable strings pulled from JSON
+  const plans = [
+    {
+      id: 'free' as const,
+      name: t('plans.free.name'),
+      description: t('plans.free.description'),
+      price: { monthly: 0, yearly: 0 },
+      icon: Zap,
+      color: 'from-gray-500 to-gray-600',
+      popular: false,
+      cta: t('plans.free.cta'),
+      ctaVariant: 'outline' as const,
+    },
+    {
+      id: 'creator' as const,
+      name: t('plans.creator.name'),
+      description: t('plans.creator.description'),
+      price: { monthly: 19, yearly: 144 },
+      icon: Crown,
+      color: 'from-blue-500 to-cyan-500',
+      popular: false,
+      cta: t('plans.creator.cta'),
+      ctaVariant: 'default' as const,
+    },
+    {
+      id: 'pro' as const,
+      name: t('plans.pro.name'),
+      description: t('plans.pro.description'),
+      price: { monthly: 49, yearly: 348 },
+      icon: Rocket,
+      color: 'from-purple-500 to-pink-500',
+      popular: true,
+      cta: t('plans.pro.cta'),
+      ctaVariant: 'default' as const,
+    },
+    {
+      id: 'agency' as const,
+      name: t('plans.agency.name'),
+      description: t('plans.agency.description'),
+      price: { monthly: 149, yearly: 1068 },
+      icon: Building2,
+      color: 'from-orange-500 to-red-500',
+      popular: false,
+      cta: t('plans.agency.cta'),
+      ctaVariant: 'default' as const,
+    },
+  ];
+
+  // Highlights with localized strings
+  const highlights = [
+    { icon: TrendingUp, title: t('highlights.trends.title'), description: t('highlights.trends.description') },
+    { icon: Sparkles, title: t('highlights.scripts.title'), description: t('highlights.scripts.description') },
+    { icon: Mic, title: t('highlights.voice.title'), description: t('highlights.voice.description') },
+    { icon: Users, title: t('highlights.competitors.title'), description: t('highlights.competitors.description') },
+  ];
 
   const handlePlanClick = (planId: string) => {
     if (planId === 'free' || currentPlan.toLowerCase() === planId) return;
@@ -211,19 +185,24 @@ export function Pricing() {
     return <span className="text-sm font-medium">{value}</span>;
   };
 
+  // Helper to get plan features list from JSON
+  const getPlanFeatures = (planId: string): string[] => {
+    return t(`plans.${planId}.features`, { returnObjects: true }) as string[];
+  };
+
   return (
     <div className="space-y-8 pb-12">
       <div className="text-center space-y-4">
-        <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20">Pricing</Badge>
-        <h1 className="text-4xl font-bold tracking-tight">Choose your plan</h1>
+        <Badge className="bg-purple-500/10 text-purple-600 border-purple-500/20">{t('badge')}</Badge>
+        <h1 className="text-4xl font-bold tracking-tight">{t('title')}</h1>
         <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          Start free and scale as you grow. All plans include core features.
+          {t('subtitle')}
         </p>
         <div className="flex items-center justify-center gap-3 pt-4">
-          <span className={cn('text-sm font-medium', !isYearly && 'text-foreground', isYearly && 'text-muted-foreground')}>Monthly</span>
+          <span className={cn('text-sm font-medium', !isYearly && 'text-foreground', isYearly && 'text-muted-foreground')}>{t('billing.monthly')}</span>
           <Switch checked={isYearly} onCheckedChange={setIsYearly} />
-          <span className={cn('text-sm font-medium', isYearly && 'text-foreground', !isYearly && 'text-muted-foreground')}>Yearly</span>
-          {isYearly && <Badge className="bg-green-500/10 text-green-600 border-green-500/20">Save 40%</Badge>}
+          <span className={cn('text-sm font-medium', isYearly && 'text-foreground', !isYearly && 'text-muted-foreground')}>{t('billing.yearly')}</span>
+          {isYearly && <Badge className="bg-green-500/10 text-green-600 border-green-500/20">{t('billing.save')}</Badge>}
         </div>
       </div>
 
@@ -247,12 +226,13 @@ export function Pricing() {
           const Icon = plan.icon;
           const monthlyPrice = isYearly ? Math.round(plan.price.yearly / 12) : plan.price.monthly;
           const isCurrentPlan = currentPlan.toLowerCase() === plan.id;
+          const planFeatures = getPlanFeatures(plan.id);
 
           return (
             <Card key={plan.id} className={cn('relative overflow-hidden transition-all hover:shadow-lg', plan.popular && 'border-purple-500 shadow-purple-500/20 shadow-lg')}>
               {plan.popular && (
                 <div className="absolute top-0 right-0">
-                  <div className="bg-purple-500 text-white text-xs font-medium px-3 py-1 rounded-bl-lg">Most Popular</div>
+                  <div className="bg-purple-500 text-white text-xs font-medium px-3 py-1 rounded-bl-lg">{t('mostPopular')}</div>
                 </div>
               )}
               <CardHeader className="pb-4">
@@ -266,10 +246,10 @@ export function Pricing() {
                 <div>
                   <div className="flex items-baseline gap-1">
                     <span className="text-4xl font-bold">${monthlyPrice}</span>
-                    <span className="text-muted-foreground">/mo</span>
+                    <span className="text-muted-foreground">{t('billing.perMonth')}</span>
                   </div>
                   {isYearly && plan.price.monthly > 0 && (
-                    <p className="text-sm text-muted-foreground mt-1">${plan.price.yearly} billed yearly</p>
+                    <p className="text-sm text-muted-foreground mt-1">{t('billing.billedYearly', { amount: plan.price.yearly })}</p>
                   )}
                 </div>
                 <Button
@@ -278,45 +258,22 @@ export function Pricing() {
                   disabled={isCurrentPlan}
                   onClick={() => handlePlanClick(plan.id)}
                 >
-                  {isCurrentPlan ? 'Current Plan' : plan.cta}
+                  {isCurrentPlan ? t('currentPlan') : plan.cta}
                 </Button>
                 <div className="space-y-2 pt-4 border-t">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Key features</p>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('keyFeatures')}</p>
                   <ul className="space-y-2">
-                    {plan.id === 'free' && (
-                      <>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" />Light Analyze (basic)</li>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" />10 trend views/day</li>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" />5 AI scripts/month</li>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" />3 competitor tracking</li>
-                      </>
-                    )}
-                    {plan.id === 'creator' && (
-                      <>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" />Light Analyze (unlimited)</li>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" />50 AI scripts/month</li>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" /><Mic className="h-3 w-3" /> 10 min Voice AI/day</li>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" />100 Deep Scans/month</li>
-                      </>
-                    )}
-                    {plan.id === 'pro' && (
-                      <>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" /><Sparkles className="h-3 w-3" /> Deep Analyze (6-layer UTS)</li>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" />Unlimited AI scripts</li>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" /><Mic className="h-3 w-3" /> 60 min Voice AI/day</li>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" />Visual clustering (AI)</li>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" />Priority support</li>
-                      </>
-                    )}
-                    {plan.id === 'agency' && (
-                      <>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" />5 team members</li>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" /><Mic className="h-3 w-3" /> 180 min Voice AI/day</li>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" />100 competitors</li>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" />API access (10K/mo)</li>
-                        <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-green-500" />Dedicated support</li>
-                      </>
-                    )}
+                    {planFeatures.map((feature, idx) => (
+                      <li key={idx} className="flex items-center gap-2 text-sm">
+                        <Check className="h-4 w-4 text-green-500" />
+                        {/* Add special icons for voice and deep analyze features */}
+                        {plan.id === 'creator' && idx === 2 && <Mic className="h-3 w-3" />}
+                        {plan.id === 'pro' && idx === 0 && <Sparkles className="h-3 w-3" />}
+                        {plan.id === 'pro' && idx === 2 && <Mic className="h-3 w-3" />}
+                        {plan.id === 'agency' && idx === 1 && <Mic className="h-3 w-3" />}
+                        {feature}
+                      </li>
+                    ))}
                   </ul>
                 </div>
               </CardContent>
@@ -326,22 +283,22 @@ export function Pricing() {
       </div>
 
       <div className="mt-16">
-        <h2 className="text-2xl font-bold text-center mb-8">Compare all features</h2>
+        <h2 className="text-2xl font-bold text-center mb-8">{t('compareFeatures.title')}</h2>
         <div className="overflow-x-auto">
           <table className="w-full border-collapse">
             <thead>
               <tr className="border-b">
-                <th className="text-left py-4 px-4 font-medium text-muted-foreground">Feature</th>
-                <th className="text-center py-4 px-4 font-medium">Free</th>
-                <th className="text-center py-4 px-4 font-medium">Creator</th>
-                <th className="text-center py-4 px-4 font-medium text-purple-600">Pro</th>
-                <th className="text-center py-4 px-4 font-medium">Agency</th>
+                <th className="text-left py-4 px-4 font-medium text-muted-foreground">{t('compareFeatures.feature')}</th>
+                <th className="text-center py-4 px-4 font-medium">{t('plans.free.name')}</th>
+                <th className="text-center py-4 px-4 font-medium">{t('plans.creator.name')}</th>
+                <th className="text-center py-4 px-4 font-medium text-purple-600">{t('plans.pro.name')}</th>
+                <th className="text-center py-4 px-4 font-medium">{t('plans.agency.name')}</th>
               </tr>
             </thead>
             <tbody>
               <tr className="bg-muted/30">
                 <td colSpan={5} className="py-3 px-4 font-semibold text-sm flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4" />Trend Analysis
+                  <TrendingUp className="h-4 w-4" />{t('compareFeatures.sections.trendAnalysis')}
                 </td>
               </tr>
               {features.slice(0, 5).map((feature, idx) => (
@@ -355,7 +312,7 @@ export function Pricing() {
               ))}
               <tr className="bg-muted/30">
                 <td colSpan={5} className="py-3 px-4 font-semibold text-sm flex items-center gap-2">
-                  <Search className="h-4 w-4" />Video Search
+                  <Search className="h-4 w-4" />{t('compareFeatures.sections.videoSearch')}
                 </td>
               </tr>
               {features.slice(5, 9).map((feature, idx) => (
@@ -369,7 +326,7 @@ export function Pricing() {
               ))}
               <tr className="bg-muted/30">
                 <td colSpan={5} className="py-3 px-4 font-semibold text-sm flex items-center gap-2">
-                  <FileText className="h-4 w-4" />AI Script Generation
+                  <FileText className="h-4 w-4" />{t('compareFeatures.sections.aiScriptGeneration')}
                 </td>
               </tr>
               {features.slice(9, 14).map((feature, idx) => (
@@ -383,8 +340,8 @@ export function Pricing() {
               ))}
               <tr className="bg-muted/30">
                 <td colSpan={5} className="py-3 px-4 font-semibold text-sm flex items-center gap-2">
-                  <Mic className="h-4 w-4" />Voice AI (PersonaPlex)
-                  <Badge className="text-[10px] bg-green-500/10 text-green-600 border-green-500/20">NEW</Badge>
+                  <Mic className="h-4 w-4" />{t('compareFeatures.sections.voiceAI')}
+                  <Badge className="text-[10px] bg-green-500/10 text-green-600 border-green-500/20">{t('compareFeatures.sections.voiceAIBadge')}</Badge>
                 </td>
               </tr>
               {features.slice(14, 18).map((feature, idx) => (
@@ -398,7 +355,7 @@ export function Pricing() {
               ))}
               <tr className="bg-muted/30">
                 <td colSpan={5} className="py-3 px-4 font-semibold text-sm flex items-center gap-2">
-                  <Users className="h-4 w-4" />Competitor Tracking
+                  <Users className="h-4 w-4" />{t('compareFeatures.sections.competitorTracking')}
                 </td>
               </tr>
               {features.slice(18, 21).map((feature, idx) => (
@@ -412,7 +369,7 @@ export function Pricing() {
               ))}
               <tr className="bg-muted/30">
                 <td colSpan={5} className="py-3 px-4 font-semibold text-sm flex items-center gap-2">
-                  <Headphones className="h-4 w-4" />Team & Support
+                  <Headphones className="h-4 w-4" />{t('compareFeatures.sections.teamSupport')}
                 </td>
               </tr>
               {features.slice(21).map((feature, idx) => (
@@ -430,43 +387,27 @@ export function Pricing() {
       </div>
 
       <div className="mt-16 max-w-3xl mx-auto">
-        <h2 className="text-2xl font-bold text-center mb-8">Frequently Asked Questions</h2>
+        <h2 className="text-2xl font-bold text-center mb-8">{t('faq.title')}</h2>
         <div className="space-y-4">
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="font-semibold mb-2">Can I switch plans anytime?</h3>
-              <p className="text-sm text-muted-foreground">Yes! You can upgrade or downgrade your plan at any time. When upgrading, you'll be charged the prorated difference.</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="font-semibold mb-2">What is Voice AI (PersonaPlex)?</h3>
-              <p className="text-sm text-muted-foreground">Voice AI is our revolutionary feature powered by NVIDIA's PersonaPlex. It allows you to have real-time voice conversations with AI — dictate your ideas, get instant feedback, and brainstorm content hands-free.</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="font-semibold mb-2">What payment methods do you accept?</h3>
-              <p className="text-sm text-muted-foreground">We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and for Agency plans, we also offer invoice-based billing.</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <h3 className="font-semibold mb-2">Is there a refund policy?</h3>
-              <p className="text-sm text-muted-foreground">Yes, we offer a 14-day money-back guarantee for all paid plans. If you're not satisfied, contact our support team for a full refund.</p>
-            </CardContent>
-          </Card>
+          {(t('faq.items', { returnObjects: true }) as Array<{ question: string; answer: string }>).map((item, idx) => (
+            <Card key={idx}>
+              <CardContent className="pt-6">
+                <h3 className="font-semibold mb-2">{item.question}</h3>
+                <p className="text-sm text-muted-foreground">{item.answer}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
 
       <div className="mt-16 text-center">
         <Card className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border-purple-500/20">
           <CardContent className="py-12">
-            <h2 className="text-2xl font-bold mb-4">Ready to go viral?</h2>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">Join thousands of creators who use Rizko.ai to find trends, create viral content, and grow their audience.</p>
+            <h2 className="text-2xl font-bold mb-4">{t('cta.title')}</h2>
+            <p className="text-muted-foreground mb-6 max-w-md mx-auto">{t('cta.subtitle')}</p>
             <div className="flex items-center justify-center gap-4">
-              <Button size="lg" className="bg-purple-600 hover:bg-purple-700" onClick={() => handlePlanClick('pro')}>Start Pro Trial</Button>
-              <Button size="lg" variant="outline" onClick={() => navigate('/dashboard')}>Try Free</Button>
+              <Button size="lg" className="bg-purple-600 hover:bg-purple-700" onClick={() => handlePlanClick('pro')}>{t('cta.startPro')}</Button>
+              <Button size="lg" variant="outline" onClick={() => navigate('/dashboard')}>{t('cta.tryFree')}</Button>
             </div>
           </CardContent>
         </Card>
@@ -478,19 +419,24 @@ export function Pricing() {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Lock className="h-5 w-5 text-purple-500" />
-              Developer Access
+              {t('devModal.title')}
             </DialogTitle>
             <DialogDescription>
-              Enter developer code to upgrade to <span className="font-semibold text-foreground">{selectedPlan.toUpperCase()}</span> plan.
+              <Trans
+                i18nKey="devModal.description"
+                t={t}
+                values={{ plan: selectedPlan.toUpperCase() }}
+                components={{ 1: <span className="font-semibold text-foreground" /> }}
+              />
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Dev Code</label>
+              <label className="text-sm font-medium">{t('devModal.label')}</label>
               <Input
                 type="password"
-                placeholder="Enter developer code..."
+                placeholder={t('devModal.placeholder')}
                 value={devCode}
                 onChange={(e) => setDevCode(e.target.value)}
                 onKeyDown={(e) => {
@@ -501,14 +447,14 @@ export function Pricing() {
 
             <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
               <p className="text-xs text-amber-600 dark:text-amber-400">
-                ⚠️ This is a developer feature for testing purposes. In production, Stripe checkout will be used.
+                {t('devModal.warning')}
               </p>
             </div>
           </div>
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowDevModal(false)}>
-              Cancel
+              {t('devModal.cancel')}
             </Button>
             <Button
               onClick={handleDevUpgrade}
@@ -518,12 +464,12 @@ export function Pricing() {
               {isUpgrading ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Upgrading...
+                  {t('devModal.upgrading')}
                 </>
               ) : (
                 <>
                   <Sparkles className="h-4 w-4 mr-2" />
-                  Upgrade to {selectedPlan}
+                  {t('devModal.upgrade', { plan: selectedPlan })}
                 </>
               )}
             </Button>

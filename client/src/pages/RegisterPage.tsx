@@ -16,6 +16,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useOnlineStatus } from '@/hooks/useFormValidation';
 import { PasswordStrength } from '@/components/PasswordStrength';
+import { useTranslation } from 'react-i18next';
 
 const RegisterPage = () => {
   const [fullName, setFullName] = useState('');
@@ -30,18 +31,19 @@ const RegisterPage = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
   const isOnline = useOnlineStatus();
+  const { t } = useTranslation('auth');
 
   // Inline validation
-  const nameError = touched.fullName && !fullName.trim() ? 'Name is required'
-    : touched.fullName && fullName.trim().length < 2 ? 'Minimum 2 characters'
+  const nameError = touched.fullName && !fullName.trim() ? t('validation.nameRequired')
+    : touched.fullName && fullName.trim().length < 2 ? t('validation.nameMinLength')
     : '';
-  const emailError = touched.email && !email.trim() ? 'Email is required'
-    : touched.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'Invalid email address'
+  const emailError = touched.email && !email.trim() ? t('validation.emailRequired')
+    : touched.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? t('validation.emailInvalid')
     : '';
-  const passwordError = touched.password && !password ? 'Password is required'
-    : touched.password && password.length < 8 ? 'Minimum 8 characters'
-    : touched.password && !/[a-zA-Z]/.test(password) ? 'Must contain at least one letter'
-    : touched.password && !/[0-9]/.test(password) ? 'Must contain at least one number'
+  const passwordError = touched.password && !password ? t('validation.passwordRequired')
+    : touched.password && password.length < 8 ? t('validation.passwordMinLength', { min: 8 })
+    : touched.password && !/[a-zA-Z]/.test(password) ? t('validation.passwordMustContainLetter')
+    : touched.password && !/[0-9]/.test(password) ? t('validation.passwordMustContainNumber')
     : '';
   const isValid = fullName.trim().length >= 2 && email && password.length >= 8
     && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -53,7 +55,7 @@ const RegisterPage = () => {
     setTouched({ fullName: true, email: true, password: true });
 
     if (!isOnline) {
-      setSubmitError('No internet connection. Please check your network and try again.');
+      setSubmitError(t('errors.noInternet'));
       return;
     }
 
@@ -64,32 +66,32 @@ const RegisterPage = () => {
       await register(email, password, fullName);
       navigate('/dashboard');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Registration failed. Please try again.';
+      const message = err instanceof Error ? err.message : t('errors.registerFailed');
       if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
-        setSubmitError('Cannot connect to server. Please try again later.');
+        setSubmitError(t('errors.cannotConnect'));
       } else if (message.includes('already registered') || message.includes('already exists')) {
-        setSubmitError('An account with this email already exists. Please sign in.');
+        setSubmitError(t('errors.emailAlreadyExists'));
       } else {
         setSubmitError(message);
       }
     } finally {
       setIsLoading(false);
     }
-  }, [isOnline, isValid, register, email, password, fullName, navigate]);
+  }, [isOnline, isValid, register, email, password, fullName, navigate, t]);
 
   const handleGoogleSignIn = useCallback(async () => {
     setSubmitError('');
     if (!isOnline) {
-      setSubmitError('No internet connection. Please check your network and try again.');
+      setSubmitError(t('errors.noInternet'));
       return;
     }
     try {
       await signInWithGoogle();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Google sign-in failed. Please try again.';
+      const message = err instanceof Error ? err.message : t('errors.googleSignInFailed');
       setSubmitError(message);
     }
-  }, [isOnline, signInWithGoogle]);
+  }, [isOnline, signInWithGoogle, t]);
 
   const inputClass = (hasError: boolean, isFieldValid: boolean) =>
     `w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all ${
@@ -148,8 +150,8 @@ const RegisterPage = () => {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              Start your{' '}
-              <span className="gradient-text">viral journey</span>
+              {t('hero.registerTitle')}{' '}
+              <span className="gradient-text">{t('hero.registerTitleHighlight')}</span>
             </motion.h1>
 
             <motion.p
@@ -158,8 +160,7 @@ const RegisterPage = () => {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              Join thousands of creators who use Rizko.ai to discover trends,
-              generate viral content, and grow their audience faster than ever.
+              {t('hero.description')}
             </motion.p>
 
             <motion.div
@@ -169,13 +170,13 @@ const RegisterPage = () => {
               transition={{ duration: 0.5, delay: 0.5 }}
             >
               {[
-                'AI-powered trend detection',
-                'Viral script generation',
-                'Competitor analysis',
-                'Real-time analytics',
+                t('hero.features.aiTrend'),
+                t('hero.features.viralScript'),
+                t('hero.features.competitor'),
+                t('hero.features.realtime'),
               ].map((feature, index) => (
                 <motion.div
-                  key={feature}
+                  key={index}
                   className="flex items-center gap-3"
                   initial={{ opacity: 0, x: -20 }}
                   animate={isInView ? { opacity: 1, x: 0 } : {}}
@@ -197,9 +198,9 @@ const RegisterPage = () => {
               transition={{ duration: 0.5, delay: 1 }}
             >
               {[
-                { value: '50K+', label: 'Active creators' },
-                { value: '1M+', label: 'Trends analyzed' },
-                { value: '99%', label: 'Satisfaction' },
+                { value: '50K+', label: t('hero.stats.creators') },
+                { value: '1M+', label: t('hero.stats.trends') },
+                { value: '99%', label: t('hero.stats.satisfaction') },
               ].map((stat, index) => (
                 <div key={index} className="text-center">
                   <div className="text-2xl font-bold gradient-text">{stat.value}</div>
@@ -229,14 +230,14 @@ const RegisterPage = () => {
             </div>
 
             <div className="glass-card p-8">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Create account</h2>
-              <p className="text-muted-foreground mb-6">Start discovering viral trends today</p>
+              <h2 className="text-2xl font-bold text-foreground mb-2">{t('register.title')}</h2>
+              <p className="text-muted-foreground mb-6">{t('register.subtitle')}</p>
 
               {/* Offline Warning */}
               {!isOnline && (
                 <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-sm flex items-center gap-2 mb-5">
                   <WifiOff className="w-4 h-4" />
-                  <span>No internet connection</span>
+                  <span>{t('offline')}</span>
                 </div>
               )}
 
@@ -250,7 +251,7 @@ const RegisterPage = () => {
               <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 {/* Full Name */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground/80">Full Name</label>
+                  <label className="text-sm font-medium text-foreground/80">{t('register.nameLabel')}</label>
                   <div className="relative group">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     <input
@@ -258,7 +259,7 @@ const RegisterPage = () => {
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       onBlur={() => setTouched(p => ({ ...p, fullName: true }))}
-                      placeholder="Enter your full name"
+                      placeholder={t('register.namePlaceholder')}
                       className={inputClass(!!nameError, !!touched.fullName && !nameError && fullName.trim().length >= 2)}
                       disabled={isLoading}
                     />
@@ -270,7 +271,7 @@ const RegisterPage = () => {
 
                 {/* Email */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground/80">Email Address</label>
+                  <label className="text-sm font-medium text-foreground/80">{t('register.emailLabel')}</label>
                   <div className="relative group">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     <input
@@ -278,7 +279,7 @@ const RegisterPage = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       onBlur={() => setTouched(p => ({ ...p, email: true }))}
-                      placeholder="Enter your email"
+                      placeholder={t('register.emailPlaceholder')}
                       className={inputClass(!!emailError, !!touched.email && !emailError && !!email)}
                       disabled={isLoading}
                     />
@@ -290,7 +291,7 @@ const RegisterPage = () => {
 
                 {/* Password */}
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground/80">Password</label>
+                  <label className="text-sm font-medium text-foreground/80">{t('register.passwordLabel')}</label>
                   <div className="relative group">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     <input
@@ -298,7 +299,7 @@ const RegisterPage = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       onBlur={() => setTouched(p => ({ ...p, password: true }))}
-                      placeholder="Create a password (min 8 characters)"
+                      placeholder={t('register.passwordPlaceholder')}
                       className={`${inputClass(!!passwordError, !!touched.password && !passwordError && password.length >= 8)} !pr-12`}
                       disabled={isLoading}
                     />
@@ -326,7 +327,7 @@ const RegisterPage = () => {
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <>
-                      <span>Create Account</span>
+                      <span>{t('register.createAccount')}</span>
                       <ArrowRight className="w-5 h-5" />
                     </>
                   )}
@@ -335,7 +336,7 @@ const RegisterPage = () => {
 
               <div className="flex items-center gap-4 my-6">
                 <div className="flex-1 h-px bg-border/50" />
-                <span className="text-muted-foreground text-sm">or</span>
+                <span className="text-muted-foreground text-sm">{t('register.or')}</span>
                 <div className="flex-1 h-px bg-border/50" />
               </div>
 
@@ -351,20 +352,20 @@ const RegisterPage = () => {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                 </svg>
-                <span className="whitespace-nowrap">Continue with Google</span>
+                <span className="whitespace-nowrap">{t('register.continueWithGoogle')}</span>
               </button>
 
               <p className="text-center text-muted-foreground text-sm mt-6">
-                Already have an account?{' '}
+                {t('register.hasAccount')}{' '}
                 <Link to="/login" className="text-primary hover:text-primary/80 font-medium transition-colors">
-                  Sign in
+                  {t('register.signIn')}
                 </Link>
               </p>
             </div>
 
             <div className="mt-6 text-center">
               <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-2">
-                ← Back to home
+                {`\u2190 ${t('register.backToHome')}`}
               </Link>
             </div>
           </div>

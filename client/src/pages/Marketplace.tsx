@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Store,
   User,
@@ -64,11 +65,11 @@ const initialFormState: ApplicationForm = {
   priceRange: '',
 };
 
-const categoryOptions = [
-  { id: 'video', label: 'Video Creation', icon: Video },
-  { id: 'script', label: 'Script Writing', icon: PenTool },
-  { id: 'smm', label: 'SMM Management', icon: BarChart3 },
-  { id: 'design', label: 'Design & Thumbnails', icon: Palette },
+const categoryOptionDefs = [
+  { id: 'video', icon: Video },
+  { id: 'script', icon: PenTool },
+  { id: 'smm', icon: BarChart3 },
+  { id: 'design', icon: Palette },
 ];
 
 const priceRangeOptions = [
@@ -77,7 +78,6 @@ const priceRangeOptions = [
   '$100-200',
   '$200-500',
   '$500+',
-  'Custom pricing',
 ];
 
 type ProviderType = 'human' | 'ai' | 'hybrid';
@@ -472,47 +472,15 @@ const providers: Provider[] = [
   },
 ];
 
-const categories = [
-  {
-    icon: Video,
-    title: 'Video Creation',
-    description: 'UGC creators and AI video generators',
-    humanCount: 12,
-    aiCount: 5,
-  },
-  {
-    icon: PenTool,
-    title: 'Script Writing',
-    description: 'Copywriters and AI script agents',
-    humanCount: 18,
-    aiCount: 8,
-  },
-  {
-    icon: BarChart3,
-    title: 'SMM Management',
-    description: 'Social media managers and AI schedulers',
-    humanCount: 8,
-    aiCount: 4,
-  },
-  {
-    icon: Palette,
-    title: 'Design & Thumbnails',
-    description: 'Designers and AI image generators',
-    humanCount: 15,
-    aiCount: 6,
-  },
-];
-
-const comingSoonFeatures = [
-  'Find verified UGC creators for your niche',
-  'Hire AI agents that work 24/7',
-  'Compare human vs AI pricing instantly',
-  'Book calls directly with creators',
-  'Pay securely through the platform',
+const categoryDefs = [
+  { icon: Video, key: 'videoCreation', humanCount: 12, aiCount: 5 },
+  { icon: PenTool, key: 'scriptWriting', humanCount: 18, aiCount: 8 },
+  { icon: BarChart3, key: 'smmManagement', humanCount: 8, aiCount: 4 },
+  { icon: Palette, key: 'designThumbnails', humanCount: 15, aiCount: 6 },
 ];
 
 // Helper function to get provider type styles
-const getProviderStyles = (type: ProviderType) => {
+const getProviderStyles = (type: ProviderType, t: (key: string) => string) => {
   switch (type) {
     case 'human':
       return {
@@ -522,7 +490,7 @@ const getProviderStyles = (type: ProviderType) => {
         text: 'text-blue-600 dark:text-blue-400',
         badge: 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300',
         icon: User,
-        label: 'Human',
+        label: t('providerTypes.human'),
       };
     case 'ai':
       return {
@@ -532,7 +500,7 @@ const getProviderStyles = (type: ProviderType) => {
         text: 'text-purple-600 dark:text-purple-400',
         badge: 'bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300',
         icon: Bot,
-        label: 'AI Agent',
+        label: t('providerTypes.ai'),
       };
     case 'hybrid':
       return {
@@ -542,23 +510,24 @@ const getProviderStyles = (type: ProviderType) => {
         text: 'text-orange-600 dark:text-orange-400',
         badge: 'bg-orange-100 text-orange-700 dark:bg-orange-900/50 dark:text-orange-300',
         icon: Users,
-        label: 'Hybrid',
+        label: t('providerTypes.hybrid'),
       };
   }
 };
 
-const getPriceLabel = (priceType: Provider['priceType']) => {
+const getPriceLabel = (priceType: Provider['priceType'], t: (key: string) => string) => {
   switch (priceType) {
-    case 'per_video': return '/video';
-    case 'per_month': return '/mo';
-    case 'per_script': return '/script';
-    case 'per_hour': return '/hr';
+    case 'per_video': return t('priceLabels.perVideo');
+    case 'per_month': return t('priceLabels.perMonth');
+    case 'per_script': return t('priceLabels.perScript');
+    case 'per_hour': return t('priceLabels.perHour');
   }
 };
 
 // Provider Card Component
 function ProviderCard({ provider, isLocked = false }: { provider: Provider; isLocked?: boolean }) {
-  const styles = getProviderStyles(provider.type);
+  const { t } = useTranslation('marketplace');
+  const styles = getProviderStyles(provider.type, t);
   const TypeIcon = styles.icon;
 
   return (
@@ -632,7 +601,7 @@ function ProviderCard({ provider, isLocked = false }: { provider: Provider; isLo
             {provider.delivery}
           </span>
           <span className="flex items-center gap-1 font-semibold text-foreground">
-            {provider.price}{getPriceLabel(provider.priceType)}
+            {provider.price}{getPriceLabel(provider.priceType, t)}
           </span>
         </div>
 
@@ -650,12 +619,12 @@ function ProviderCard({ provider, isLocked = false }: { provider: Provider; isLo
           {isLocked ? (
             <Button variant="outline" className="w-full" disabled>
               <Lock className="h-4 w-4 mr-2" />
-              Join waitlist to unlock
+              {t('card.joinWaitlistToUnlock')}
             </Button>
           ) : (
             <>
               <Button variant="outline" className="flex-1">
-                View Profile
+                {t('card.viewProfile')}
               </Button>
               <Button className={cn(
                 'flex-1',
@@ -663,7 +632,7 @@ function ProviderCard({ provider, isLocked = false }: { provider: Provider; isLo
                 provider.type === 'ai' && 'bg-purple-600 hover:bg-purple-700',
                 provider.type === 'hybrid' && 'bg-orange-600 hover:bg-orange-700'
               )}>
-                {provider.type === 'ai' ? 'Try Free' : 'Contact'}
+                {provider.type === 'ai' ? t('card.tryFree') : t('card.contact')}
               </Button>
             </>
           )}
@@ -680,7 +649,7 @@ function ProviderCard({ provider, isLocked = false }: { provider: Provider; isLo
             provider.type === 'hybrid' && 'bg-orange-600'
           )}>
             <Sparkles className="h-3 w-3 mr-1" />
-            Featured
+            {t('card.featured')}
           </Badge>
         </div>
       )}
@@ -689,6 +658,7 @@ function ProviderCard({ provider, isLocked = false }: { provider: Provider; isLo
 }
 
 export function Marketplace() {
+  const { t } = useTranslation('marketplace');
   const [activeTab, setActiveTab] = useState<'client' | 'provider'>('client');
   const [email, setEmail] = useState('');
   const [accessCode, setAccessCode] = useState('');
@@ -702,6 +672,11 @@ export function Marketplace() {
   const [applicationStep, setApplicationStep] = useState<'form' | 'success'>('form');
   const [formData, setFormData] = useState<ApplicationForm>(initialFormState);
 
+  const comingSoonFeatures = t('comingSoonFeatures', { returnObjects: true }) as string[];
+  const creatorsItems = t('benefits.creatorsItems', { returnObjects: true }) as string[];
+  const aiItems = t('benefits.aiItems', { returnObjects: true }) as string[];
+  const successSteps = t('success.steps', { returnObjects: true }) as string[];
+
   const filteredProviders = providers.filter(p => {
     if (filterType !== 'all' && p.type !== filterType) return false;
     if (searchQuery && !p.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
@@ -713,13 +688,13 @@ export function Marketplace() {
   const handleWaitlistSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      toast.error('Please enter your email');
+      toast.error(t('toasts.enterEmail'));
       return;
     }
 
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success('You\'re on the waitlist! We\'ll notify you when we launch.');
+    toast.success(t('toasts.waitlistSuccess'));
     setEmail('');
     setIsSubmitting(false);
   };
@@ -727,13 +702,13 @@ export function Marketplace() {
   const handleAccessCodeSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!accessCode) {
-      toast.error('Please enter your access code');
+      toast.error(t('toasts.enterAccessCode'));
       return;
     }
 
     setIsSubmitting(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.error('Invalid access code. Apply below to get one!');
+    toast.error(t('toasts.invalidAccessCode'));
     setAccessCode('');
     setIsSubmitting(false);
   };
@@ -759,27 +734,27 @@ export function Marketplace() {
 
     // Validation
     if (!formData.fullName.trim()) {
-      toast.error('Please enter your full name');
+      toast.error(t('toasts.enterFullName'));
       return;
     }
     if (!formData.email.trim()) {
-      toast.error('Please enter your email');
+      toast.error(t('toasts.enterYourEmail'));
       return;
     }
     if (providerType === 'human' && !formData.tiktokUsername.trim()) {
-      toast.error('Please enter your TikTok username');
+      toast.error(t('toasts.enterTiktok'));
       return;
     }
     if (providerType === 'ai' && !formData.githubUsername.trim()) {
-      toast.error('Please enter your GitHub username');
+      toast.error(t('toasts.enterGithub'));
       return;
     }
     if (formData.categories.length === 0) {
-      toast.error('Please select at least one category');
+      toast.error(t('toasts.selectCategory'));
       return;
     }
     if (!formData.title.trim()) {
-      toast.error('Please enter your service title');
+      toast.error(t('toasts.enterServiceTitle'));
       return;
     }
 
@@ -803,19 +778,19 @@ export function Marketplace() {
 
       if (error) {
         if (error.code === '23505') {
-          toast.error('This email has already been submitted');
+          toast.error(t('toasts.duplicateEmail'));
         } else {
           console.error('Supabase error:', error);
-          toast.error('Failed to submit application. Please try again.');
+          toast.error(t('toasts.submitFailed'));
         }
         return;
       }
 
       setApplicationStep('success');
-      toast.success('Application submitted successfully!');
+      toast.success(t('toasts.applicationSuccess'));
     } catch (err) {
       console.error('Submit error:', err);
-      toast.error('Something went wrong. Please try again.');
+      toast.error(t('toasts.somethingWrong'));
     } finally {
       setIsSubmitting(false);
     }
@@ -833,15 +808,14 @@ export function Marketplace() {
       <div className="text-center">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 text-sm font-medium mb-4">
           <Sparkles className="h-4 w-4" />
-          Coming Soon
+          {t('header.badge')}
         </div>
         <h1 className="text-3xl font-bold tracking-tight flex items-center justify-center gap-2">
           <Store className="h-8 w-8" />
-          Marketplace
+          {t('header.title')}
         </h1>
         <p className="text-muted-foreground mt-2 max-w-2xl mx-auto">
-          Find creators and AI agents to grow your TikTok.
-          The first marketplace where you can hire humans or AI — or both.
+          {t('header.subtitle')}
         </p>
       </div>
 
@@ -856,7 +830,7 @@ export function Marketplace() {
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            I'm looking to hire
+            {t('tabs.client')}
           </button>
           <button
             onClick={() => setActiveTab('provider')}
@@ -866,7 +840,7 @@ export function Marketplace() {
                 : 'text-muted-foreground hover:text-foreground'
             }`}
           >
-            I want to offer services
+            {t('tabs.provider')}
           </button>
         </div>
       </div>
@@ -877,15 +851,15 @@ export function Marketplace() {
           <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
             <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20">
               <div className="text-2xl font-bold text-blue-600">12</div>
-              <div className="text-xs text-muted-foreground">Creators</div>
+              <div className="text-xs text-muted-foreground">{t('stats.creators')}</div>
             </div>
             <div className="text-center p-3 rounded-lg bg-purple-50 dark:bg-purple-900/20">
               <div className="text-2xl font-bold text-purple-600">8</div>
-              <div className="text-xs text-muted-foreground">AI Agents</div>
+              <div className="text-xs text-muted-foreground">{t('stats.aiAgents')}</div>
             </div>
             <div className="text-center p-3 rounded-lg bg-orange-50 dark:bg-orange-900/20">
               <div className="text-2xl font-bold text-orange-600">4</div>
-              <div className="text-xs text-muted-foreground">Hybrid</div>
+              <div className="text-xs text-muted-foreground">{t('stats.hybrid')}</div>
             </div>
           </div>
 
@@ -894,7 +868,7 @@ export function Marketplace() {
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search providers..."
+                placeholder={t('search.placeholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
@@ -906,7 +880,7 @@ export function Marketplace() {
                 size="sm"
                 onClick={() => setFilterType('all')}
               >
-                All
+                {t('filters.all')}
               </Button>
               <Button
                 variant={filterType === 'human' ? 'default' : 'outline'}
@@ -915,7 +889,7 @@ export function Marketplace() {
                 className={filterType === 'human' ? 'bg-blue-600 hover:bg-blue-700' : ''}
               >
                 <User className="h-4 w-4 mr-1" />
-                Human
+                {t('filters.human')}
               </Button>
               <Button
                 variant={filterType === 'ai' ? 'default' : 'outline'}
@@ -924,7 +898,7 @@ export function Marketplace() {
                 className={filterType === 'ai' ? 'bg-purple-600 hover:bg-purple-700' : ''}
               >
                 <Bot className="h-4 w-4 mr-1" />
-                AI
+                {t('filters.ai')}
               </Button>
               <Button
                 variant={filterType === 'hybrid' ? 'default' : 'outline'}
@@ -933,7 +907,7 @@ export function Marketplace() {
                 className={filterType === 'hybrid' ? 'bg-orange-600 hover:bg-orange-700' : ''}
               >
                 <Users className="h-4 w-4 mr-1" />
-                Hybrid
+                {t('filters.hybrid')}
               </Button>
             </div>
           </div>
@@ -942,11 +916,11 @@ export function Marketplace() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">
-                {filterType === 'all' ? 'All Providers' :
-                 filterType === 'human' ? 'Human Creators' :
-                 filterType === 'ai' ? 'AI Agents' : 'Hybrid Services'}
+                {filterType === 'all' ? t('sections.allProviders') :
+                 filterType === 'human' ? t('sections.humanCreators') :
+                 filterType === 'ai' ? t('sections.aiAgents') : t('sections.hybridServices')}
               </h2>
-              <Badge variant="secondary">{filteredProviders.length} results</Badge>
+              <Badge variant="secondary">{t('results', { count: filteredProviders.length })}</Badge>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -963,27 +937,27 @@ export function Marketplace() {
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4">
                   <Lock className="h-8 w-8 text-white" />
                 </div>
-                <h2 className="text-xl font-semibold mb-2">Join the Waitlist to Unlock</h2>
+                <h2 className="text-xl font-semibold mb-2">{t('waitlist.title')}</h2>
                 <p className="text-muted-foreground text-sm">
-                  Be the first to hire creators and AI agents when we launch
+                  {t('waitlist.subtitle')}
                 </p>
               </div>
 
               <form onSubmit={handleWaitlistSubmit} className="flex gap-2">
                 <Input
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder={t('waitlist.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="flex-1"
                 />
                 <Button type="submit" disabled={isSubmitting} className="bg-purple-600 hover:bg-purple-700">
-                  {isSubmitting ? 'Joining...' : 'Join Waitlist'}
+                  {isSubmitting ? t('waitlist.joining') : t('waitlist.joinButton')}
                 </Button>
               </form>
 
               <div className="mt-6 pt-6 border-t">
-                <h3 className="font-medium mb-3 text-sm">What you'll get access to:</h3>
+                <h3 className="font-medium mb-3 text-sm">{t('waitlist.accessTitle')}</h3>
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {comingSoonFeatures.map((feature, index) => (
                     <li key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -998,9 +972,9 @@ export function Marketplace() {
 
           {/* Categories */}
           <div>
-            <h2 className="text-xl font-semibold mb-4 text-center">Browse by Category</h2>
+            <h2 className="text-xl font-semibold mb-4 text-center">{t('sections.browseByCategory')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {categories.map((category, index) => {
+              {categoryDefs.map((category, index) => {
                 const Icon = category.icon;
                 return (
                   <Card key={index} className="p-4 hover:shadow-lg transition-all duration-300 cursor-pointer">
@@ -1009,8 +983,8 @@ export function Marketplace() {
                         <Icon className="h-5 w-5 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h3 className="font-medium truncate">{category.title}</h3>
-                        <p className="text-xs text-muted-foreground mt-1">{category.description}</p>
+                        <h3 className="font-medium truncate">{t(`categories.${category.key}.title`)}</h3>
+                        <p className="text-xs text-muted-foreground mt-1">{t(`categories.${category.key}.description`)}</p>
                         <div className="flex items-center gap-3 mt-2 text-xs">
                           <span className="flex items-center gap-1 text-blue-600">
                             <User className="h-3 w-3" />
@@ -1040,23 +1014,23 @@ export function Marketplace() {
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center mx-auto mb-4">
                     <Lock className="h-6 w-6 text-white" />
                   </div>
-                  <h2 className="text-xl font-semibold mb-2">Have an Access Code?</h2>
+                  <h2 className="text-xl font-semibold mb-2">{t('accessCode.title')}</h2>
                   <p className="text-muted-foreground text-sm">
-                    Enter your code to start setting up your profile
+                    {t('accessCode.subtitle')}
                   </p>
                 </div>
 
                 <form onSubmit={handleAccessCodeSubmit} className="space-y-3">
                   <Input
                     type="text"
-                    placeholder="Enter access code"
+                    placeholder={t('accessCode.placeholder')}
                     value={accessCode}
                     onChange={(e) => setAccessCode(e.target.value.toUpperCase())}
                     className="text-center font-mono tracking-widest"
                     maxLength={12}
                   />
                   <Button type="submit" className="w-full" disabled={isSubmitting}>
-                    {isSubmitting ? 'Verifying...' : 'Verify Code'}
+                    {isSubmitting ? t('accessCode.verifying') : t('accessCode.verifyButton')}
                   </Button>
                 </form>
               </CardContent>
@@ -1069,15 +1043,15 @@ export function Marketplace() {
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center mx-auto mb-4">
                     <Mail className="h-6 w-6 text-white" />
                   </div>
-                  <h2 className="text-xl font-semibold mb-2">Apply for Access</h2>
+                  <h2 className="text-xl font-semibold mb-2">{t('apply.title')}</h2>
                   <p className="text-muted-foreground text-sm">
-                    Join as a creator or AI developer
+                    {t('apply.subtitle')}
                   </p>
                 </div>
 
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground text-center mb-4">
-                    What type of provider are you?
+                    {t('apply.providerTypeQuestion')}
                   </p>
 
                   <div className="grid grid-cols-2 gap-3">
@@ -1092,7 +1066,7 @@ export function Marketplace() {
                       <User className={`h-8 w-8 mx-auto mb-2 ${
                         providerType === 'human' ? 'text-blue-500' : 'text-muted-foreground'
                       }`} />
-                      <span className="text-sm font-medium">Creator / SMM</span>
+                      <span className="text-sm font-medium">{t('apply.creatorSmm')}</span>
                     </button>
 
                     <button
@@ -1106,7 +1080,7 @@ export function Marketplace() {
                       <Bot className={`h-8 w-8 mx-auto mb-2 ${
                         providerType === 'ai' ? 'text-purple-500' : 'text-muted-foreground'
                       }`} />
-                      <span className="text-sm font-medium">AI Developer</span>
+                      <span className="text-sm font-medium">{t('apply.aiDeveloper')}</span>
                     </button>
                   </div>
 
@@ -1115,7 +1089,7 @@ export function Marketplace() {
                     className="w-full mt-4"
                     disabled={!providerType}
                   >
-                    Apply Now
+                    {t('apply.applyNow')}
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 </div>
@@ -1126,22 +1100,16 @@ export function Marketplace() {
           {/* Provider Benefits */}
           <Card className="max-w-4xl mx-auto">
             <CardContent className="pt-6">
-              <h2 className="text-xl font-semibold mb-6 text-center">Why join as a provider?</h2>
+              <h2 className="text-xl font-semibold mb-6 text-center">{t('benefits.title')}</h2>
 
               <div className="grid md:grid-cols-2 gap-8">
                 <div>
                   <div className="flex items-center gap-2 mb-4">
                     <User className="h-5 w-5 text-blue-500" />
-                    <h3 className="font-medium">For Creators & SMM</h3>
+                    <h3 className="font-medium">{t('benefits.creatorsTitle')}</h3>
                   </div>
                   <ul className="space-y-2">
-                    {[
-                      'Access to businesses looking for TikTok help',
-                      'Set your own rates and availability',
-                      'Get paid securely through the platform',
-                      'Build your reputation with reviews',
-                      'No upfront fees — we only take 15% commission',
-                    ].map((item, i) => (
+                    {creatorsItems.map((item, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                         <Check className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
                         {item}
@@ -1153,16 +1121,10 @@ export function Marketplace() {
                 <div>
                   <div className="flex items-center gap-2 mb-4">
                     <Bot className="h-5 w-5 text-purple-500" />
-                    <h3 className="font-medium">For AI Developers</h3>
+                    <h3 className="font-medium">{t('benefits.aiTitle')}</h3>
                   </div>
                   <ul className="space-y-2">
-                    {[
-                      'Monetize your AI agents',
-                      'Access to Rizko.ai API and data',
-                      'Reach thousands of potential customers',
-                      'We handle payments and support',
-                      '70/30 revenue share in your favor',
-                    ].map((item, i) => (
+                    {aiItems.map((item, i) => (
                       <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
                         <Check className="h-4 w-4 text-green-500 flex-shrink-0 mt-0.5" />
                         {item}
@@ -1179,7 +1141,7 @@ export function Marketplace() {
       {/* Bottom CTA */}
       <div className="text-center text-sm text-muted-foreground">
         <p>
-          Questions? Contact us at{' '}
+          {t('contact.text')}{' '}
           <a
             href="mailto:axislineX@gmail.com"
             className="text-purple-500 hover:underline"
@@ -1201,19 +1163,19 @@ export function Marketplace() {
                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
                         <User className="h-4 w-4 text-white" />
                       </div>
-                      Apply as Creator
+                      {t('applicationModal.applyAsCreator')}
                     </>
                   ) : (
                     <>
                       <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
                         <Bot className="h-4 w-4 text-white" />
                       </div>
-                      Apply as AI Developer
+                      {t('applicationModal.applyAsAiDeveloper')}
                     </>
                   )}
                 </DialogTitle>
                 <DialogDescription>
-                  Fill out the form below. We'll review and send you an access code within 24-48 hours.
+                  {t('applicationModal.formDescription')}
                 </DialogDescription>
               </DialogHeader>
 
@@ -1221,20 +1183,20 @@ export function Marketplace() {
                 {/* Basic Info */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1.5">
-                    <Label htmlFor="fullName">Full Name *</Label>
+                    <Label htmlFor="fullName">{t('applicationModal.fullName')}</Label>
                     <Input
                       id="fullName"
-                      placeholder="John Doe"
+                      placeholder={t('applicationModal.fullNamePlaceholder')}
                       value={formData.fullName}
                       onChange={(e) => setFormData(prev => ({ ...prev, fullName: e.target.value }))}
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label htmlFor="email">Email *</Label>
+                    <Label htmlFor="email">{t('applicationModal.email')}</Label>
                     <Input
                       id="email"
                       type="email"
-                      placeholder="john@example.com"
+                      placeholder={t('applicationModal.emailPlaceholder')}
                       value={formData.email}
                       onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                     />
@@ -1245,19 +1207,19 @@ export function Marketplace() {
                 {providerType === 'human' ? (
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label htmlFor="tiktok">TikTok Username *</Label>
+                      <Label htmlFor="tiktok">{t('applicationModal.tiktokUsername')}</Label>
                       <Input
                         id="tiktok"
-                        placeholder="@username"
+                        placeholder={t('applicationModal.tiktokPlaceholder')}
                         value={formData.tiktokUsername}
                         onChange={(e) => setFormData(prev => ({ ...prev, tiktokUsername: e.target.value }))}
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="instagram">Instagram (optional)</Label>
+                      <Label htmlFor="instagram">{t('applicationModal.instagram')}</Label>
                       <Input
                         id="instagram"
-                        placeholder="@username"
+                        placeholder={t('applicationModal.instagramPlaceholder')}
                         value={formData.instagramUsername}
                         onChange={(e) => setFormData(prev => ({ ...prev, instagramUsername: e.target.value }))}
                       />
@@ -1266,19 +1228,19 @@ export function Marketplace() {
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                      <Label htmlFor="github">GitHub Username *</Label>
+                      <Label htmlFor="github">{t('applicationModal.githubUsername')}</Label>
                       <Input
                         id="github"
-                        placeholder="username"
+                        placeholder={t('applicationModal.githubPlaceholder')}
                         value={formData.githubUsername}
                         onChange={(e) => setFormData(prev => ({ ...prev, githubUsername: e.target.value }))}
                       />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="portfolio">Demo / API URL</Label>
+                      <Label htmlFor="portfolio">{t('applicationModal.demoApiUrl')}</Label>
                       <Input
                         id="portfolio"
-                        placeholder="https://..."
+                        placeholder={t('applicationModal.demoApiPlaceholder')}
                         value={formData.portfolioUrl}
                         onChange={(e) => setFormData(prev => ({ ...prev, portfolioUrl: e.target.value }))}
                       />
@@ -1288,9 +1250,9 @@ export function Marketplace() {
 
                 {/* Categories */}
                 <div className="space-y-2">
-                  <Label>Categories * (select all that apply)</Label>
+                  <Label>{t('applicationModal.categoriesLabel')}</Label>
                   <div className="grid grid-cols-2 gap-2">
-                    {categoryOptions.map((cat) => {
+                    {categoryOptionDefs.map((cat) => {
                       const Icon = cat.icon;
                       const isSelected = formData.categories.includes(cat.id);
                       return (
@@ -1306,7 +1268,7 @@ export function Marketplace() {
                           )}
                         >
                           <Icon className={cn('h-4 w-4', isSelected ? 'text-purple-500' : 'text-muted-foreground')} />
-                          <span className="text-sm font-medium">{cat.label}</span>
+                          <span className="text-sm font-medium">{t(`categoryOptions.${cat.id}`)}</span>
                           {isSelected && <Check className="h-4 w-4 text-purple-500 ml-auto" />}
                         </button>
                       );
@@ -1317,11 +1279,11 @@ export function Marketplace() {
                 {/* Title */}
                 <div className="space-y-1.5">
                   <Label htmlFor="title">
-                    {providerType === 'human' ? 'Your Title *' : 'AI Agent Name *'}
+                    {providerType === 'human' ? t('applicationModal.yourTitle') : t('applicationModal.aiAgentName')}
                   </Label>
                   <Input
                     id="title"
-                    placeholder={providerType === 'human' ? 'e.g. UGC Creator, SMM Manager' : 'e.g. TrendBot AI, ScriptGenius'}
+                    placeholder={providerType === 'human' ? t('applicationModal.titlePlaceholderHuman') : t('applicationModal.titlePlaceholderAi')}
                     value={formData.title}
                     onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                   />
@@ -1330,13 +1292,13 @@ export function Marketplace() {
                 {/* Bio */}
                 <div className="space-y-1.5">
                   <Label htmlFor="bio">
-                    Short Bio <span className="text-muted-foreground">(max 280 chars)</span>
+                    {t('applicationModal.shortBio')} <span className="text-muted-foreground">{t('applicationModal.shortBioMax')}</span>
                   </Label>
                   <Textarea
                     id="bio"
                     placeholder={providerType === 'human'
-                      ? "Tell us about your experience and what makes you unique..."
-                      : "Describe what your AI agent does and its key features..."}
+                      ? t('applicationModal.bioPlaceholderHuman')
+                      : t('applicationModal.bioPlaceholderAi')}
                     value={formData.bio}
                     onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value.slice(0, 280) }))}
                     className="h-20 resize-none"
@@ -1346,7 +1308,7 @@ export function Marketplace() {
 
                 {/* Price Range */}
                 <div className="space-y-2">
-                  <Label>Price Range</Label>
+                  <Label>{t('applicationModal.priceRange')}</Label>
                   <div className="flex flex-wrap gap-2">
                     {priceRangeOptions.map((price) => (
                       <button
@@ -1363,6 +1325,18 @@ export function Marketplace() {
                         {price}
                       </button>
                     ))}
+                    <button
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, priceRange: prev.priceRange === 'Custom pricing' ? '' : 'Custom pricing' }))}
+                      className={cn(
+                        'px-3 py-1.5 rounded-full border text-sm transition-all',
+                        formData.priceRange === 'Custom pricing'
+                          ? 'border-purple-500 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                          : 'border-border hover:border-purple-300'
+                      )}
+                    >
+                      {t('applicationModal.customPricing')}
+                    </button>
                   </div>
                 </div>
 
@@ -1374,7 +1348,7 @@ export function Marketplace() {
                     onClick={closeApplicationModal}
                     className="flex-1"
                   >
-                    Cancel
+                    {t('applicationModal.cancel')}
                   </Button>
                   <Button
                     type="submit"
@@ -1387,10 +1361,10 @@ export function Marketplace() {
                     {isSubmitting ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Submitting...
+                        {t('applicationModal.submitting')}
                       </>
                     ) : (
-                      'Submit Application'
+                      t('applicationModal.submitApplication')
                     )}
                   </Button>
                 </div>
@@ -1402,35 +1376,26 @@ export function Marketplace() {
               <div className="w-16 h-16 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="h-8 w-8 text-green-600" />
               </div>
-              <h2 className="text-xl font-semibold mb-2">Application Received!</h2>
-              <p className="text-muted-foreground mb-6">
-                We'll review your profile and send you an access code to <strong>{formData.email}</strong> within 24-48 hours.
-              </p>
+              <h2 className="text-xl font-semibold mb-2">{t('success.title')}</h2>
+              <p
+                className="text-muted-foreground mb-6"
+                dangerouslySetInnerHTML={{ __html: t('success.message', { email: formData.email }) }}
+              />
 
               <div className="bg-muted/50 rounded-lg p-4 text-left mb-6">
-                <h3 className="font-medium mb-2 text-sm">What happens next?</h3>
+                <h3 className="font-medium mb-2 text-sm">{t('success.whatHappensNext')}</h3>
                 <ul className="space-y-2 text-sm text-muted-foreground">
-                  <li className="flex items-start gap-2">
-                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    We review your profile and portfolio
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    You receive an access code via email
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    Enter the code to set up your profile
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-                    Start getting clients!
-                  </li>
+                  {successSteps.map((step, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <Check className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
+                      {step}
+                    </li>
+                  ))}
                 </ul>
               </div>
 
               <Button onClick={closeApplicationModal} className="w-full">
-                Got it!
+                {t('success.gotIt')}
               </Button>
             </div>
           )}

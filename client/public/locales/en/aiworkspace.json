@@ -1,0 +1,53 @@
+{
+  "title": "AI Creator",
+  "welcome": "What would you like to create?",
+  "welcomeSubtitle": "Choose a quick action or start typing your own prompt",
+  "quickActions": {
+    "scriptGenerator": { "title": "Script Generator", "description": "Create viral video script" },
+    "contentIdeas": { "title": "Content Ideas", "description": "Get 10 video ideas" },
+    "trendAnalysis": { "title": "Trend Analysis", "description": "Analyze trending topic" },
+    "improveScript": { "title": "Improve Script", "description": "Make your script better" }
+  },
+  "prompts": {
+    "scriptGenerator": "Create a viral TikTok script about ",
+    "contentIdeas": "Generate 10 viral content ideas for ",
+    "trendAnalysis": "Analyze the current trends in ",
+    "improveScript": "Improve this script and make it more viral: "
+  },
+  "popularPrompts": {
+    "title": "Popular Prompts",
+    "items": [
+      "Create TikTok script about productivity hacks",
+      "Analyze @garyvee's content strategy",
+      "Generate 10 video ideas for fitness niche",
+      "Write Instagram Reels hook for beauty product",
+      "Improve my script's engagement"
+    ]
+  },
+  "chat": {
+    "copy": "Copy",
+    "save": "Save",
+    "placeholder": "Create script, # for trends, / for templates",
+    "models": "Models",
+    "mode": "Mode",
+    "soon": "Soon",
+    "addTrend": "Add trending topic",
+    "attachFile": "Attach file",
+    "voiceInput": "Voice input",
+    "sendMessage": "Send message",
+    "errorMessage": "Sorry, there was an error connecting to the AI. Please try again.",
+    "imageGen": "Image",
+    "expand": "View full size",
+    "download": "Download image",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out"
+  },
+  "modes": {
+    "chat": "Chat",
+    "script": "Script",
+    "ideas": "Ideas",
+    "analysis": "Analysis",
+    "improve": "Improve",
+    "hook": "Hook"
+  }
+}

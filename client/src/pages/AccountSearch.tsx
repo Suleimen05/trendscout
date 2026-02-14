@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Search, Users, UserPlus, TrendingUp, Eye, Video, BarChart3, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,7 @@ interface SearchResult {
 }
 
 export function AccountSearch() {
+  const { t } = useTranslation('accountsearch');
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -59,7 +61,7 @@ export function AccountSearch() {
 
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
-      toast.error('Please enter a username or TikTok URL to search');
+      toast.error(t('toasts.enterUsername'));
       return;
     }
 
@@ -68,7 +70,7 @@ export function AccountSearch() {
     // Check if already searched
     const existingResult = searchResults.find(r => r.username === cleanUsername);
     if (existingResult) {
-      toast.info('This account is already in the results');
+      toast.info(t('toasts.alreadySearched'));
       return;
     }
 
@@ -94,19 +96,19 @@ export function AccountSearch() {
         )
       );
 
-      toast.success(`Found account: @${cleanUsername}`);
+      toast.success(t('toasts.found', { username: cleanUsername }));
     } catch (error) {
       console.error('Error searching account:', error);
 
       setSearchResults(prev =>
         prev.map(r =>
           r.username === cleanUsername
-            ? { ...r, loading: false, error: 'Account not found or error loading data' }
+            ? { ...r, loading: false, error: t('error') }
             : r
         )
       );
 
-      toast.error('Failed to load account data');
+      toast.error(t('toasts.loadFailed'));
     } finally {
       setSearching(false);
       setSearchQuery('');
@@ -118,7 +120,7 @@ export function AccountSearch() {
     const result = searchResults.find(r => r.username === username);
 
     if (!result || !result.report) {
-      toast.error('No data available for this account');
+      toast.error(t('toasts.noData'));
       return;
     }
 
@@ -129,7 +131,7 @@ export function AccountSearch() {
 
       // Check if already added
       if (competitors.some((c: any) => c.username === username)) {
-        toast.info(`@${username} is already in competitors list`);
+        toast.info(t('toasts.alreadyCompetitor', { username }));
         return;
       }
 
@@ -152,10 +154,10 @@ export function AccountSearch() {
       competitors.push(newCompetitor);
       localStorage.setItem('competitors', JSON.stringify(competitors));
 
-      toast.success(`Added @${username} to competitors list`);
+      toast.success(t('toasts.addedCompetitor', { username }));
     } catch (error) {
       console.error('Error adding competitor:', error);
-      toast.error('Failed to add as competitor');
+      toast.error(t('toasts.addFailed'));
     }
   };
 
@@ -170,22 +172,22 @@ export function AccountSearch() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <Search className="h-7 w-7" />
-            Account Search
+            {t('title')}
           </h1>
           <p className="text-muted-foreground">
-            Search and analyze TikTok accounts by username
+            {t('subtitle')}
           </p>
         </div>
       </div>
 
       {/* Search Bar */}
       <Card className="p-6">
-        <h3 className="font-semibold mb-4">Search for Accounts</h3>
+        <h3 className="font-semibold mb-4">{t('searchTitle')}</h3>
         <div className="flex gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Enter TikTok username (e.g., @username or username)..."
+              placeholder={t('placeholder')}
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -201,12 +203,12 @@ export function AccountSearch() {
             {searching ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Searching...
+                {t('searching')}
               </>
             ) : (
               <>
                 <Search className="h-4 w-4 mr-2" />
-                Search
+                {t('search')}
               </>
             )}
           </Button>
@@ -217,7 +219,7 @@ export function AccountSearch() {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-semibold">
-            Search Results ({searchResults.length})
+            {t('results', { count: searchResults.length })}
           </h2>
           {searchResults.length > 0 && (
             <Button
@@ -225,7 +227,7 @@ export function AccountSearch() {
               size="sm"
               onClick={() => setSearchResults([])}
             >
-              Clear All
+              {t('clearAll')}
             </Button>
           )}
         </div>
@@ -234,9 +236,9 @@ export function AccountSearch() {
           <Card className="p-12">
             <div className="text-center">
               <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No searches yet</h3>
+              <h3 className="text-lg font-semibold mb-2">{t('emptyTitle')}</h3>
               <p className="text-muted-foreground">
-                Enter a TikTok username above to analyze an account
+                {t('emptyDescription')}
               </p>
             </div>
           </Card>
@@ -266,6 +268,7 @@ interface SearchResultCardProps {
 }
 
 function SearchResultCard({ result, onAddAsCompetitor, onRemove, formatNumber }: SearchResultCardProps) {
+  const { t } = useTranslation('accountsearch');
   const [showAllVideos, setShowAllVideos] = useState(false);
 
   if (result.loading) {
@@ -362,7 +365,7 @@ function SearchResultCard({ result, onAddAsCompetitor, onRemove, formatNumber }:
                   className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                 >
                   <UserPlus className="h-4 w-4 mr-2" />
-                  Add to Competitors
+                  {t('addToCompetitors')}
                 </Button>
                 <Button
                   variant="ghost"
@@ -382,10 +385,10 @@ function SearchResultCard({ result, onAddAsCompetitor, onRemove, formatNumber }:
                 {report.metrics.status}
               </Badge>
               <span className="text-sm text-muted-foreground">
-                Efficiency: {report.metrics.efficiency_score.toFixed(1)}
+                {t('efficiency')}: {report.metrics.efficiency_score.toFixed(1)}
               </span>
               <span className="text-sm text-muted-foreground">
-                Viral Lift: {report.metrics.avg_viral_lift.toFixed(1)}x
+                {t('viralLift')}: {report.metrics.avg_viral_lift.toFixed(1)}x
               </span>
             </div>
 
@@ -394,7 +397,7 @@ function SearchResultCard({ result, onAddAsCompetitor, onRemove, formatNumber }:
               <div className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 p-4 rounded-xl border border-purple-200 dark:border-purple-800">
                 <div className="flex items-center gap-2 mb-2">
                   <Users className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                  <p className="text-xs font-medium text-purple-600 dark:text-purple-400">Followers</p>
+                  <p className="text-xs font-medium text-purple-600 dark:text-purple-400">{t('followers')}</p>
                 </div>
                 <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">
                   {formatNumber(report.author.followers)}
@@ -404,7 +407,7 @@ function SearchResultCard({ result, onAddAsCompetitor, onRemove, formatNumber }:
               <div className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 p-4 rounded-xl border border-blue-200 dark:border-blue-800">
                 <div className="flex items-center gap-2 mb-2">
                   <Eye className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  <p className="text-xs font-medium text-blue-600 dark:text-blue-400">Avg Views</p>
+                  <p className="text-xs font-medium text-blue-600 dark:text-blue-400">{t('avgViews')}</p>
                 </div>
                 <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">
                   {formatNumber(report.metrics.avg_views)}
@@ -414,7 +417,7 @@ function SearchResultCard({ result, onAddAsCompetitor, onRemove, formatNumber }:
               <div className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 p-4 rounded-xl border border-green-200 dark:border-green-800">
                 <div className="flex items-center gap-2 mb-2">
                   <BarChart3 className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  <p className="text-xs font-medium text-green-600 dark:text-green-400">Engagement</p>
+                  <p className="text-xs font-medium text-green-600 dark:text-green-400">{t('engagement')}</p>
                 </div>
                 <p className="text-2xl font-bold text-green-900 dark:text-green-100">
                   {report.metrics.engagement_rate.toFixed(1)}%
@@ -424,7 +427,7 @@ function SearchResultCard({ result, onAddAsCompetitor, onRemove, formatNumber }:
               <div className="bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-950 dark:to-pink-900 p-4 rounded-xl border border-pink-200 dark:border-pink-800">
                 <div className="flex items-center gap-2 mb-2">
                   <Video className="h-5 w-5 text-pink-600 dark:text-pink-400" />
-                  <p className="text-xs font-medium text-pink-600 dark:text-pink-400">Videos</p>
+                  <p className="text-xs font-medium text-pink-600 dark:text-pink-400">{t('videos')}</p>
                 </div>
                 <p className="text-2xl font-bold text-pink-900 dark:text-pink-100">
                   {report.full_feed.length}
@@ -439,7 +442,7 @@ function SearchResultCard({ result, onAddAsCompetitor, onRemove, formatNumber }:
           <div className="mt-6 pt-6 border-t">
             <div className="flex items-center justify-between mb-4">
               <h4 className="font-semibold text-lg">
-                Recent Videos ({report.full_feed.length})
+                {t('recentVideos', { count: report.full_feed.length })}
               </h4>
               {report.full_feed.length > 6 && (
                 <Button
@@ -447,7 +450,7 @@ function SearchResultCard({ result, onAddAsCompetitor, onRemove, formatNumber }:
                   size="sm"
                   onClick={() => setShowAllVideos(!showAllVideos)}
                 >
-                  {showAllVideos ? 'Show Less' : `Show All ${report.full_feed.length}`}
+                  {showAllVideos ? t('showLess') : t('showAll', { count: report.full_feed.length })}
                 </Button>
               )}
             </div>

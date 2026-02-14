@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 # Initialize Apify client
 APIFY_API_TOKEN = os.getenv("APIFY_API_TOKEN")
 if not APIFY_API_TOKEN:
-    logger.warning("⚠️ APIFY_API_TOKEN not set - Apify Storage disabled")
+    logger.warning("[WARNING] APIFY_API_TOKEN not set - Apify Storage disabled")
     _apify_client = None
 else:
     _apify_client = ApifyClient(APIFY_API_TOKEN)
@@ -90,17 +90,17 @@ class ApifyStorage:
 
             if existing_store:
                 _store_id_cache = existing_store["id"]
-                logger.info(f"✅ Using existing Apify store: {_store_id_cache}")
+                logger.info(f"[OK] Using existing Apify store: {_store_id_cache}")
             else:
                 # Create new store
                 store = _apify_client.key_value_stores().get_or_create(name=STORE_NAME)
                 _store_id_cache = store["id"]
-                logger.info(f"✅ Created new Apify store: {_store_id_cache}")
+                logger.info(f"[OK] Created new Apify store: {_store_id_cache}")
 
             return _store_id_cache
 
         except Exception as e:
-            logger.error(f"❌ Failed to get/create Apify store: {e}")
+            logger.error(f"[ERROR] Failed to get/create Apify store: {e}")
             return None
 
     @staticmethod
@@ -139,7 +139,7 @@ class ApifyStorage:
                 "Accept": "image/webp,image/apng,image/*,*/*;q=0.8",
             }
 
-            logger.info(f"📥 Downloading image from {platform} via Apify Proxy: {image_url[:80]}...")
+            logger.info(f"[DOWNLOAD] Downloading image from {platform} via Apify Proxy: {image_url[:80]}...")
 
             # Note: httpx uses 'proxy' parameter with dict format
             proxies = {
@@ -159,7 +159,7 @@ class ApifyStorage:
             image_data = response.content
             content_type = response.headers.get("content-type", "image/jpeg")
 
-            logger.info(f"✅ Downloaded {len(image_data)} bytes ({content_type})")
+            logger.info(f"[OK] Downloaded {len(image_data)} bytes ({content_type})")
 
             # Generate unique key
             timestamp = int(time.time() * 1000)
@@ -175,13 +175,13 @@ class ApifyStorage:
             # Generate public URL
             public_url = f"https://api.apify.com/v2/key-value-stores/{store_id}/records/{key}"
 
-            logger.info(f"✅ Stored in Apify: {key}")
-            logger.info(f"🔗 Public URL: {public_url}")
+            logger.info(f"[OK] Stored in Apify: {key}")
+            logger.info(f"[LINK] Public URL: {public_url}")
 
             return public_url
 
         except Exception as e:
-            logger.error(f"❌ Failed to download/store image: {e}")
+            logger.error(f"[ERROR] Failed to download/store image: {e}")
             logger.error(f"   URL: {image_url[:100] if image_url else 'None'}")
             return None
 

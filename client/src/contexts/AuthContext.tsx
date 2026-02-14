@@ -18,7 +18,7 @@ import {
   useRef,
   type ReactNode
 } from 'react';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import type { User } from '@/types';
 import { apiService } from '@/services/api';
@@ -315,7 +315,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      // Fall back to Supabase session check (for OAuth)
+      // Fall back to Supabase session check (for OAuth) - only if configured
+      if (!isSupabaseConfigured) {
+        clearAuthData();
+        setState({
+          user: null,
+          tokens: null,
+          isAuthenticated: false,
+          isLoading: false,
+        });
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user && session?.access_token) {
@@ -541,6 +552,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // ---------------------------------------------------------------------------
 
   const signInWithGoogle = async (): Promise<void> => {
+    if (!isSupabaseConfigured) {
+      throw new Error('Google sign-in is not available. Supabase configuration is missing.');
+    }
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -574,7 +588,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       // Sign out from Supabase (if using OAuth)
-      await supabase.auth.signOut();
+      if (isSupabaseConfigured) {
+        await supabase.auth.signOut();
+      }
 
       // Clear local storage
       clearAuthData();
@@ -682,7 +698,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     checkAuth();
 
-    // Listen for Supabase auth state changes (for OAuth)
+    // Listen for Supabase auth state changes (for OAuth) - only if configured
+    if (!isSupabaseConfigured) {
+      return () => {
+        if (refreshTimerRef.current) {
+          clearTimeout(refreshTimerRef.current);
+        }
+      };
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (event === 'SIGNED_IN' && session?.user && session?.access_token) {

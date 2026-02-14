@@ -57,6 +57,7 @@ export const apiConfig = {
  */
 export const AUTH_STORAGE_KEY = 'rizko_auth';
 export const THEME_STORAGE_KEY = 'rizko_theme';
+export const LANGUAGE_STORAGE_KEY = 'rizko_language';
 
 /**
  * App metadata

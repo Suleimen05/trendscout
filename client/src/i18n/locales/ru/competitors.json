@@ -1,0 +1,78 @@
+{
+  "title": "Конкуренты",
+  "subtitle": "Ищите и отслеживайте каналы конкурентов",
+  "channelCount": "{{count}} каналов",
+  "search": {
+    "title": "Поиск и добавление каналов",
+    "placeholder": "Введите @username в {{platform}}...",
+    "button": "Искать",
+    "searching": "Поиск...",
+    "result": "Результат поиска:",
+    "followers": "подписчиков",
+    "videos": "видео",
+    "add": "Добавить",
+    "adding": "Добавление..."
+  },
+  "platforms": {
+    "tiktok": "TikTok",
+    "instagram": "Instagram"
+  },
+  "myCompetitors": "Мои конкуренты",
+  "card": {
+    "followers": "Подписчики",
+    "videos": "Видео",
+    "avgViews": "Ср. просмотры",
+    "newVideo": "Новое видео {{time}}",
+    "upToDate": "Актуально • Последняя активность {{time}}",
+    "viewFeed": "Смотреть ленту",
+    "untrack": "Перестать отслеживать",
+    "confirmRemove": "Удалить @{{username}} из отслеживания?",
+    "new": "НОВОЕ"
+  },
+  "emptyState": {
+    "title": "Конкурентов пока нет",
+    "description": "Найдите каналы выше, чтобы добавить их в список"
+  },
+  "feed": {
+    "backToCompetitors": "Назад к конкурентам",
+    "competitorNotFound": "Конкурент не найден",
+    "followers": "Подписчики",
+    "avgViews": "Ср. просмотры",
+    "videos": "Видео",
+    "engagement": "Вовлечённость",
+    "trackingSince": "Отслеживается с {{date}}",
+    "lastChecked": "Последняя проверка: {{date}}",
+    "refresh": "Обновить",
+    "refreshing": "Обновление...",
+    "notifications": "Уведомления",
+    "newActivity": "Новая активность!",
+    "newVideosCount": "{{count}} новых видео за последние 24 часа",
+    "viewNewVideos": "Посмотреть новые видео",
+    "recentVideos": "Последние видео ({{count}})",
+    "filters": {
+      "all": "Все",
+      "new": "Только новые",
+      "trending": "В тренде"
+    },
+    "emptyVideos": {
+      "title": "Видео не найдены",
+      "noNew": "Новых видео пока нет. Проверьте позже!",
+      "noTrending": "Трендовых видео на данный момент нет.",
+      "noVideos": "У этого конкурента пока нет видео."
+    }
+  },
+  "toast": {
+    "addSuccess": "@{{username}} добавлен в ваш список",
+    "alreadyExists": "@{{username}} уже в вашем списке",
+    "addError": "Не удалось добавить канал",
+    "removeSuccess": "@{{username}} удалён",
+    "removeError": "Не удалось удалить канал",
+    "loadError": "Не удалось загрузить конкурентов",
+    "searchNotFound": "Канал {{platform}} @{{username}} не найден",
+    "searchError": "Ошибка поиска. Попробуйте ещё раз.",
+    "feedNotFound": "Конкурент @{{username}} не найден",
+    "feedLoadError": "Не удалось загрузить ленту конкурента",
+    "refreshSuccess": "Обновление данных конкурента...",
+    "refreshError": "Не удалось обновить. Попробуйте позже."
+  }
+}

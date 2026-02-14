@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Users, UserPlus, Search, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,14 +9,16 @@ import type { Competitor } from '@/types';
 import { toast } from 'sonner';
 import { apiClient } from '@/services/api';
 import { proxyAvatarUrl } from '@/utils/imageProxy';
+import i18n from '@/lib/i18n';
 
 interface CompetitorCardProps {
   competitor: Competitor;
   onRemove: (competitor: Competitor) => void;
   onViewDetails: (competitor: Competitor) => void;
+  t: (key: string, options?: Record<string, unknown>) => string;
 }
 
-function CompetitorCard({ competitor, onRemove, onViewDetails }: CompetitorCardProps) {
+function CompetitorCard({ competitor, onRemove, onViewDetails, t }: CompetitorCardProps) {
   const formatNumber = (num: number): string => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
@@ -29,9 +32,9 @@ function CompetitorCard({ competitor, onRemove, onViewDetails }: CompetitorCardP
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffMinutes = Math.floor(diffMs / (1000 * 60));
 
-    if (diffMinutes < 60) return `${diffMinutes}m ago`;
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${Math.floor(diffHours / 24)}d ago`;
+    if (diffMinutes < 60) return t('timeAgoMinutes', { count: diffMinutes });
+    if (diffHours < 24) return t('timeAgoHours', { count: diffHours });
+    return t('timeAgoDays', { count: Math.floor(diffHours / 24) });
   };
 
   // Mock: check if competitor has new videos (you'll get this from backend later)
@@ -47,7 +50,7 @@ function CompetitorCard({ competitor, onRemove, onViewDetails }: CompetitorCardP
       {hasNewVideos && (
         <div className="absolute top-2 right-2 z-10">
           <Badge className="bg-red-500 text-white text-xs animate-pulse">
-            🔴 NEW
+            {t('newBadge')}
           </Badge>
         </div>
       )}
@@ -88,15 +91,15 @@ function CompetitorCard({ competitor, onRemove, onViewDetails }: CompetitorCardP
         <div className="grid grid-cols-3 gap-2 mb-3 text-xs">
           <div className="text-center p-2 bg-muted/50 rounded">
             <div className="font-bold text-sm">{formatNumber(competitor.followerCount)}</div>
-            <div className="text-muted-foreground">Followers</div>
+            <div className="text-muted-foreground">{t('statsFollowers')}</div>
           </div>
           <div className="text-center p-2 bg-muted/50 rounded">
             <div className="font-bold text-sm">{competitor.videoCount}</div>
-            <div className="text-muted-foreground">Videos</div>
+            <div className="text-muted-foreground">{t('statsVideos')}</div>
           </div>
           <div className="text-center p-2 bg-muted/50 rounded">
             <div className="font-bold text-sm">{formatNumber(competitor.avgViews)}</div>
-            <div className="text-muted-foreground">Avg Views</div>
+            <div className="text-muted-foreground">{t('statsAvgViews')}</div>
           </div>
         </div>
 
@@ -105,12 +108,12 @@ function CompetitorCard({ competitor, onRemove, onViewDetails }: CompetitorCardP
           {hasNewVideos ? (
             <div className="flex items-center gap-1 text-red-500 font-medium">
               <span>🆕</span>
-              <span>New video {formatTimeAgo(competitor.lastActivity)}</span>
+              <span>{t('newVideo', { time: formatTimeAgo(competitor.lastActivity) })}</span>
             </div>
           ) : (
             <div className="flex items-center gap-1 text-muted-foreground">
               <span>✅</span>
-              <span>Up to date • Last activity {formatTimeAgo(competitor.lastActivity)}</span>
+              <span>{t('upToDate', { time: formatTimeAgo(competitor.lastActivity) })}</span>
             </div>
           )}
         </div>
@@ -126,7 +129,7 @@ function CompetitorCard({ competitor, onRemove, onViewDetails }: CompetitorCardP
               onViewDetails(competitor);
             }}
           >
-            View Feed
+            {t('viewFeed')}
           </Button>
           <Button
             variant="ghost"
@@ -134,12 +137,12 @@ function CompetitorCard({ competitor, onRemove, onViewDetails }: CompetitorCardP
             className="text-xs text-red-500 hover:text-red-600 hover:bg-red-50"
             onClick={(e) => {
               e.stopPropagation();
-              if (confirm(`Remove @${competitor.username} from tracking?`)) {
+              if (confirm(t('removeConfirm', { username: competitor.username }))) {
                 onRemove(competitor);
               }
             }}
           >
-            Untrack
+            {t('untrack')}
           </Button>
         </div>
       </CardContent>
@@ -148,6 +151,7 @@ function CompetitorCard({ competitor, onRemove, onViewDetails }: CompetitorCardP
 }
 
 export function Competitors() {
+  const { t } = useTranslation('competitors');
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -182,7 +186,7 @@ export function Competitors() {
       })));
     } catch (error) {
       console.error('Error loading competitors:', error);
-      toast.error('Failed to load competitors');
+      toast.error(i18n.t('toasts:competitors.loadFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -228,9 +232,10 @@ export function Competitors() {
     } catch (error: any) {
       console.error('Search error:', error);
       if (error.response?.status === 404) {
-        toast.error(`${searchPlatform === 'instagram' ? 'Instagram' : 'TikTok'} channel @${cleanUsername} not found`);
+        const platform = searchPlatform === 'instagram' ? 'Instagram' : 'TikTok';
+        toast.error(i18n.t('toasts:competitors.channelNotFound', { platform, username: cleanUsername }));
       } else {
-        toast.error('Search failed. Try again.');
+        toast.error(i18n.t('toasts:competitors.searchFailed'));
       }
       setSearchResults(null);
     } finally {
@@ -254,16 +259,16 @@ export function Competitors() {
           nickname: channel.nickname || channel.username
         }
       });
-      toast.success(`@${channel.username} added to your list`);
+      toast.success(i18n.t('toasts:competitors.addSuccess', { username: channel.username }));
       setSearchQuery('');
       setSearchResults(null);
       loadCompetitors(); // Обновить список
     } catch (error: any) {
       console.error('Add error:', error);
       if (error.response?.status === 400) {
-        toast.error(`@${channel.username} already in your list`);
+        toast.error(i18n.t('toasts:competitors.alreadyExists', { username: channel.username }));
       } else {
-        toast.error('Failed to add channel');
+        toast.error(i18n.t('toasts:competitors.addFailed'));
       }
     } finally {
       setIsAdding(false);
@@ -274,11 +279,11 @@ export function Competitors() {
   const handleRemoveChannel = async (competitor: Competitor) => {
     try {
       await apiClient.delete(`/competitors/${competitor.username}`);
-      toast.success(`@${competitor.username} removed`);
+      toast.success(i18n.t('toasts:competitors.removeSuccess', { username: competitor.username }));
       loadCompetitors(); // Обновить список
     } catch (error) {
       console.error('Remove error:', error);
-      toast.error('Failed to remove channel');
+      toast.error(i18n.t('toasts:competitors.removeFailed'));
     }
   };
 
@@ -295,13 +300,13 @@ export function Competitors() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
-            <h1 className="text-3xl font-bold tracking-tight">Competitors</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{t('pageTitle')}</h1>
             <Badge variant="secondary" className="text-sm">
-              {competitors.length} channels
+              {t('channelsCount', { count: competitors.length })}
             </Badge>
           </div>
           <p className="text-muted-foreground">
-            Search and track competitor channels
+            {t('pageDescription')}
           </p>
         </div>
       </div>
@@ -310,7 +315,7 @@ export function Competitors() {
       <Card className="p-6">
         <h3 className="font-semibold mb-4 flex items-center gap-2">
           <Search className="h-5 w-5" />
-          Search & Add Channels
+          {t('searchTitle')}
         </h3>
 
         {/* Platform Selector */}
@@ -337,7 +342,7 @@ export function Competitors() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder={`Enter ${searchPlatform === 'instagram' ? 'Instagram' : 'TikTok'} @username...`}
+              placeholder={searchPlatform === 'instagram' ? t('searchPlaceholderInstagram') : t('searchPlaceholderTiktok')}
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -352,10 +357,10 @@ export function Competitors() {
             {isSearching ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Searching...
+                {t('searching')}
               </>
             ) : (
-              'Search'
+              t('searchButton')
             )}
           </Button>
         </div>
@@ -363,7 +368,7 @@ export function Competitors() {
         {/* Search Results */}
         {searchResults && (
           <div className="mt-4 p-4 border rounded-lg bg-muted/50">
-            <p className="text-sm text-muted-foreground mb-3">Search Result:</p>
+            <p className="text-sm text-muted-foreground mb-3">{t('searchResult')}</p>
             <div className="flex items-center gap-4">
               <img
                 src={proxyAvatarUrl(searchResults.avatar)}
@@ -377,8 +382,8 @@ export function Competitors() {
               <div className="flex-1">
                 <p className="font-semibold">@{searchResults.username}</p>
                 <p className="text-sm text-muted-foreground">
-                  {(searchResults.follower_count || 0).toLocaleString()} followers • 
-                  {searchResults.video_count || 0} videos
+                  {(searchResults.follower_count || 0).toLocaleString()} {t('followers')} •
+                  {searchResults.video_count || 0} {t('videos')}
                 </p>
               </div>
               <Button
@@ -389,12 +394,12 @@ export function Competitors() {
                 {isAdding ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Adding...
+                    {t('adding')}
                   </>
                 ) : (
                   <>
                     <UserPlus className="h-4 w-4 mr-2" />
-                    Add
+                    {t('add')}
                   </>
                 )}
               </Button>
@@ -405,7 +410,7 @@ export function Competitors() {
 
       {/* My Competitors Section */}
       <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">My Competitors</h2>
+        <h2 className="text-xl font-semibold mb-4">{t('myCompetitors')}</h2>
       </div>
 
       {/* Competitors Grid */}
@@ -417,9 +422,9 @@ export function Competitors() {
         <Card className="p-12">
           <div className="text-center">
             <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No competitors yet</h3>
+            <h3 className="text-lg font-semibold mb-2">{t('emptyTitle')}</h3>
             <p className="text-muted-foreground mb-4">
-              Search for channels above to add them to your list
+              {t('emptyDescription')}
             </p>
           </div>
         </Card>
@@ -431,6 +436,7 @@ export function Competitors() {
               competitor={competitor}
               onRemove={handleRemoveChannel}
               onViewDetails={handleViewDetails}
+              t={t}
             />
           ))}
         </div>

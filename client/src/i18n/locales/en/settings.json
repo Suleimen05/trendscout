@@ -1,0 +1,140 @@
+{
+  "title": "Settings",
+  "subtitle": "Manage your account preferences and notifications",
+  "tabs": {
+    "general": "General",
+    "accounts": "Accounts",
+    "usage": "Usage",
+    "billing": "Billing"
+  },
+  "general": {
+    "profile": {
+      "title": "Profile",
+      "fullName": "Full name",
+      "email": "Email",
+      "saveChanges": "Save Changes"
+    },
+    "preferences": {
+      "title": "Preferences",
+      "darkMode": "Dark Mode",
+      "darkModeDescription": "Enable dark theme",
+      "language": "Language",
+      "region": "Region",
+      "languages": {
+        "english": "English",
+        "spanish": "Spanish",
+        "french": "French",
+        "german": "German"
+      },
+      "regions": {
+        "us": "United States",
+        "uk": "United Kingdom",
+        "ca": "Canada",
+        "au": "Australia"
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "emailNotifications": "Email Notifications",
+      "emailDescription": "Get emails about trends and updates",
+      "weeklySummary": "Weekly Summary",
+      "weeklyDescription": "Receive weekly usage reports"
+    },
+    "about": {
+      "title": "About",
+      "version": "Version",
+      "installApp": "Install App",
+      "installed": "Installed"
+    }
+  },
+  "accounts": {
+    "title": "Connected Accounts",
+    "connectedCount": "{{count}} connected",
+    "securityNote": "Your data is secure. We use official OAuth connections and never store your passwords.",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "connecting": "Connecting...",
+    "disconnecting": "Disconnecting...",
+    "platforms": {
+      "tiktok": {
+        "name": "TikTok",
+        "description": "Video analytics and performance metrics."
+      },
+      "instagram": {
+        "name": "Instagram",
+        "description": "Track posts, reels and stories."
+      },
+      "youtube": {
+        "name": "YouTube",
+        "description": "Analyze videos and shorts performance."
+      },
+      "twitter": {
+        "name": "X (Twitter)",
+        "description": "Track tweets and engagement metrics."
+      },
+      "reddit": {
+        "name": "Reddit",
+        "description": "Monitor subreddit trends and posts."
+      },
+      "discord": {
+        "name": "Discord",
+        "description": "Track server engagement and growth."
+      },
+      "telegram": {
+        "name": "Telegram",
+        "description": "Analyze channel and group metrics."
+      }
+    },
+    "security": {
+      "title": "Account Security",
+      "password": "Password",
+      "changePassword": "Change Password"
+    },
+    "dangerZone": {
+      "title": "Danger Zone",
+      "deleteAccount": "Delete Account",
+      "deleteWarning": "Once you delete your account, there is no going back. Please be certain."
+    }
+  },
+  "usage": {
+    "title": "Usage Statistics",
+    "plan": "Current Plan",
+    "resetDate": "Credits reset on",
+    "credits": {
+      "title": "Credit Usage",
+      "used": "Used",
+      "limit": "Limit",
+      "bonus": "Bonus",
+      "rollover": "Rollover",
+      "totalAvailable": "Total Available"
+    },
+    "stats": {
+      "scriptsGenerated": "Scripts Generated",
+      "chatMessages": "Chat Messages",
+      "deepAnalyze": "Deep Analyze"
+    },
+    "autoMode": {
+      "title": "Auto Mode",
+      "description": "Automatically use the cheapest AI model when possible to save credits",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "savings": "Estimated savings"
+    }
+  },
+  "billing": {
+    "title": "Billing",
+    "currentPlan": "Current Plan",
+    "managePlan": "Manage Plan",
+    "billingHistory": "Billing History",
+    "noBilling": "No billing history yet"
+  },
+  "toast": {
+    "connectSuccess": "Your {{platform}} account has been connected successfully!",
+    "connectError": "Failed to connect account. Please try again.",
+    "disconnectSuccess": "Your {{platform}} account has been disconnected.",
+    "disconnectError": "Failed to disconnect account. Please try again.",
+    "loginRequired": "Please log in to connect your account",
+    "usageLoadError": "Failed to load usage statistics",
+    "autoModeError": "Failed to toggle Auto Mode"
+  }
+}

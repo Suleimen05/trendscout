@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Send,
   Sparkles,
@@ -13,54 +14,60 @@ import {
   Mic,
   Hash,
   Check,
+  X,
+  ZoomIn,
+  ZoomOut,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import type { ChatMessage, QuickAction } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
-const quickActions: QuickAction[] = [
+const getQuickActions = (t: (key: string) => string): QuickAction[] => [
   {
     id: '1',
-    title: 'Script Generator',
-    description: 'Create viral video script',
+    title: t('quickActions.scriptGenerator.title'),
+    description: t('quickActions.scriptGenerator.description'),
     icon: 'FileText',
-    prompt: 'Create a viral TikTok script about ',
+    prompt: t('prompts.scriptGenerator'),
     category: 'script',
   },
   {
     id: '2',
-    title: 'Content Ideas',
-    description: 'Get 10 video ideas',
+    title: t('quickActions.contentIdeas.title'),
+    description: t('quickActions.contentIdeas.description'),
     icon: 'Lightbulb',
-    prompt: 'Generate 10 viral content ideas for ',
+    prompt: t('prompts.contentIdeas'),
     category: 'ideas',
   },
   {
     id: '3',
-    title: 'Trend Analysis',
-    description: 'Analyze trending topic',
+    title: t('quickActions.trendAnalysis.title'),
+    description: t('quickActions.trendAnalysis.description'),
     icon: 'TrendingUp',
-    prompt: 'Analyze the current trends in ',
+    prompt: t('prompts.trendAnalysis'),
     category: 'analysis',
   },
   {
     id: '4',
-    title: 'Improve Script',
-    description: 'Make your script better',
+    title: t('quickActions.improveScript.title'),
+    description: t('quickActions.improveScript.description'),
     icon: 'Wand2',
-    prompt: 'Improve this script and make it more viral: ',
+    prompt: t('prompts.improveScript'),
     category: 'improvement',
   },
 ];
 
-const popularPrompts = [
-  'Create TikTok script about productivity hacks',
-  'Analyze @garyvee\'s content strategy',
-  'Generate 10 video ideas for fitness niche',
-  'Write Instagram Reels hook for beauty product',
-  'Improve my script\'s engagement',
+const getContentModes = (t: (key: string) => string) => [
+  { id: 'chat', name: t('modes.chat'), icon: '\u{1F4AC}' },
+  { id: 'script', name: t('modes.script'), icon: '\u{1F4DD}' },
+  { id: 'ideas', name: t('modes.ideas'), icon: '\u{1F4A1}' },
+  { id: 'analysis', name: t('modes.analysis'), icon: '\u{1F4CA}' },
+  { id: 'improve', name: t('modes.improve'), icon: '\u{270F}\u{FE0F}' },
+  { id: 'hook', name: t('modes.hook'), icon: '\u{1F3AF}' },
 ];
 
 // SVG Icon Components for AI Models
@@ -103,37 +110,49 @@ const KimiIcon = () => (
   </svg>
 );
 
-// AutoIcon available for future use
-// const AutoIcon = () => ( ... )
+const NanoBanaIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-4 w-4">
+    <defs>
+      <linearGradient id="nanoBanaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#EA4335"/>
+        <stop offset="33%" stopColor="#FBBC04"/>
+        <stop offset="66%" stopColor="#34A853"/>
+        <stop offset="100%" stopColor="#4285F4"/>
+      </linearGradient>
+    </defs>
+    <rect x="3" y="3" width="18" height="18" rx="4" fill="url(#nanoBanaGrad)" opacity="0.9"/>
+    <circle cx="9" cy="10" r="2.5" fill="white" opacity="0.9"/>
+    <path d="M5 17l4-5 3 3.5 2-2.5 5 4H5z" fill="white" opacity="0.85"/>
+  </svg>
+);
 
 // AI Models - only Gemini is active, others coming soon
 const aiModels = [
   { id: 'gemini', name: 'Gemini 2.5', icon: GeminiIcon, available: true },
+  { id: 'nano-bana', name: 'Nano Bana', icon: NanoBanaIcon, available: true, isImageGen: true },
   { id: 'claude', name: 'Sonnet 4.5', icon: ClaudeIcon, available: false, comingSoon: true },
   { id: 'gpt4', name: 'GPT-5.1', icon: GPTIcon, available: false, comingSoon: true },
   { id: 'grok', name: 'Grok 4', icon: GrokIcon, available: false, comingSoon: true },
   { id: 'kimi', name: 'Kimi', icon: KimiIcon, available: false, comingSoon: true },
 ];
 
-// Content Modes
-const contentModes = [
-  { id: 'script', name: 'Script', icon: '📝' },
-  { id: 'ideas', name: 'Ideas', icon: '💡' },
-  { id: 'analysis', name: 'Analysis', icon: '📊' },
-  { id: 'improve', name: 'Improve', icon: '✏️' },
-  { id: 'hook', name: 'Hook', icon: '🎯' },
-];
-
 export function AIWorkspace() {
-  const { user } = useAuth();
+  const { user, getAccessToken } = useAuth();
+  const { t } = useTranslation('aiworkspace');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [selectedModel, setSelectedModel] = useState(aiModels.find(m => m.id === 'gemini') || aiModels[0]);
+  const contentModes = getContentModes(t);
   const [selectedMode, setSelectedMode] = useState(contentModes[0]);
   const [showModelMenu, setShowModelMenu] = useState(false);
   const [showModeMenu, setShowModeMenu] = useState(false);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [lightboxZoom, setLightboxZoom] = useState(1);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const quickActions = getQuickActions(t);
+  const popularPrompts = t('popularPrompts.items', { returnObjects: true }) as string[];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -142,6 +161,63 @@ export function AIWorkspace() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  const resolveImageSrc = useCallback((src?: string) => {
+    if (!src) return '';
+    if (src.startsWith('/uploads')) {
+      const base = import.meta.env.VITE_API_URL
+        ? import.meta.env.VITE_API_URL.replace('/api', '')
+        : 'http://localhost:8000';
+      return `${base}${src}`;
+    }
+    return src;
+  }, []);
+
+  // Extract image URLs from markdown content
+  const extractImageUrls = useCallback((content: string): string[] => {
+    const imgRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
+    const urls: string[] = [];
+    let match;
+    while ((match = imgRegex.exec(content)) !== null) {
+      urls.push(match[2]);
+    }
+    return urls;
+  }, []);
+
+  const handleDownloadImage = useCallback(async (imgSrc: string) => {
+    try {
+      const res = await fetch(imgSrc, { mode: 'cors' });
+      if (!res.ok) throw new Error('fetch failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rizko-ai-${Date.now()}.png`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+    } catch {
+      const a = document.createElement('a');
+      a.href = imgSrc;
+      a.download = `rizko-ai-${Date.now()}.png`;
+      a.target = '_blank';
+      a.click();
+    }
+  }, []);
+
+  const openLightbox = useCallback((src: string) => {
+    setLightboxImage(src);
+    setLightboxZoom(1);
+  }, []);
+
+  const closeLightbox = useCallback(() => {
+    setLightboxImage(null);
+    setLightboxZoom(1);
+  }, []);
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isStreaming) return;
@@ -159,12 +235,13 @@ export function AIWorkspace() {
     setIsStreaming(true);
 
     try {
-      // Call backend API for Gemini
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+      const token = await getAccessToken();
       const response = await fetch(`${API_URL}/ai-scripts/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           message: currentInput,
@@ -196,7 +273,7 @@ export function AIWorkspace() {
       const errorMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: 'Sorry, there was an error connecting to the AI. Please try again.',
+        content: t('chat.errorMessage'),
         timestamp: new Date().toISOString(),
         isStreaming: false,
       };
@@ -226,13 +303,13 @@ export function AIWorkspace() {
 
   return (
     <div className="flex h-[calc(100vh-4rem)] bg-background">
-      {/* Main Chat Area - без второго sidebar */}
+      {/* Main Chat Area */}
       <div className="flex-1 flex flex-col">
         {/* Header */}
         <div className="h-14 border-b border-border flex items-center px-6">
           <div className="flex items-center gap-3">
             <Sparkles className="h-5 w-5 text-purple-500" />
-            <h1 className="text-lg font-semibold">AI Creator</h1>
+            <h1 className="text-lg font-semibold">{t('title')}</h1>
           </div>
         </div>
 
@@ -245,9 +322,9 @@ export function AIWorkspace() {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-purple-600 mb-4">
                   <Sparkles className="h-8 w-8 text-white" />
                 </div>
-                <h2 className="text-3xl font-bold">What would you like to create?</h2>
+                <h2 className="text-3xl font-bold">{t('welcome')}</h2>
                 <p className="text-muted-foreground text-lg">
-                  Choose a quick action or start typing your own prompt
+                  {t('welcomeSubtitle')}
                 </p>
               </div>
 
@@ -277,7 +354,7 @@ export function AIWorkspace() {
 
               {/* Popular Prompts */}
               <div className="space-y-3">
-                <h3 className="text-sm font-semibold text-muted-foreground">Popular Prompts</h3>
+                <h3 className="text-sm font-semibold text-muted-foreground">{t('popularPrompts.title')}</h3>
                 <div className="space-y-2">
                   {popularPrompts.map((prompt, idx) => (
                     <button
@@ -315,21 +392,63 @@ export function AIWorkspace() {
                         : 'bg-accent'
                     )}
                   >
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <p className="whitespace-pre-wrap">{message.content}</p>
+                    <div
+                      className="prose prose-sm dark:prose-invert max-w-none [&_img]:rounded-lg [&_img]:max-h-[512px] [&_img]:cursor-pointer"
+                      onClick={(e) => {
+                        const target = e.target as HTMLElement;
+                        if (target.tagName === 'IMG') {
+                          const src = (target as HTMLImageElement).src;
+                          openLightbox(src);
+                        }
+                      }}
+                    >
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                        {message.content}
+                      </ReactMarkdown>
                     </div>
-                    {message.role === 'assistant' && (
-                      <div className="flex items-center gap-2 mt-3 pt-3 border-t border-border/50">
-                        <Button variant="ghost" size="sm" className="h-8">
-                          <Copy className="h-3 w-3 mr-1" />
-                          Copy
-                        </Button>
-                        <Button variant="ghost" size="sm" className="h-8">
-                          <Download className="h-3 w-3 mr-1" />
-                          Save
-                        </Button>
-                      </div>
-                    )}
+                    {/* Action buttons for assistant messages */}
+                    {message.role === 'assistant' && (() => {
+                      const imageUrls = extractImageUrls(message.content);
+                      console.log('[AIWorkspace] message content:', message.content?.substring(0, 200));
+                      console.log('[AIWorkspace] found images:', imageUrls);
+                      return (
+                        <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-border/50">
+                          <Button variant="ghost" size="sm" className="h-8">
+                            <Copy className="h-3 w-3 mr-1" />
+                            {t('chat.copy')}
+                          </Button>
+                          <Button variant="ghost" size="sm" className="h-8">
+                            <Download className="h-3 w-3 mr-1" />
+                            {t('chat.save')}
+                          </Button>
+                          {imageUrls.length > 0 && imageUrls.map((imgUrl, idx) => {
+                            const imgSrc = resolveImageSrc(imgUrl);
+                            return (
+                              <div key={idx} className="flex items-center gap-1">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 text-xs"
+                                  onClick={() => openLightbox(imgSrc)}
+                                >
+                                  <ZoomIn className="h-3.5 w-3.5 mr-1" />
+                                  {t('chat.expand')}
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-8 text-xs"
+                                  onClick={() => handleDownloadImage(imgSrc)}
+                                >
+                                  <Download className="h-3.5 w-3.5 mr-1" />
+                                  {t('chat.download')}
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })()}
                   </div>
                   {message.role === 'user' && (
                     <div className="w-8 h-8 rounded-full bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center flex-shrink-0 text-white text-sm font-bold">
@@ -372,7 +491,7 @@ export function AIWorkspace() {
                       handleSendMessage();
                     }
                   }}
-                  placeholder="Create script, # for trends, / for templates"
+                  placeholder={t('chat.placeholder')}
                   className="w-full bg-transparent resize-none focus:outline-none text-foreground placeholder:text-muted-foreground text-sm"
                   rows={1}
                   disabled={isStreaming}
@@ -406,7 +525,7 @@ export function AIWorkspace() {
                     {showModelMenu && (
                       <div className="absolute bottom-full left-0 mb-2 w-44 bg-popover border border-border rounded-xl shadow-xl py-1 z-50">
                         <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground border-b border-border/50">
-                          Models
+                          {t('chat.models')}
                         </div>
                         {aiModels.map((model) => {
                           const IconComponent = model.icon;
@@ -434,9 +553,14 @@ export function AIWorkspace() {
                               <span className={cn("flex-1 text-left", isDisabled && "text-muted-foreground")}>
                                 {model.name}
                               </span>
+                              {model.isImageGen && (
+                                <span className="text-[10px] px-1.5 py-0.5 bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded text-pink-400 font-medium">
+                                  {t('chat.imageGen')}
+                                </span>
+                              )}
                               {model.comingSoon && (
                                 <span className="text-[10px] px-1.5 py-0.5 bg-muted rounded text-muted-foreground">
-                                  Soon
+                                  {t('chat.soon')}
                                 </span>
                               )}
                               {selectedModel.id === model.id && model.available && (
@@ -467,7 +591,7 @@ export function AIWorkspace() {
                     {showModeMenu && (
                       <div className="absolute bottom-full left-0 mb-2 w-40 bg-popover border border-border rounded-xl shadow-xl py-1 z-50">
                         <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground border-b border-border/50">
-                          Mode
+                          {t('chat.mode')}
                         </div>
                         {contentModes.map((mode) => (
                           <button
@@ -497,7 +621,7 @@ export function AIWorkspace() {
                     size="icon"
                     className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     disabled={isStreaming}
-                    title="Add trending topic"
+                    title={t('chat.addTrend')}
                   >
                     <Hash className="h-4 w-4" />
                   </Button>
@@ -508,7 +632,7 @@ export function AIWorkspace() {
                     size="icon"
                     className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     disabled={isStreaming}
-                    title="Attach file"
+                    title={t('chat.attachFile')}
                   >
                     <Paperclip className="h-4 w-4" />
                   </Button>
@@ -519,7 +643,7 @@ export function AIWorkspace() {
                     size="icon"
                     className="h-8 w-8 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted/50"
                     disabled={isStreaming}
-                    title="Voice input"
+                    title={t('chat.voiceInput')}
                   >
                     <Mic className="h-4 w-4" />
                   </Button>
@@ -536,7 +660,7 @@ export function AIWorkspace() {
                         ? "bg-purple-500 text-white hover:bg-purple-600"
                         : "text-muted-foreground hover:bg-muted/50"
                     )}
-                    title="Send message"
+                    title={t('chat.sendMessage')}
                   >
                     <Send className="h-4 w-4" />
                   </Button>
@@ -546,6 +670,71 @@ export function AIWorkspace() {
           </div>
         </div>
       </div>
+
+      {/* Image Lightbox */}
+      {lightboxImage && (
+        <div
+          className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center"
+          onClick={closeLightbox}
+        >
+          {/* Top bar */}
+          <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3 z-10">
+            <div className="text-white/60 text-sm">
+              {Math.round(lightboxZoom * 100)}%
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => { e.stopPropagation(); setLightboxZoom(z => Math.max(0.25, z - 0.25)); }}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                title={t('chat.zoomOut')}
+              >
+                <ZoomOut className="h-5 w-5" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setLightboxZoom(z => Math.min(4, z + 0.25)); }}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                title={t('chat.zoomIn')}
+              >
+                <ZoomIn className="h-5 w-5" />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); setLightboxZoom(1); }}
+                className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm transition-colors"
+              >
+                1:1
+              </button>
+              <div className="w-px h-6 bg-white/20 mx-1" />
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDownloadImage(lightboxImage); }}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+                title={t('chat.download')}
+              >
+                <Download className="h-5 w-5" />
+              </button>
+              <button
+                onClick={closeLightbox}
+                className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Image */}
+          <div
+            className="overflow-auto max-h-[calc(100vh-80px)] max-w-[calc(100vw-40px)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={lightboxImage}
+              alt="Generated image"
+              className="transition-transform duration-200"
+              style={{ transform: `scale(${lightboxZoom})`, transformOrigin: 'center center' }}
+              draggable={false}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

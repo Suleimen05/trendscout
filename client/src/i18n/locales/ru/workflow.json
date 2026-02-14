@@ -1,0 +1,172 @@
+{
+  "title": "Без названия",
+  "aiModels": {
+    "gemini": {
+      "name": "Gemini 2.0 Flash",
+      "description": "Быстрый и эффективный"
+    },
+    "claude": {
+      "name": "Claude 3.5 Sonnet",
+      "description": "Лучший для текстов"
+    },
+    "gpt4": {
+      "name": "GPT-4o",
+      "description": "Самый мощный"
+    }
+  },
+  "contentModes": {
+    "script": {
+      "name": "Сценарист",
+      "description": "Создавайте вирусные сценарии"
+    },
+    "ideas": {
+      "name": "Генератор идей",
+      "description": "Генерируйте идеи для контента"
+    },
+    "analysis": {
+      "name": "Аналитик трендов",
+      "description": "Анализируйте контент"
+    },
+    "improve": {
+      "name": "Улучшатель контента",
+      "description": "Улучшайте существующий контент"
+    },
+    "hook": {
+      "name": "Мастер хуков",
+      "description": "Создавайте цепляющие хуки"
+    }
+  },
+  "suggestedPrompts": {
+    "script": "Напиши вирусный сценарий для TikTok о...",
+    "ideas": "Дай мне 5 идей для контента о...",
+    "analysis": "Проанализируй эту трендовую идею для видео",
+    "hook": "Создай 3 хука для моего видео о..."
+  },
+  "nodeTypes": {
+    "video": {
+      "title": "Видеовход",
+      "description": "Перетащите сохранённое видео сюда"
+    },
+    "brand": {
+      "title": "Бренд-бриф",
+      "description": "Контекст вашего бренда"
+    },
+    "analyze": {
+      "title": "Анализ",
+      "description": "Глубокий анализ контента"
+    },
+    "extract": {
+      "title": "Извлечение",
+      "description": "Извлечение ключевых элементов"
+    },
+    "style": {
+      "title": "Стиль",
+      "description": "Подбор визуального стиля"
+    },
+    "generate": {
+      "title": "Генерация",
+      "description": "Создание сценария ИИ"
+    },
+    "refine": {
+      "title": "Доработка",
+      "description": "Шлифовка и улучшение"
+    },
+    "script": {
+      "title": "Сценарий",
+      "description": "Итоговый сценарий"
+    },
+    "storyboard": {
+      "title": "Раскадровка",
+      "description": "Визуальная разбивка"
+    }
+  },
+  "templates": {
+    "videoAnalysis": "Конвейер анализа видео",
+    "scriptGenerator": "Генератор сценариев",
+    "fullPipeline": "Полный контент-конвейер"
+  },
+  "sidebar": {
+    "nodes": "Узлы",
+    "saved": "Сохранённые",
+    "history": "История",
+    "chat": "Чат"
+  },
+  "savedTabs": {
+    "videos": "Видео",
+    "workflows": "Рабочие процессы"
+  },
+  "historyTabs": {
+    "runs": "Запуски",
+    "chats": "Чаты"
+  },
+  "canvas": {
+    "zoomIn": "Увеличить",
+    "zoomOut": "Уменьшить",
+    "fitToScreen": "Вписать в экран",
+    "deleteSelected": "Удалить выбранное"
+  },
+  "actions": {
+    "save": "Сохранить",
+    "run": "Запустить",
+    "running": "Выполняется...",
+    "newWorkflow": "Новый процесс",
+    "deleteWorkflow": "Удалить процесс",
+    "close": "Закрыть"
+  },
+  "chat": {
+    "placeholder": "Спросите ИИ что угодно...",
+    "send": "Отправить",
+    "newChat": "Новый чат",
+    "deleteChat": "Удалить чат",
+    "copyMessage": "Копировать",
+    "regenerate": "Сгенерировать заново",
+    "credits": "Кредиты"
+  },
+  "results": {
+    "title": "Результаты запуска",
+    "tabs": {
+      "all": "Все",
+      "script": "Сценарий",
+      "storyboard": "Раскадровка",
+      "nodes": "Узлы"
+    },
+    "creditsUsed": "Потрачено кредитов",
+    "executionTime": "Время выполнения",
+    "copy": "Копировать",
+    "download": "Скачать",
+    "close": "Закрыть",
+    "back": "Назад"
+  },
+  "runHistory": {
+    "title": "История запусков",
+    "noRuns": "Запусков пока нет",
+    "success": "Успех",
+    "failed": "Ошибка",
+    "viewDetails": "Подробности"
+  },
+  "savedVideos": {
+    "title": "Сохранённые видео",
+    "noVideos": "Нет сохранённых видео",
+    "dragToCanvas": "Перетащите видео на холст",
+    "filterAll": "Все",
+    "views": "просмотров",
+    "uts": "UTS"
+  },
+  "savedWorkflows": {
+    "title": "Сохранённые процессы",
+    "noWorkflows": "Нет сохранённых процессов",
+    "load": "Загрузить",
+    "delete": "Удалить"
+  },
+  "toast": {
+    "workflowSaved": "Процесс сохранён",
+    "workflowDeleted": "Процесс удалён",
+    "runStarted": "Процесс запущен...",
+    "runComplete": "Процесс завершён",
+    "runFailed": "Ошибка выполнения процесса",
+    "noNodes": "Сначала добавьте узлы на холст",
+    "messageCopied": "Сообщение скопировано",
+    "resultCopied": "Скопировано в буфер обмена",
+    "loadError": "Не удалось загрузить детали запуска"
+  }
+}

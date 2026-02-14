@@ -1,0 +1,163 @@
+{
+  "badge": "Pricing",
+  "title": "Choose your plan",
+  "subtitle": "Start free and scale as you grow. All plans include core features.",
+  "billing": {
+    "monthly": "Monthly",
+    "yearly": "Yearly",
+    "save": "Save 40%",
+    "perMonth": "/mo",
+    "billedYearly": "${{amount}} billed yearly"
+  },
+  "highlights": {
+    "trends": {
+      "title": "Real-time Trends",
+      "description": "Track TikTok trends as they emerge"
+    },
+    "scripts": {
+      "title": "AI Script Generation",
+      "description": "Create viral scripts with GPT-5, Claude & more"
+    },
+    "voice": {
+      "title": "Voice AI Assistant",
+      "description": "Talk to AI in real-time with PersonaPlex"
+    },
+    "competitors": {
+      "title": "Competitor Analysis",
+      "description": "Track and analyze your competition"
+    }
+  },
+  "plans": {
+    "free": {
+      "name": "Free",
+      "description": "Get started with basic features",
+      "cta": "Current Plan",
+      "features": [
+        "Light Analyze (basic)",
+        "10 trend views/day",
+        "5 AI scripts/month",
+        "3 competitor tracking"
+      ]
+    },
+    "creator": {
+      "name": "Creator",
+      "description": "For content creators ready to grow",
+      "cta": "Upgrade to Creator",
+      "features": [
+        "Light Analyze (unlimited)",
+        "50 AI scripts/month",
+        "10 min Voice AI/day",
+        "100 Deep Scans/month"
+      ]
+    },
+    "pro": {
+      "name": "Pro",
+      "description": "For serious creators & marketers",
+      "cta": "Upgrade to Pro",
+      "features": [
+        "Deep Analyze (6-layer UTS)",
+        "Unlimited AI scripts",
+        "60 min Voice AI/day",
+        "Visual clustering (AI)",
+        "Priority support"
+      ]
+    },
+    "agency": {
+      "name": "Agency",
+      "description": "For teams and agencies",
+      "cta": "Contact Sales",
+      "features": [
+        "5 team members",
+        "180 min Voice AI/day",
+        "100 competitors",
+        "API access (10K/mo)",
+        "Dedicated support"
+      ]
+    }
+  },
+  "mostPopular": "Most Popular",
+  "currentPlan": "Current Plan",
+  "keyFeatures": "Key features",
+  "features": [
+    { "name": "Light Analyze (basic metrics)", "free": true, "creator": true, "pro": true, "agency": true },
+    { "name": "Deep Analyze (6-layer UTS)", "free": false, "creator": false, "pro": true, "agency": true },
+    { "name": "Daily trend views", "free": "10", "creator": "Unlimited", "pro": "Unlimited", "agency": "Unlimited" },
+    { "name": "Deep Scan videos per month", "free": "0", "creator": "100", "pro": "500", "agency": "2,000" },
+    { "name": "UTS Score breakdown", "free": false, "creator": false, "pro": true, "agency": true },
+    { "name": "Visual clustering (AI)", "free": false, "creator": false, "pro": true, "agency": true },
+    { "name": "Growth velocity tracking", "free": false, "creator": false, "pro": true, "agency": true },
+    { "name": "Saturation indicator", "free": false, "creator": false, "pro": true, "agency": true },
+    { "name": "Sound cascade analysis", "free": false, "creator": false, "pro": true, "agency": true },
+    { "name": "Auto-rescan (24h)", "free": false, "creator": false, "pro": true, "agency": true },
+    { "name": "Historical data", "free": false, "creator": "7 days", "pro": "30 days", "agency": "90 days" },
+    { "name": "Export data (CSV)", "free": false, "creator": true, "pro": true, "agency": true },
+    { "name": "Daily searches", "free": "10", "creator": "Unlimited", "pro": "Unlimited", "agency": "Unlimited" },
+    { "name": "Advanced filters", "free": false, "creator": true, "pro": true, "agency": true },
+    { "name": "AI scripts per month", "free": "5", "creator": "50", "pro": "Unlimited", "agency": "Unlimited" },
+    { "name": "Choose AI model", "free": false, "creator": true, "pro": true, "agency": true },
+    { "name": "All 5 generation modes", "free": false, "creator": true, "pro": true, "agency": true },
+    { "name": "Bulk generation", "free": false, "creator": false, "pro": "10 at once", "agency": "25 at once" },
+    { "name": "Custom templates", "free": false, "creator": false, "pro": true, "agency": true },
+    { "name": "Voice AI minutes/day", "free": false, "creator": "10 min", "pro": "60 min", "agency": "180 min" },
+    { "name": "Voice selection (16 voices)", "free": false, "creator": false, "pro": true, "agency": true },
+    { "name": "Custom persona", "free": false, "creator": false, "pro": true, "agency": true },
+    { "name": "Priority queue", "free": false, "creator": false, "pro": true, "agency": true },
+    { "name": "Track competitors", "free": "3", "creator": "10", "pro": "25", "agency": "100" },
+    { "name": "Competitor alerts", "free": false, "creator": false, "pro": true, "agency": true },
+    { "name": "Strategy analysis", "free": false, "creator": false, "pro": true, "agency": true },
+    { "name": "Team members", "free": "1", "creator": "1", "pro": "1", "agency": "5" },
+    { "name": "API access", "free": false, "creator": false, "pro": false, "agency": "10K/mo" },
+    { "name": "Support", "free": "Email", "creator": "Email", "pro": "Priority", "agency": "Dedicated" },
+    { "name": "Weekly reports", "free": false, "creator": false, "pro": true, "agency": true }
+  ],
+  "compareFeatures": {
+    "title": "Compare all features",
+    "feature": "Feature",
+    "sections": {
+      "trendAnalysis": "Trend Analysis",
+      "videoSearch": "Video Search",
+      "aiScriptGeneration": "AI Script Generation",
+      "voiceAI": "Voice AI (PersonaPlex)",
+      "voiceAIBadge": "NEW",
+      "competitorTracking": "Competitor Tracking",
+      "teamSupport": "Team & Support"
+    }
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "items": [
+      {
+        "question": "Can I switch plans anytime?",
+        "answer": "Yes! You can upgrade or downgrade your plan at any time. When upgrading, you'll be charged the prorated difference."
+      },
+      {
+        "question": "What is Voice AI (PersonaPlex)?",
+        "answer": "Voice AI is our revolutionary feature powered by NVIDIA's PersonaPlex. It allows you to have real-time voice conversations with AI — dictate your ideas, get instant feedback, and brainstorm content hands-free."
+      },
+      {
+        "question": "What payment methods do you accept?",
+        "answer": "We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and for Agency plans, we also offer invoice-based billing."
+      },
+      {
+        "question": "Is there a refund policy?",
+        "answer": "Yes, we offer a 14-day money-back guarantee for all paid plans. If you're not satisfied, contact our support team for a full refund."
+      }
+    ]
+  },
+  "cta": {
+    "title": "Ready to go viral?",
+    "subtitle": "Join thousands of creators who use Rizko.ai to find trends, create viral content, and grow their audience.",
+    "startPro": "Start Pro Trial",
+    "tryFree": "Try Free"
+  },
+  "devModal": {
+    "title": "Developer Access",
+    "description": "Enter developer code to upgrade to <1>{{plan}}</1> plan.",
+    "label": "Dev Code",
+    "placeholder": "Enter developer code...",
+    "warning": "This is a developer feature for testing purposes. In production, Stripe checkout will be used.",
+    "cancel": "Cancel",
+    "upgrade": "Upgrade to {{plan}}",
+    "upgrading": "Upgrading..."
+  }
+}

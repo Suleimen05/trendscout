@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
 import { Sparkles, Copy, Download, Folder, Clock, Star, Trash2, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -85,9 +87,10 @@ interface ScriptCardProps {
   onCopy: (script: AIScript) => void;
   onDownload: (script: AIScript) => void;
   isSelected: boolean;
+  t: TFunction;
 }
 
-function ScriptCard({ script, onSelect, onDelete, onCopy, onDownload, isSelected }: ScriptCardProps) {
+function ScriptCard({ script, onSelect, onDelete, onCopy, onDownload, isSelected, t }: ScriptCardProps) {
   const formatDuration = (seconds: number): string => {
     if (seconds < 60) return `${seconds}s`;
     return `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, '0')}`;
@@ -95,12 +98,12 @@ function ScriptCard({ script, onSelect, onDelete, onCopy, onDownload, isSelected
 
   const timeAgo = (date: string): string => {
     const seconds = Math.floor((new Date().getTime() - new Date(date).getTime()) / 1000);
-    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 60) return t('timeAgoSeconds', { count: seconds });
     const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
+    if (minutes < 60) return t('timeAgoMinutes', { count: minutes });
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h ago`;
-    return `${Math.floor(hours / 24)}d ago`;
+    if (hours < 24) return t('timeAgoHours', { count: hours });
+    return t('timeAgoDays', { count: Math.floor(hours / 24) });
   };
 
   const toneColors: Record<string, string> = {
@@ -185,7 +188,16 @@ function ScriptCard({ script, onSelect, onDelete, onCopy, onDownload, isSelected
   );
 }
 
+const getNiches = (t: TFunction, scripts: AIScript[]) => [
+  { id: 'all', label: t('nichesAll'), count: scripts.length },
+  { id: 'entertainment', label: t('nichesEntertainment'), count: scripts.filter(s => s.niche === 'entertainment').length },
+  { id: 'education', label: t('nichesEducation'), count: scripts.filter(s => s.niche === 'education').length },
+  { id: 'lifestyle', label: t('nichesLifestyle'), count: scripts.filter(s => s.niche === 'lifestyle').length },
+  { id: 'business', label: t('nichesBusiness'), count: scripts.filter(s => s.niche === 'business').length },
+];
+
 export function AIScripts() {
+  const { t } = useTranslation('aiscripts');
   const [scripts, setScripts] = useState<AIScript[]>(mockScripts);
   const [selectedScript, setSelectedScript] = useState<AIScript | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -223,13 +235,7 @@ export function AIScripts() {
     return script.niche === activeTab;
   });
 
-  const niches = [
-    { id: 'all', label: 'All Scripts', count: scripts.length },
-    { id: 'entertainment', label: 'Entertainment', count: scripts.filter(s => s.niche === 'entertainment').length },
-    { id: 'education', label: 'Education', count: scripts.filter(s => s.niche === 'education').length },
-    { id: 'lifestyle', label: 'Lifestyle', count: scripts.filter(s => s.niche === 'lifestyle').length },
-    { id: 'business', label: 'Business', count: scripts.filter(s => s.niche === 'business').length },
-  ];
+  const niches = getNiches(t, scripts);
 
   return (
     <DevAccessGate>
@@ -239,15 +245,15 @@ export function AIScripts() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <Sparkles className="h-7 w-7 text-purple-500" />
-            AI Scripts
+            {t('pageTitle')}
           </h1>
           <p className="text-muted-foreground">
-            Your generated viral scripts and content ideas
+            {t('pageDescription')}
           </p>
         </div>
         <Button className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
           <Sparkles className="h-4 w-4 mr-2" />
-          Generate New Script
+          {t('generateNewScript')}
         </Button>
       </div>
 
@@ -260,7 +266,7 @@ export function AIScripts() {
             </div>
             <div>
               <p className="text-2xl font-bold">{scripts.length}</p>
-              <p className="text-sm text-muted-foreground">Total Scripts</p>
+              <p className="text-sm text-muted-foreground">{t('statsTotal')}</p>
             </div>
           </div>
         </Card>
@@ -271,7 +277,7 @@ export function AIScripts() {
             </div>
             <div>
               <p className="text-2xl font-bold">12</p>
-              <p className="text-sm text-muted-foreground">Favorites</p>
+              <p className="text-sm text-muted-foreground">{t('statsFavorites')}</p>
             </div>
           </div>
         </Card>
@@ -282,7 +288,7 @@ export function AIScripts() {
             </div>
             <div>
               <p className="text-2xl font-bold">8</p>
-              <p className="text-sm text-muted-foreground">Used This Week</p>
+              <p className="text-sm text-muted-foreground">{t('statsUsedThisWeek')}</p>
             </div>
           </div>
         </Card>
@@ -293,7 +299,7 @@ export function AIScripts() {
             </div>
             <div>
               <p className="text-2xl font-bold">24</p>
-              <p className="text-sm text-muted-foreground">Avg Duration (s)</p>
+              <p className="text-sm text-muted-foreground">{t('statsAvgDuration')}</p>
             </div>
           </div>
         </Card>
@@ -320,13 +326,13 @@ export function AIScripts() {
                 <Card className="p-12">
                   <div className="text-center">
                     <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold mb-2">No scripts yet</h3>
+                    <h3 className="text-lg font-semibold mb-2">{t('emptyTitle')}</h3>
                     <p className="text-muted-foreground">
-                      Generate your first AI script from a trending video
+                      {t('emptyDescription')}
                     </p>
                     <Button className="mt-4 bg-gradient-to-r from-purple-600 to-pink-600">
                       <Sparkles className="h-4 w-4 mr-2" />
-                      Generate Script
+                      {t('generateScript')}
                     </Button>
                   </div>
                 </Card>
@@ -340,6 +346,7 @@ export function AIScripts() {
                     onCopy={handleCopy}
                     onDownload={handleDownload}
                     isSelected={selectedScript?.id === script.id}
+                    t={t}
                   />
                 ))
               )}
@@ -352,14 +359,14 @@ export function AIScripts() {
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Sparkles className="h-5 w-5 text-purple-500" />
-                      Script Preview
+                      {t('previewTitle')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* Hook */}
                     <div>
                       <Badge variant="secondary" className="mb-2">
-                        Hook (First 3 seconds)
+                        {t('hookLabel')}
                       </Badge>
                       <p className="font-medium text-lg">{selectedScript.hook}</p>
                     </div>
@@ -367,7 +374,7 @@ export function AIScripts() {
                     {/* Body */}
                     <div>
                       <Badge variant="secondary" className="mb-2">
-                        Body
+                        {t('bodyLabel')}
                       </Badge>
                       <div className="space-y-2">
                         {selectedScript.body.map((segment, index) => (
@@ -381,7 +388,7 @@ export function AIScripts() {
                     {/* CTA */}
                     <div>
                       <Badge variant="secondary" className="mb-2">
-                        Call to Action
+                        {t('ctaLabel')}
                       </Badge>
                       <p className="font-medium">{selectedScript.callToAction}</p>
                     </div>
@@ -389,7 +396,7 @@ export function AIScripts() {
                     {/* Tips */}
                     <div>
                       <Badge variant="secondary" className="mb-2">
-                        Pro Tips
+                        {t('tipsLabel')}
                       </Badge>
                       <ul className="space-y-1">
                         {selectedScript.tips.map((tip, index) => (
@@ -411,12 +418,12 @@ export function AIScripts() {
                       >
                         {copiedId === selectedScript.id ? (
                           <>
-                            Copied!
+                            {t('copied')}
                           </>
                         ) : (
                           <>
                             <Copy className="h-4 w-4 mr-2" />
-                            Copy
+                            {t('copy')}
                           </>
                         )}
                       </Button>
@@ -434,7 +441,7 @@ export function AIScripts() {
                   <div className="text-center">
                     <Sparkles className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <p className="text-muted-foreground">
-                      Select a script to view details
+                      {t('previewPlaceholder')}
                     </p>
                   </div>
                 </Card>

@@ -1,0 +1,35 @@
+{
+  "pageTitle": "AI Scripts",
+  "pageDescription": "Your generated viral scripts and content ideas",
+  "generateNewScript": "Generate New Script",
+  "generateScript": "Generate Script",
+
+  "statsTotal": "Total Scripts",
+  "statsFavorites": "Favorites",
+  "statsUsedThisWeek": "Used This Week",
+  "statsAvgDuration": "Avg Duration (s)",
+
+  "nichesAll": "All Scripts",
+  "nichesEntertainment": "Entertainment",
+  "nichesEducation": "Education",
+  "nichesLifestyle": "Lifestyle",
+  "nichesBusiness": "Business",
+
+  "emptyTitle": "No scripts yet",
+  "emptyDescription": "Generate your first AI script from a trending video",
+
+  "previewTitle": "Script Preview",
+  "previewPlaceholder": "Select a script to view details",
+  "hookLabel": "Hook (First 3 seconds)",
+  "bodyLabel": "Body",
+  "ctaLabel": "Call to Action",
+  "tipsLabel": "Pro Tips",
+
+  "copied": "Copied!",
+  "copy": "Copy",
+
+  "timeAgoSeconds": "{{count}}s ago",
+  "timeAgoMinutes": "{{count}}m ago",
+  "timeAgoHours": "{{count}}h ago",
+  "timeAgoDays": "{{count}}d ago"
+}

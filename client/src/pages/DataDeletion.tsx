@@ -5,8 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export function DataDeletion() {
+  const { t } = useTranslation('legal');
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [confirmationCode, setConfirmationCode] = useState('');
@@ -34,9 +36,9 @@ export function DataDeletion() {
       <div className="flex items-center gap-3">
         <Trash2 className="h-8 w-8 text-red-500" />
         <div>
-          <h1 className="text-3xl font-bold">Data Deletion Request</h1>
+          <h1 className="text-3xl font-bold">{t('dataDeletion.title')}</h1>
           <p className="text-muted-foreground">
-            Request deletion of your personal data from Rizko.ai
+            {t('dataDeletion.subtitle')}
           </p>
         </div>
       </div>
@@ -48,11 +50,10 @@ export function DataDeletion() {
             <Shield className="h-6 w-6 text-blue-600 dark:text-blue-400 flex-shrink-0" />
             <div className="space-y-2">
               <h3 className="font-semibold text-blue-900 dark:text-blue-100">
-                Your Privacy Rights
+                {t('dataDeletion.yourPrivacyRights')}
               </h3>
               <p className="text-sm text-blue-800 dark:text-blue-200">
-                Under GDPR, CCPA, and other privacy regulations, you have the right to request
-                deletion of your personal data. We will process your request within 30 days.
+                {t('dataDeletion.privacyRightsDescription')}
               </p>
             </div>
           </div>
@@ -62,36 +63,34 @@ export function DataDeletion() {
       {/* What Gets Deleted */}
       <Card>
         <CardHeader>
-          <CardTitle>What data will be deleted?</CardTitle>
+          <CardTitle>{t('dataDeletion.whatGetsDeleted')}</CardTitle>
           <CardDescription>
-            Upon processing your request, we will permanently delete:
+            {t('dataDeletion.whatGetsDeletedDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <ul className="space-y-2">
             <li className="flex items-start gap-2">
               <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-              <span>Your account information (email, name, profile)</span>
+              <span>{t('dataDeletion.deleteAccountInfo')}</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-              <span>Connected social media account data and OAuth tokens</span>
+              <span>{t('dataDeletion.deleteOAuthData')}</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-              <span>Saved videos, analytics history, and preferences</span>
+              <span>{t('dataDeletion.deleteSavedData')}</span>
             </li>
             <li className="flex items-start gap-2">
               <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />
-              <span>Usage logs and activity data</span>
+              <span>{t('dataDeletion.deleteUsageLogs')}</span>
             </li>
           </ul>
 
           <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-950 rounded-lg border border-yellow-200 dark:border-yellow-800">
             <p className="text-sm text-yellow-800 dark:text-yellow-200">
-              <strong>Note:</strong> Some data may be retained for legal or compliance purposes
-              (e.g., payment records for tax purposes). This retained data will be anonymized
-              where possible.
+              <strong>Note:</strong> {t('dataDeletion.retentionNote')}
             </p>
           </div>
         </CardContent>
@@ -100,9 +99,9 @@ export function DataDeletion() {
       {/* Request Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Submit Deletion Request</CardTitle>
+          <CardTitle>{t('dataDeletion.submitRequest')}</CardTitle>
           <CardDescription>
-            Enter the email address associated with your Rizko.ai account
+            {t('dataDeletion.submitRequestDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -113,34 +112,31 @@ export function DataDeletion() {
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-green-700 dark:text-green-300">
-                  Request Submitted Successfully
+                  {t('dataDeletion.requestSubmitted')}
                 </h3>
-                <p className="text-muted-foreground mt-2">
-                  We've received your data deletion request. You will receive a confirmation
-                  email at <strong>{email}</strong>.
-                </p>
+                <p className="text-muted-foreground mt-2" dangerouslySetInnerHTML={{ __html: t('dataDeletion.confirmationEmailSent', { email }) }} />
               </div>
               <div className="bg-muted p-4 rounded-lg">
-                <p className="text-sm text-muted-foreground">Your confirmation code:</p>
+                <p className="text-sm text-muted-foreground">{t('dataDeletion.confirmationCode')}</p>
                 <p className="text-2xl font-mono font-bold mt-1">{confirmationCode}</p>
                 <p className="text-xs text-muted-foreground mt-2">
-                  Please save this code for your records
+                  {t('dataDeletion.saveCode')}
                 </p>
               </div>
               <div className="text-sm text-muted-foreground space-y-1">
-                <p>• Your request will be processed within 30 days</p>
-                <p>• You will receive email confirmation when deletion is complete</p>
-                <p>• For questions, contact <a href="mailto:privacy@rizko.ai" className="text-blue-600 dark:text-blue-400">privacy@rizko.ai</a></p>
+                <p>• {t('dataDeletion.processedWithin30Days')}</p>
+                <p>• {t('dataDeletion.emailConfirmation')}</p>
+                <p>• {t('dataDeletion.questionsContact')} <a href="mailto:privacy@rizko.ai" className="text-blue-600 dark:text-blue-400">privacy@rizko.ai</a></p>
               </div>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
+                <Label htmlFor="email">{t('dataDeletion.emailLabel')}</Label>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="your@email.com"
+                  placeholder={t('dataDeletion.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -151,14 +147,13 @@ export function DataDeletion() {
               {status === 'error' && (
                 <div className="flex items-center gap-2 text-red-600 dark:text-red-400">
                   <AlertCircle className="h-4 w-4" />
-                  <span className="text-sm">Something went wrong. Please try again.</span>
+                  <span className="text-sm">{t('dataDeletion.errorMessage')}</span>
                 </div>
               )}
 
               <div className="bg-muted p-3 rounded-lg">
                 <p className="text-sm text-muted-foreground">
-                  By submitting this request, you confirm that you are the owner of this account
-                  and understand that this action is irreversible.
+                  {t('dataDeletion.consentNotice')}
                 </p>
               </div>
 
@@ -171,12 +166,12 @@ export function DataDeletion() {
                 {status === 'loading' ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Processing...
+                    {t('dataDeletion.processing')}
                   </>
                 ) : (
                   <>
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Request Data Deletion
+                    {t('dataDeletion.requestDataDeletion')}
                   </>
                 )}
               </Button>
@@ -188,13 +183,13 @@ export function DataDeletion() {
       {/* Alternative Methods */}
       <Card>
         <CardHeader>
-          <CardTitle>Alternative Methods</CardTitle>
+          <CardTitle>{t('dataDeletion.alternativeMethods')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-start gap-3">
             <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
             <div>
-              <p className="font-medium">Email Request</p>
+              <p className="font-medium">{t('dataDeletion.emailRequest')}</p>
               <p className="text-sm text-muted-foreground">
                 Send an email to{' '}
                 <a href="mailto:privacy@rizko.ai" className="text-blue-600 dark:text-blue-400">
@@ -208,7 +203,7 @@ export function DataDeletion() {
           <div className="flex items-start gap-3">
             <Trash2 className="h-5 w-5 text-muted-foreground mt-0.5" />
             <div>
-              <p className="font-medium">Self-Service (Logged-in Users)</p>
+              <p className="font-medium">{t('dataDeletion.selfService')}</p>
               <p className="text-sm text-muted-foreground">
                 If you can access your account, go to{' '}
                 <Link to="/dashboard/settings" className="text-blue-600 dark:text-blue-400">
@@ -227,7 +222,7 @@ export function DataDeletion() {
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
               <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073z"/>
             </svg>
-            Instagram/Meta Users
+            {t('dataDeletion.instagramMetaUsers')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -246,10 +241,10 @@ export function DataDeletion() {
       {/* Links */}
       <div className="flex gap-4 text-sm">
         <Link to="/dashboard/privacy-policy" className="text-blue-600 dark:text-blue-400 hover:underline">
-          Privacy Policy →
+          {t('privacyPolicyLink')} →
         </Link>
         <Link to="/dashboard/usage-policy" className="text-blue-600 dark:text-blue-400 hover:underline">
-          Terms of Service →
+          {t('termsOfServiceLink')} →
         </Link>
       </div>
     </div>

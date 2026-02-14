@@ -1,0 +1,122 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "myPosts": "My Posts",
+    "myVideos": "My Videos",
+    "trending": "Trending Now",
+    "discover": "Discover Videos",
+    "deepAnalysis": "Deep Analysis",
+    "saved": "Saved",
+    "competitors": "Competitors",
+    "aiScripts": "AI Scripts",
+    "feedback": "Feedback",
+    "help": "Help & FAQ",
+    "settings": "Settings",
+    "language": "Language",
+    "upgradePlan": "Upgrade Plan",
+    "logOut": "Log out",
+    "getHelp": "Get help",
+    "learnMore": "Learn more",
+    "about": "About",
+    "usagePolicy": "Usage policy",
+    "privacyPolicy": "Privacy policy",
+    "connectAccounts": "Connect Accounts",
+    "publishHub": "Publish Hub",
+    "marketplace": "Marketplace"
+  },
+  "section": {
+    "tools": "Tools",
+    "aiTools": "AI Tools",
+    "support": "Support"
+  },
+  "tabs": {
+    "trends": "Trends",
+    "scripts": "Scripts"
+  },
+  "button": {
+    "save": "Save",
+    "saveChanges": "Save Changes",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "retry": "Retry",
+    "connect": "Connect",
+    "disconnect": "Disconnect",
+    "sync": "Sync",
+    "viewAll": "View All",
+    "install": "Install",
+    "update": "Update",
+    "apply": "Apply",
+    "close": "Close",
+    "copy": "Copy",
+    "copied": "Copied",
+    "newSearch": "New Search",
+    "newChat": "New Chat",
+    "generate": "Generate",
+    "run": "Run",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "getStarted": "Get Started",
+    "tryFree": "Try Free",
+    "analyze": "Analyze",
+    "download": "Download",
+    "share": "Share",
+    "edit": "Edit",
+    "refresh": "Refresh",
+    "goBack": "Go Back",
+    "goHome": "Go Home"
+  },
+  "status": {
+    "loading": "Loading...",
+    "active": "Active",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "online": "Online",
+    "offline": "Offline",
+    "pending": "Pending",
+    "completed": "Completed",
+    "failed": "Failed",
+    "running": "Running"
+  },
+  "plan": {
+    "free": "Free",
+    "creator": "Creator",
+    "pro": "Pro",
+    "agency": "Agency",
+    "label": "{{plan}} Plan"
+  },
+  "time": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "daysAgo": "{{count}} days ago",
+    "hoursAgo": "{{count}}h ago",
+    "minutesAgo": "{{count}}m ago",
+    "justNow": "just now"
+  },
+  "pwa": {
+    "offline": "You are offline",
+    "offlineDescription": "Some features may be unavailable",
+    "connectionRestored": "Connection restored",
+    "connectedVia": "Connected via {{type}}",
+    "updateAvailable": "Update available",
+    "updateNow": "Update now"
+  },
+  "search": {
+    "placeholder": "Search...",
+    "recentSearches": "Recent Searches",
+    "noResults": "No results found"
+  },
+  "history": {
+    "saved": "Saved"
+  },
+  "error": {
+    "somethingWentWrong": "Something went wrong",
+    "pleaseTryAgain": "Please try again later",
+    "pageError": "An error occurred on this page",
+    "tryAgain": "Try Again",
+    "goHome": "Go Home",
+    "appCrashed": "The application encountered an unexpected error"
+  },
+  "demo": {
+    "user": "Demo User"
+  }
+}

@@ -1,26 +1,24 @@
 import { Check, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface PasswordStrengthProps {
   password: string;
 }
 
-interface PasswordRequirement {
-  label: string;
-  test: (password: string) => boolean;
-}
-
-const requirements: PasswordRequirement[] = [
-  { label: 'Минимум 8 символов', test: (p) => p.length >= 8 },
-  { label: 'Содержит заглавную букву', test: (p) => /[A-Z]/.test(p) },
-  { label: 'Содержит строчную букву', test: (p) => /[a-z]/.test(p) },
-  { label: 'Содержит цифру', test: (p) => /[0-9]/.test(p) },
-];
-
 /**
  * Password strength indicator component
  */
 export function PasswordStrength({ password }: PasswordStrengthProps) {
+  const { t } = useTranslation('auth');
+
+  const requirements = [
+    { label: t('passwordStrength.minLength'), test: (p: string) => p.length >= 8 },
+    { label: t('passwordStrength.hasUppercase'), test: (p: string) => /[A-Z]/.test(p) },
+    { label: t('passwordStrength.hasLowercase'), test: (p: string) => /[a-z]/.test(p) },
+    { label: t('passwordStrength.hasNumber'), test: (p: string) => /[0-9]/.test(p) },
+  ];
+
   const passedRequirements = requirements.filter((req) => req.test(password));
   const strength = passedRequirements.length;
 
@@ -35,12 +33,12 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
     4: 'bg-green-500',
   };
 
-  const strengthLabels = {
-    0: 'Очень слабый',
-    1: 'Слабый',
-    2: 'Средний',
-    3: 'Хороший',
-    4: 'Отличный',
+  const strengthLabels: Record<number, string> = {
+    0: t('passwordStrength.veryWeak'),
+    1: t('passwordStrength.weak'),
+    2: t('passwordStrength.fair'),
+    3: t('passwordStrength.good'),
+    4: t('passwordStrength.excellent'),
   };
 
   return (
@@ -60,7 +58,7 @@ export function PasswordStrength({ password }: PasswordStrengthProps) {
 
       {/* Strength label */}
       <p className="text-xs text-muted-foreground">
-        Сложность пароля: <span className="font-medium">{strengthLabels[strength as keyof typeof strengthLabels]}</span>
+        {t('passwordStrength.label')}: <span className="font-medium">{strengthLabels[strength]}</span>
       </p>
 
       {/* Requirements list */}

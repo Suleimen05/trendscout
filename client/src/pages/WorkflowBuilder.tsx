@@ -1,4 +1,7 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import type { TFunction } from 'i18next';
+import i18n from '@/lib/i18n';
 import {
   Send,
   ChevronDown,
@@ -21,7 +24,6 @@ import {
   FolderOpen,
   X,
   Plus,
-  ChevronLeft,
   ChevronRight,
   Copy,
   RefreshCw,
@@ -45,6 +47,9 @@ import {
   Award,
   Timer,
   Coins,
+  Component,
+  Heart,
+  RotateCcw,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -52,11 +57,11 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useChat } from '@/contexts/ChatContext';
-import { useWorkflow } from '@/contexts/WorkflowContext';
+import { useWorkflow, type SavedVideo } from '@/contexts/WorkflowContext';
 import { apiService } from '@/services/api';
 import { toast } from 'sonner';
 import { DevAccessGate } from '@/components/DevAccessGate';
-import { NodeConfigPanel } from '@/components/workflow/NodeConfigPanel';
+import { NodeConfigPanel, NODE_MODEL_COSTS } from '@/components/workflow/NodeConfigPanel';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -89,49 +94,61 @@ const GPTIcon = () => (
   </svg>
 );
 
-const aiModels = [
-  { id: 'gemini', name: 'Gemini 2.0 Flash', icon: GeminiIcon, available: true, description: 'Fast & efficient', creditCost: 1 },
-  { id: 'claude', name: 'Claude 3.5 Sonnet', icon: ClaudeIcon, available: true, description: 'Best for writing', creditCost: 5 },
-  { id: 'gpt4', name: 'GPT-4o', icon: GPTIcon, available: true, description: 'Most capable', creditCost: 4 },
+const NanoBanaIcon = () => (
+  <svg viewBox="0 0 24 24" className="h-4 w-4">
+    <defs>
+      <linearGradient id="nanoBanaGradWf" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stopColor="#EA4335"/>
+        <stop offset="33%" stopColor="#FBBC04"/>
+        <stop offset="66%" stopColor="#34A853"/>
+        <stop offset="100%" stopColor="#4285F4"/>
+      </linearGradient>
+    </defs>
+    <rect x="3" y="3" width="18" height="18" rx="4" fill="url(#nanoBanaGradWf)" opacity="0.9"/>
+    <circle cx="9" cy="10" r="2.5" fill="white" opacity="0.9"/>
+    <path d="M5 17l4-5 3 3.5 2-2.5 5 4H5z" fill="white" opacity="0.85"/>
+  </svg>
+);
+
+const getAiModels = (t: TFunction) => [
+  { id: 'gemini', name: t('models.gemini.name'), icon: GeminiIcon, available: true, description: t('models.gemini.description'), creditCost: 1 },
+  { id: 'nano-bana', name: t('models.nano-bana.name'), icon: NanoBanaIcon, available: true, description: t('models.nano-bana.description'), creditCost: 2, isImageGen: true },
+  { id: 'claude', name: t('models.claude.name'), icon: ClaudeIcon, available: true, description: t('models.claude.description'), creditCost: 5 },
+  { id: 'gpt4', name: t('models.gpt4.name'), icon: GPTIcon, available: true, description: t('models.gpt4.description'), creditCost: 4 },
 ];
 
-const contentModes = [
-  { id: 'script', name: 'Script Writer', icon: PenTool, description: 'Create viral scripts', color: 'from-purple-500 to-pink-500' },
-  { id: 'ideas', name: 'Idea Generator', icon: Lightbulb, description: 'Generate content ideas', color: 'from-yellow-500 to-orange-500' },
-  { id: 'analysis', name: 'Trend Analyst', icon: TrendingUp, description: 'Analyze content', color: 'from-blue-500 to-cyan-500' },
-  { id: 'improve', name: 'Content Improver', icon: Zap, description: 'Enhance existing content', color: 'from-green-500 to-emerald-500' },
-  { id: 'hook', name: 'Hook Master', icon: Sparkles, description: 'Create attention hooks', color: 'from-red-500 to-pink-500' },
+const getContentModes = (t: TFunction) => [
+  { id: 'chat', name: t('modes.chat.name'), icon: MessageSquare, description: t('modes.chat.description'), color: 'from-zinc-600 to-zinc-700' },
+  { id: 'script', name: t('modes.script.name'), icon: PenTool, description: t('modes.script.description'), color: 'from-zinc-600 to-zinc-700' },
+  { id: 'ideas', name: t('modes.ideas.name'), icon: Lightbulb, description: t('modes.ideas.description'), color: 'from-zinc-600 to-zinc-700' },
+  { id: 'analysis', name: t('modes.analysis.name'), icon: TrendingUp, description: t('modes.analysis.description'), color: 'from-zinc-600 to-zinc-700' },
+  { id: 'improve', name: t('modes.improve.name'), icon: Zap, description: t('modes.improve.description'), color: 'from-zinc-600 to-zinc-700' },
+  { id: 'hook', name: t('modes.hook.name'), icon: Sparkles, description: t('modes.hook.description'), color: 'from-zinc-600 to-zinc-700' },
 ];
 
-const suggestedPrompts = [
-  { icon: PenTool, text: 'Write a viral TikTok script about...', category: 'script' },
-  { icon: Lightbulb, text: 'Give me 5 content ideas for...', category: 'ideas' },
-  { icon: TrendingUp, text: 'Analyze this trending video concept', category: 'analysis' },
-  { icon: Sparkles, text: 'Create 3 hooks for my video about...', category: 'hook' },
-];
 
 // ============================================================================
 // NODE TYPES
 // ============================================================================
 
-const nodeTypes: Record<string, {
+const getNodeTypes = (t: TFunction): Record<string, {
   title: string;
   icon: React.ReactNode;
   description: string;
   color: string;
   hasInput: boolean;
   hasOutput: boolean;
-}> = {
-  video: { title: 'Video Input', icon: <Video className="h-4 w-4 text-white" />, description: 'Drop saved video here', color: 'from-blue-500 to-cyan-500', hasInput: false, hasOutput: true },
-  brand: { title: 'Brand Brief', icon: <Building2 className="h-4 w-4 text-white" />, description: 'Your brand context', color: 'from-blue-500 to-cyan-500', hasInput: false, hasOutput: true },
-  analyze: { title: 'Analyze', icon: <Search className="h-4 w-4 text-white" />, description: 'Deep content analysis', color: 'from-purple-500 to-pink-500', hasInput: true, hasOutput: true },
-  extract: { title: 'Extract', icon: <Target className="h-4 w-4 text-white" />, description: 'Extract key elements', color: 'from-purple-500 to-pink-500', hasInput: true, hasOutput: true },
-  style: { title: 'Style Match', icon: <Palette className="h-4 w-4 text-white" />, description: 'Match visual style', color: 'from-purple-500 to-pink-500', hasInput: true, hasOutput: true },
-  generate: { title: 'Generate', icon: <Wand2 className="h-4 w-4 text-white" />, description: 'AI script creation', color: 'from-green-500 to-emerald-500', hasInput: true, hasOutput: true },
-  refine: { title: 'Refine', icon: <MessageSquare className="h-4 w-4 text-white" />, description: 'Polish & improve', color: 'from-green-500 to-emerald-500', hasInput: true, hasOutput: true },
-  script: { title: 'Script Output', icon: <FileText className="h-4 w-4 text-white" />, description: 'Final script', color: 'from-orange-500 to-yellow-500', hasInput: true, hasOutput: false },
-  storyboard: { title: 'Storyboard', icon: <LayoutGrid className="h-4 w-4 text-white" />, description: 'Visual breakdown', color: 'from-orange-500 to-yellow-500', hasInput: true, hasOutput: false },
-};
+}> => ({
+  video: { title: t('nodes.video.title'), icon: <Video className="h-4 w-4" />, description: t('nodes.video.description'), color: 'from-zinc-600 to-zinc-700', hasInput: false, hasOutput: true },
+  brand: { title: t('nodes.brand.title'), icon: <Building2 className="h-4 w-4" />, description: t('nodes.brand.description'), color: 'from-zinc-600 to-zinc-700', hasInput: false, hasOutput: true },
+  analyze: { title: t('nodes.analyze.title'), icon: <Search className="h-4 w-4" />, description: t('nodes.analyze.description'), color: 'from-zinc-600 to-zinc-700', hasInput: true, hasOutput: true },
+  extract: { title: t('nodes.extract.title'), icon: <Target className="h-4 w-4" />, description: t('nodes.extract.description'), color: 'from-zinc-600 to-zinc-700', hasInput: true, hasOutput: true },
+  style: { title: t('nodes.style.title'), icon: <Palette className="h-4 w-4" />, description: t('nodes.style.description'), color: 'from-zinc-600 to-zinc-700', hasInput: true, hasOutput: true },
+  generate: { title: t('nodes.generate.title'), icon: <Wand2 className="h-4 w-4" />, description: t('nodes.generate.description'), color: 'from-zinc-600 to-zinc-700', hasInput: true, hasOutput: true },
+  refine: { title: t('nodes.refine.title'), icon: <MessageSquare className="h-4 w-4" />, description: t('nodes.refine.description'), color: 'from-zinc-600 to-zinc-700', hasInput: true, hasOutput: true },
+  script: { title: t('nodes.script.title'), icon: <FileText className="h-4 w-4" />, description: t('nodes.script.description'), color: 'from-zinc-600 to-zinc-700', hasInput: true, hasOutput: false },
+  storyboard: { title: t('nodes.storyboard.title'), icon: <LayoutGrid className="h-4 w-4" />, description: t('nodes.storyboard.description'), color: 'from-zinc-600 to-zinc-700', hasInput: true, hasOutput: false },
+});
 
 // ============================================================================
 // TYPES
@@ -157,16 +174,7 @@ interface Connection {
   to: number;
 }
 
-interface SavedVideo {
-  id: number;
-  platform: string;
-  author: string;
-  desc: string;
-  views: string;
-  uts: number;
-  thumb: string;
-  url?: string;
-}
+// SavedVideo type imported from WorkflowContext
 
 
 // ============================================================================
@@ -210,39 +218,65 @@ const MarkdownComponents = {
     <li className="leading-relaxed" style={{ wordBreak: 'break-word' }}>{children}</li>
   ),
   strong: ({ children }: { children: React.ReactNode }) => (
-    <strong className="font-semibold text-white">{children}</strong>
+    <strong className="font-semibold text-foreground">{children}</strong>
   ),
   em: ({ children }: { children: React.ReactNode }) => (
-    <em className="italic text-zinc-300">{children}</em>
+    <em className="italic text-foreground/80">{children}</em>
   ),
   code: ({ children, className }: { children: React.ReactNode; className?: string }) => {
     const isBlock = className?.includes('language-');
     if (isBlock) {
       return (
-        <pre className="bg-zinc-900 text-zinc-300 rounded-md p-2 my-2 text-xs overflow-x-auto">
+        <pre className="bg-secondary text-foreground/80 rounded-md p-2 my-2 text-xs overflow-x-auto">
           <code style={{ wordBreak: 'break-all', whiteSpace: 'pre-wrap' }}>{children}</code>
         </pre>
       );
     }
     return (
-      <code className="bg-zinc-700 text-zinc-200 px-1 py-0.5 rounded text-xs font-mono" style={{ wordBreak: 'break-all' }}>{children}</code>
+      <code className="bg-secondary text-foreground/90 px-1 py-0.5 rounded text-xs font-mono" style={{ wordBreak: 'break-all' }}>{children}</code>
     );
   },
   blockquote: ({ children }: { children: React.ReactNode }) => (
-    <blockquote className="border-l-2 border-purple-500 pl-3 my-2 text-zinc-400 italic" style={{ wordBreak: 'break-word' }}>
+    <blockquote className="border-l-2 border-blue-500 pl-3 my-2 text-muted-foreground italic" style={{ wordBreak: 'break-word' }}>
       {children}
     </blockquote>
   ),
   a: ({ children, href }: { children: React.ReactNode; href?: string }) => (
     <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:text-blue-300 underline" style={{ wordBreak: 'break-all' }}>{children}</a>
   ),
+  img: ({ src, alt }: { src?: string; alt?: string }) => {
+    const imgSrc = src?.startsWith('/uploads')
+      ? `${import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:8000'}${src}`
+      : src;
+    return <img src={imgSrc} alt={alt || 'Generated image'} className="rounded-lg max-w-full my-2" style={{ maxHeight: '512px' }} />;
+  },
 };
+
+// ============================================================================
+// UTILITY FUNCTIONS (outside component for stable references)
+// ============================================================================
+
+// detectPlatform & formatViews moved to WorkflowContext
+
+// NODE_MODEL_COSTS imported from NodeConfigPanel (single source of truth)
+
+const handleDragOver = (e: React.DragEvent) => {
+  e.preventDefault();
+};
+
+// Static templates — no need to fetch from API, they never change
+const getTemplates = (t: TFunction) => [
+  { id: 'video-analysis', name: t('templates.video-analysis'), node_count: 4, estimated_credits: 3 },
+  { id: 'script-generator', name: t('templates.script-generator'), node_count: 5, estimated_credits: 5 },
+  { id: 'full-pipeline', name: t('templates.full-pipeline'), node_count: 8, estimated_credits: 10 },
+];
 
 // ============================================================================
 // MAIN COMPONENT
 // ============================================================================
 
 export function WorkflowBuilder() {
+  const { t } = useTranslation('workflow');
   const { user: _user, tokens } = useAuth();
   const token = tokens?.accessToken;
 
@@ -252,24 +286,39 @@ export function WorkflowBuilder() {
     messages,
     isStreaming,
     credits,
+    sessions: chatSessions,
     createSession,
+    selectSession,
+    deleteSession: deleteChatSession,
     sendMessage: sendChatMessage,
   } = useChat();
 
-  // Use workflow context for persistence
+  // Use workflow context for persistence + preloaded data
   const {
     workflows,
     currentWorkflow,
     isDirty,
     loadWorkflows,
-    createWorkflow: createNewWorkflow,
     loadWorkflow,
     saveWorkflow,
     deleteWorkflow: deleteWf,
     closeWorkflow,
     markDirty,
     setCurrentWorkflow,
+    savedVideos,
+    loadingSaved,
+    runHistory,
+    loadingHistory,
+    loadRunHistory,
+    removeSavedVideo,
+    removeRunHistoryItem,
   } = useWorkflow();
+
+  // Memoized translated data
+  const aiModels = useMemo(() => getAiModels(t), [t]);
+  const contentModes = useMemo(() => getContentModes(t), [t]);
+  const nodeTypes = useMemo(() => getNodeTypes(t), [t]);
+  const TEMPLATES = useMemo(() => getTemplates(t), [t]);
 
   // Canvas state
   const [nodes, setNodes] = useState<WorkflowNode[]>([]);
@@ -284,15 +333,14 @@ export function WorkflowBuilder() {
   const [panStart, setPanStart] = useState({ x: 0, y: 0 });
 
   // Sidebar state
-  const [activePanel, setActivePanel] = useState<'nodes' | 'saved' | 'history'>('nodes');
+  const [openPanel, setOpenPanel] = useState<'nodes' | 'saved' | 'history' | 'chat' | null>('nodes');
   const [savedTab, setSavedTab] = useState<'videos' | 'workflows'>('workflows');
-  const [savedVideos, setSavedVideos] = useState<SavedVideo[]>([]);
-  const [loadingSaved, setLoadingSaved] = useState(false);
+  const [historyTab, setHistoryTab] = useState<'runs' | 'chats'>('runs');
+  // savedVideos & loadingSaved come from useWorkflow() context
   const [platformFilter, setPlatformFilter] = useState('All');
-  const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(false);
 
   // Workflow name editing
-  const [workflowName, setWorkflowName] = useState('Untitled Workflow');
+  const [workflowName, setWorkflowName] = useState(t('untitledWorkflow'));
   const [editingName, setEditingName] = useState(false);
 
   // Node config panel
@@ -308,16 +356,55 @@ export function WorkflowBuilder() {
   const [showModelMenu, setShowModelMenu] = useState(false);
   // showModeMenu removed (unused)
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [lightboxZoom, setLightboxZoom] = useState(1);
 
-  // Templates
-  const [templates, setTemplates] = useState<any[]>([]);
+  // Image helpers
+  const extractImageUrls = useCallback((content: string): string[] => {
+    const urls: string[] = [];
+    let m;
+    const re = /!\[[^\]]*\]\(([^)]+)\)/g;
+    while ((m = re.exec(content)) !== null) urls.push(m[1]);
+    return urls;
+  }, []);
 
-  // History
-  const [runHistory, setRunHistory] = useState<any[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
+  const resolveImgSrc = useCallback((src: string) => {
+    if (src.startsWith('/uploads')) {
+      const base = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:8000';
+      return `${base}${src}`;
+    }
+    return src;
+  }, []);
+
+  const handleDownloadImage = useCallback(async (imgSrc: string) => {
+    try {
+      const res = await fetch(imgSrc, { mode: 'cors' });
+      if (!res.ok) throw new Error('fetch failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `rizko-ai-${Date.now()}.png`;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 100);
+    } catch {
+      // Fallback: open image via backend proxy-like download
+      const a = document.createElement('a');
+      a.href = imgSrc;
+      a.download = `rizko-ai-${Date.now()}.png`;
+      a.target = '_blank';
+      a.click();
+    }
+  }, []);
+
+  // History (runHistory & loadingHistory come from useWorkflow() context)
   const [selectedRun, setSelectedRun] = useState<any | null>(null);
   const [selectedRunDetail, setSelectedRunDetail] = useState<any | null>(null);
-  const [loadingRunDetail, setLoadingRunDetail] = useState(false);
   const [showRunDetailModal, setShowRunDetailModal] = useState(false);
 
   // Fullscreen results view
@@ -349,6 +436,7 @@ export function WorkflowBuilder() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const rafRef = useRef<number>(0);
   const isDraggingRef = useRef(false);
+  const spaceHeldRef = useRef(false);
 
   // Dragging state
   const [draggingNode, setDraggingNode] = useState<{
@@ -361,100 +449,69 @@ export function WorkflowBuilder() {
   // LOAD SAVED VIDEOS
   // ============================================================================
 
-  useEffect(() => {
-    loadSavedVideos();
-    loadRunHistory();
-    loadWorkflows();
-    // Load templates
-    apiService.getWorkflowTemplates()
-      .then(data => setTemplates(data))
-      .catch(() => setTemplates([]));
-  }, []);
+  // All data (workflows, savedVideos, runHistory) preloaded via WorkflowContext on auth
 
-  // Auto-create new workflow on session start if none loaded
-  useEffect(() => {
-    if (!currentWorkflow && token && workflows !== undefined) {
-      createNewWorkflow('Untitled Workflow');
-    }
-  }, [token]);
-
-  const loadRunHistory = async () => {
+  // Load a run's full workflow onto the canvas with results
+  const handleLoadRunOnCanvas = useCallback(async (run: any) => {
     try {
-      setLoadingHistory(true);
-      const history = await apiService.getWorkflowHistory(30);
-      setRunHistory(history);
-    } catch (error) {
-      console.error('Failed to load run history:', error);
-      setRunHistory([]);
-    } finally {
-      setLoadingHistory(false);
-    }
-  };
-
-  const loadRunDetail = async (runId: number) => {
-    try {
-      setLoadingRunDetail(true);
-      const detail = await apiService.getWorkflowRun(runId);
-      setSelectedRunDetail(detail);
-    } catch (error) {
-      console.error('Failed to load run detail:', error);
-      toast.error('Failed to load run details');
-    } finally {
-      setLoadingRunDetail(false);
-    }
-  };
-
-  const handleSelectRun = async (run: any) => {
-    if (selectedRun?.id === run.id) {
-      setSelectedRun(null);
-      setSelectedRunDetail(null);
-    } else {
       setSelectedRun(run);
-      await loadRunDetail(run.id);
-    }
-  };
+      const detail = await apiService.getWorkflowRun(run.id);
+      setSelectedRunDetail(detail);
 
-  const loadSavedVideos = async () => {
-    try {
-      setLoadingSaved(true);
-      const response = await apiService.getFavorites({ page: 1, per_page: 50 });
+      if (!detail?.input_graph?.nodes) {
+        toast.error(t('toasts.noGraphData'));
+        return;
+      }
 
-      const videos: SavedVideo[] = response.items.map((item: any) => ({
-        id: item.id,
-        platform: detectPlatform(item.trend?.url || ''),
-        author: item.trend?.author_username || 'unknown',
-        desc: item.trend?.description || 'No description',
-        views: formatViews(item.trend?.stats?.playCount || 0),
-        uts: item.trend?.uts_score || 0,
-        thumb: item.trend?.cover_url || '',
-        url: item.trend?.url,
+      // Restore nodes from input_graph, apply results as outputContent
+      const restoredNodes: WorkflowNode[] = detail.input_graph.nodes.map((n: any) => {
+        const nodeResult = detail.results?.find((r: any) => r.node_id === n.id);
+        return {
+          id: n.id,
+          type: n.type,
+          x: n.x || 0,
+          y: n.y || 0,
+          videoData: n.videoData || undefined,
+          config: n.config || undefined,
+          outputContent: nodeResult?.success ? nodeResult.content : n.outputContent || undefined,
+        };
+      });
+
+      // Restore connections
+      const restoredConnections: Connection[] = (detail.input_graph.connections || []).map((c: any) => ({
+        from: c.from ?? c.from_node,
+        to: c.to ?? c.to_node,
       }));
 
-      setSavedVideos(videos);
+      // Apply to canvas
+      setNodes(restoredNodes);
+      setConnections(restoredConnections);
+      setNodeIdCounter(Math.max(0, ...restoredNodes.map(n => n.id)) + 1);
+      setWorkflowName(detail.workflow_name || t('untitledWorkflow'));
+
+      // Mark processed nodes
+      const processedSet = new Set<number>();
+      restoredNodes.forEach(n => { if (n.outputContent) processedSet.add(n.id); });
+      setProcessedNodes(processedSet);
+
+      // Show results view
+      setLastRunResults({
+        results: detail.results || [],
+        final_script: detail.final_script,
+        storyboard: detail.storyboard,
+        credits_used: detail.credits_used,
+        execution_time_ms: detail.execution_time_ms,
+        error: detail.error_message,
+      });
+      setResultsActiveTab(detail.final_script ? 'script' : detail.storyboard ? 'storyboard' : 'all');
+      setShowResultsView(true);
+
+      toast.success(t('toasts.runLoadedOnCanvas'));
     } catch (error) {
-      console.error('Failed to load saved videos:', error);
-      setSavedVideos([]);
-    } finally {
-      setLoadingSaved(false);
+      console.error('Failed to load run on canvas:', error);
+      toast.error(t('toasts.failedLoadRunDetails'));
     }
-  };
-
-  const detectPlatform = (url: string): string => {
-    if (url.includes('tiktok')) return 'TikTok';
-    if (url.includes('instagram')) return 'Instagram';
-    if (url.includes('youtube') || url.includes('youtu.be')) return 'YouTube';
-    if (url.includes('snapchat')) return 'Snapchat';
-    if (url.includes('twitter') || url.includes('x.com')) return 'X';
-    if (url.includes('pinterest')) return 'Pinterest';
-    if (url.includes('linkedin')) return 'LinkedIn';
-    return 'TikTok';
-  };
-
-  const formatViews = (num: number): string => {
-    if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-    if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-    return num.toString();
-  };
+  }, [t]);
 
   // ============================================================================
   // WORKFLOW PERSISTENCE - sync currentWorkflow ↔ local canvas state
@@ -483,7 +540,7 @@ export function WorkflowBuilder() {
   // Handle save
   const handleSaveWorkflow = useCallback(async () => {
     if (!token) {
-      toast.error('Please login to save workflows');
+      toast.error(t('toasts.loginToSave'));
       return;
     }
     const graphData = {
@@ -497,45 +554,23 @@ export function WorkflowBuilder() {
       graph_data: graphData,
       canvas_state: canvasState,
     });
-    toast.success('Workflow saved');
+    toast.success(t('toasts.workflowSaved'));
   }, [token, nodes, connections, zoom, panOffset, workflowName, saveWorkflow]);
 
-  // Handle new workflow — auto-save current before creating fresh
-  const handleNewWorkflow = useCallback(async () => {
-    // Auto-save current workflow if it has nodes
-    if (nodes.length > 0 && token) {
-      try {
-        const graphData = {
-          nodes: nodes.map(n => ({ ...n, outputContent: undefined })),
-          connections,
-        };
-        const canvasState = { zoom, panX: panOffset.x, panY: panOffset.y };
-        await saveWorkflow({
-          name: workflowName,
-          graph_data: graphData,
-          canvas_state: canvasState,
-        });
-      } catch (err) {
-        console.error('Auto-save before new workflow failed:', err);
-      }
-    }
-
-    // Reset local state
+  // Handle new workflow — just reset local state, no DB entry until Save
+  const handleNewWorkflow = useCallback(() => {
     setNodes([]);
     setConnections([]);
     setNodeIdCounter(0);
-    setWorkflowName('Untitled Workflow');
+    setWorkflowName(t('untitledWorkflow'));
     setZoom(1);
     setPanOffset({ x: 0, y: 0 });
     setConfigNode(null);
     setSelectedNode(null);
+    setLastRunResults(null);
+    setShowResultsView(false);
     closeWorkflow();
-
-    // Create a fresh workflow in DB
-    if (token) {
-      await createNewWorkflow('Untitled Workflow');
-    }
-  }, [closeWorkflow, nodes, connections, zoom, panOffset, workflowName, token, saveWorkflow, createNewWorkflow]);
+  }, [closeWorkflow]);
 
   // Handle load workflow from list
   const handleLoadWorkflow = useCallback(async (id: number) => {
@@ -558,17 +593,17 @@ export function WorkflowBuilder() {
   // Create workflow from template
   const handleUseTemplate = useCallback(async (templateId: string) => {
     if (!token) {
-      toast.error('Please login to use templates');
+      toast.error(t('toasts.loginToTemplates'));
       return;
     }
     try {
       const wf = await apiService.createFromTemplate(templateId);
       setCurrentWorkflow(wf);
       await loadWorkflows();
-      toast.success('Workflow created from template');
+      toast.success(t('toasts.createdFromTemplate'));
     } catch (error) {
       console.error('Failed to create from template:', error);
-      toast.error('Failed to create from template');
+      toast.error(t('toasts.failedCreateTemplate'));
     }
   }, [token, setCurrentWorkflow, loadWorkflows]);
 
@@ -578,6 +613,12 @@ export function WorkflowBuilder() {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Track Space for pan mode
+      if (e.code === 'Space' && !(e.target as HTMLElement).closest('input, textarea')) {
+        e.preventDefault();
+        spaceHeldRef.current = true;
+      }
+
       // Don't intercept when typing in inputs
       if ((e.target as HTMLElement).tagName === 'INPUT' || (e.target as HTMLElement).tagName === 'TEXTAREA') return;
 
@@ -617,30 +658,57 @@ export function WorkflowBuilder() {
         e.preventDefault();
         handleSaveWorkflow();
       }
+
+      // Ctrl+0: reset zoom
+      if ((e.ctrlKey || e.metaKey) && e.key === '0') {
+        e.preventDefault();
+        setZoom(1);
+        setPanOffset({ x: 0, y: 0 });
+      }
+
+      // Ctrl+= / Ctrl+-: zoom in/out
+      if ((e.ctrlKey || e.metaKey) && (e.key === '=' || e.key === '+')) {
+        e.preventDefault();
+        setZoom(prev => Math.min(2, +(prev + 0.1).toFixed(2)));
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === '-') {
+        e.preventDefault();
+        setZoom(prev => Math.max(0.3, +(prev - 0.1).toFixed(2)));
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        spaceHeldRef.current = false;
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
   }, [selectedConnection, selectedNode, configNode, handleSaveWorkflow, markDirty]);
 
   // ============================================================================
   // CHAT FUNCTIONS
   // ============================================================================
 
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+  }, []);
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = async (messageText?: string) => {
+  const handleSendMessage = useCallback(async (messageText?: string) => {
     const text = messageText || inputValue.trim();
     if (!text || isStreaming) return;
 
     if (!token) {
-      toast.error('Please login to use AI chat');
+      toast.error(t('toasts.loginToChat'));
       return;
     }
 
@@ -653,19 +721,19 @@ export function WorkflowBuilder() {
 
     // Use context's sendMessage which handles session creation
     await sendChatMessage(text, selectedMode.id, selectedModel.id);
-  };
+  }, [inputValue, isStreaming, token, selectedMode.id, selectedModel.id, sendChatMessage]);
 
-  const copyMessage = async (content: string, messageId: string) => {
+  const copyMessage = useCallback(async (content: string, messageId: string) => {
     try {
       await navigator.clipboard.writeText(content);
       setCopiedMessageId(messageId);
       setTimeout(() => setCopiedMessageId(null), 2000);
     } catch (error) {
-      toast.error('Failed to copy');
+      toast.error(t('toasts.failedToCopy'));
     }
-  };
+  }, []);
 
-  const regenerateResponse = async () => {
+  const regenerateResponse = useCallback(async () => {
     if (messages.length < 2 || isStreaming || !currentSessionId) return;
 
     // Get the last user message
@@ -674,7 +742,7 @@ export function WorkflowBuilder() {
 
     // Regenerate using context
     await sendChatMessage(lastUserMessage.content, selectedMode.id, selectedModel.id);
-  };
+  }, [messages, isStreaming, currentSessionId, selectedMode.id, selectedModel.id, sendChatMessage]);
 
   // ============================================================================
   // NODE MANIPULATION
@@ -707,7 +775,7 @@ export function WorkflowBuilder() {
           n.id === existingVideoNode.id ? { ...n, videoData } : n
         ));
         markDirty();
-        toast.success(`Video attached to node #${existingVideoNode.id}`);
+        toast.success(t('toasts.videoAttached', { id: existingVideoNode.id }));
       } else {
         // Create new video node
         const newNode: WorkflowNode = {
@@ -732,9 +800,7 @@ export function WorkflowBuilder() {
     }
   }, [nodeIdCounter, panOffset, zoom, nodes]);
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
+  // handleDragOver moved outside component for stable reference
 
   // ============================================================================
   // PAN & ZOOM (optimized with requestAnimationFrame)
@@ -742,7 +808,16 @@ export function WorkflowBuilder() {
 
   const handleMouseDown = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
-    // Don't start panning if clicking inside a workflow node (allows text selection/copy)
+
+    // Space+click or middle-mouse: always pan (even over nodes)
+    if (spaceHeldRef.current || e.button === 1) {
+      e.preventDefault();
+      setIsPanning(true);
+      setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+      return;
+    }
+
+    // Don't start panning if clicking inside a workflow node
     if (target.closest('.workflow-node')) return;
     if (e.button === 0 && !draggingNode && !connectingFrom && target.closest('.canvas-area')) {
       setIsPanning(true);
@@ -818,7 +893,7 @@ export function WorkflowBuilder() {
     setDraggingNode(null);
   }, [connectingFrom, panOffset, zoom, nodes, markDirty]);
 
-  // Canvas zoom handler - blocks zoom only when inside a scrollable node element
+  // Canvas wheel handler: Ctrl+scroll = zoom, scroll = pan
   const handleWheel = useCallback((e: React.WheelEvent) => {
     // Walk up from target to find any scrollable element inside a node
     let current = e.target as HTMLElement | null;
@@ -831,51 +906,65 @@ export function WorkflowBuilder() {
       current = current.parentElement;
     }
     e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.05 : 0.05;
-    setZoom(prev => Math.min(2, Math.max(0.3, +(prev + delta).toFixed(2))));
+
+    if (e.ctrlKey || e.metaKey) {
+      // Ctrl+scroll = zoom (centered on mouse position)
+      const rect = canvasAreaRef.current?.getBoundingClientRect();
+      if (rect) {
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const delta = e.deltaY > 0 ? -0.08 : 0.08;
+        setZoom(prev => {
+          const newZoom = Math.min(2, Math.max(0.3, +(prev + delta).toFixed(2)));
+          const scale = newZoom / prev;
+          // Adjust pan so zoom centers on mouse
+          setPanOffset(p => ({
+            x: mouseX - scale * (mouseX - p.x),
+            y: mouseY - scale * (mouseY - p.y),
+          }));
+          return newZoom;
+        });
+      }
+    } else {
+      // Regular scroll = pan canvas
+      setPanOffset(prev => ({
+        x: prev.x - e.deltaX,
+        y: prev.y - e.deltaY,
+      }));
+    }
   }, []);
 
   // ============================================================================
   // WORKFLOW EXECUTION
   // ============================================================================
 
-  // Estimate credit cost for current workflow
-  const NODE_COSTS: Record<string, Record<string, number>> = {
-    analyze:    { gemini: 1, claude: 5, gpt4: 4 },
-    extract:    { gemini: 1, claude: 5, gpt4: 4 },
-    style:      { gemini: 1, claude: 5, gpt4: 4 },
-    generate:   { gemini: 2, claude: 6, gpt4: 5 },
-    refine:     { gemini: 1, claude: 5, gpt4: 4 },
-    script:     { gemini: 1, claude: 5, gpt4: 4 },
-    storyboard: { gemini: 2, claude: 6, gpt4: 5 },
-  };
-
-  const estimatedCost = nodes.reduce((total, node) => {
-    const costs = NODE_COSTS[node.type];
+  // Estimate credit cost for current workflow (memoized)
+  const estimatedCost = useMemo(() => nodes.reduce((total, node) => {
+    const costs = NODE_MODEL_COSTS[node.type];
     if (!costs) return total;
     const model = node.config?.model || 'gemini';
-    return total + (costs[model] || costs.gemini || 0);
-  }, 0);
+    return total + (costs[model] ?? 0);
+  }, 0), [nodes]);
 
   const runWorkflow = async () => {
     if (!token) {
-      toast.error('Please login to run workflows');
+      toast.error(t('toasts.loginToRun'));
       return;
     }
 
     if (nodes.length === 0) {
-      toast.error('Add nodes to the canvas first');
+      toast.error(t('toasts.addNodesFirst'));
       return;
     }
 
     if (connections.length === 0) {
-      toast.error('Connect nodes together to create a workflow');
+      toast.error(t('toasts.connectNodes'));
       return;
     }
 
     // Check if user has enough credits
     if (credits && credits.remaining < estimatedCost) {
-      toast.error(`Not enough credits. Need ~${estimatedCost}, have ${credits.remaining}`);
+      toast.error(t('toasts.notEnoughCredits', { need: estimatedCost, have: credits.remaining }));
       return;
     }
 
@@ -909,11 +998,13 @@ export function WorkflowBuilder() {
             uts: n.videoData.uts,
             thumb: n.videoData.thumb,
             url: n.videoData.url,
+            localPath: n.videoData.localPath,
           } : undefined,
         })),
         connections: connections.map(c => ({ from: c.from, to: c.to })),
         workflow_id: currentWorkflow?.id,
         workflow_name: workflowName,
+        language: i18n.language === 'ru' ? 'Russian' : 'English',
       };
 
       const result = await apiService.executeWorkflow(workflowData);
@@ -946,8 +1037,8 @@ export function WorkflowBuilder() {
         setResultsActiveTab(result.final_script ? 'script' : result.storyboard ? 'storyboard' : 'all');
         setShowResultsView(true);
 
-        const creditsMsg = result.credits_used ? ` (${result.credits_used} credits used)` : '';
-        toast.success(`Workflow completed!${creditsMsg}`);
+        const creditsMsg = result.credits_used ? t('toasts.creditsUsedSuffix', { count: result.credits_used }) : '';
+        toast.success(t('toasts.workflowCompleted', { credits: creditsMsg }));
 
         // Auto-save workflow after successful run
         try {
@@ -976,11 +1067,11 @@ export function WorkflowBuilder() {
           execution_time_ms: result.execution_time_ms,
         });
         setShowResultsView(true);
-        toast.error(result.error || 'Workflow execution failed');
+        toast.error(result.error || t('toasts.failedExecute'));
       }
     } catch (error) {
       console.error('Workflow execution error:', error);
-      toast.error('Failed to execute workflow. Please try again.');
+      toast.error(t('toasts.failedExecute'));
     } finally {
       setIsRunning(false);
       setTimeout(() => {
@@ -1030,7 +1121,7 @@ export function WorkflowBuilder() {
     }>;
   }, [connections, nodes]);
 
-  const renderConnections = () => {
+  const renderConnections = useCallback(() => {
     return connectionPaths.map(({ conn, pathD, midX, midY, key }) => {
       const isActive = activeConnections.has(key);
       const isSelected = selectedConnection === key;
@@ -1052,13 +1143,13 @@ export function WorkflowBuilder() {
           <path
             d={pathD}
             fill="none"
-            stroke={isSelected ? '#ef4444' : isActive ? '#a855f7' : 'hsl(var(--border))'}
+            stroke={isSelected ? '#ef4444' : isActive ? '#3b82f6' : 'hsl(var(--border))'}
             strokeWidth={isSelected ? 3 : isActive ? 3 : 2}
             strokeDasharray={isSelected ? '8 4' : undefined}
             className={isActive ? "animate-pulse" : undefined}
           />
           {isActive && (
-            <circle r="4" fill="#a855f7" className="animate-pulse">
+            <circle r="4" fill="#3b82f6" className="animate-pulse">
               <animateMotion dur="1s" repeatCount="indefinite" path={pathD} />
             </circle>
           )}
@@ -1080,10 +1171,10 @@ export function WorkflowBuilder() {
         </g>
       );
     });
-  };
+  }, [connectionPaths, activeConnections, selectedConnection, markDirty]);
 
   // Live connection preview line during port drag (GPU-accelerated)
-  const renderConnectingLine = () => {
+  const renderConnectingLine = useCallback(() => {
     if (!connectingFrom || !connectingMouse) return null;
     const sx = connectingFrom.x;
     const sy = connectingFrom.y;
@@ -1097,7 +1188,7 @@ export function WorkflowBuilder() {
         <path
           d={pathD}
           fill="none"
-          stroke="#a855f7"
+          stroke="#3b82f6"
           strokeWidth={6}
           opacity={0.2}
           strokeLinecap="round"
@@ -1106,7 +1197,7 @@ export function WorkflowBuilder() {
         <path
           d={pathD}
           fill="none"
-          stroke="#a855f7"
+          stroke="#3b82f6"
           strokeWidth={2.5}
           strokeDasharray="8 4"
           opacity={0.9}
@@ -1117,12 +1208,12 @@ export function WorkflowBuilder() {
           cx={ex}
           cy={ey}
           r={6}
-          fill="#a855f7"
+          fill="#3b82f6"
           opacity={0.6}
         />
       </g>
     );
-  };
+  }, [connectingFrom, connectingMouse]);
 
   const renderNode = (node: WorkflowNode) => {
     const nodeDef = nodeTypes[node.type];
@@ -1142,8 +1233,8 @@ export function WorkflowBuilder() {
           isBeingDragged && "shadow-2xl z-50",
           isNodeRunning && "border-yellow-500 shadow-yellow-500/20 animate-pulse",
           isProcessed && "border-green-500 shadow-green-500/20",
-          !isNodeRunning && !isProcessed && isSelected && "border-purple-500 shadow-purple-500/20",
-          !isNodeRunning && !isProcessed && !isSelected && "border-border hover:border-purple-400"
+          !isNodeRunning && !isProcessed && isSelected && "border-blue-500 shadow-blue-500/20",
+          !isNodeRunning && !isProcessed && !isSelected && "border-border hover:border-border/80"
         )}
         style={{
           // GPU-accelerated transform instead of left/top
@@ -1176,7 +1267,7 @@ export function WorkflowBuilder() {
         <div className={cn("px-3 py-2 rounded-t-[10px] bg-gradient-to-r", nodeDef.color)}>
           <div className="flex items-center gap-2">
             {isNodeRunning ? <Loader2 className="h-4 w-4 text-white animate-spin" /> : nodeDef.icon}
-            <span className="text-xs font-medium text-white truncate">{nodeDef.title}</span>
+            <span className="text-sm font-medium text-white truncate">{nodeDef.title}</span>
             {isProcessed && <Check className="h-3 w-3 text-white" />}
             <div className="ml-auto flex items-center gap-0.5">
               <Button
@@ -1211,47 +1302,47 @@ export function WorkflowBuilder() {
         <div className="p-3">
           {node.videoData ? (
             <div className="space-y-2">
-              <div className="w-full h-20 bg-gradient-to-br from-gray-800 to-gray-900 rounded-lg overflow-hidden relative">
+              <div className="w-full h-20 bg-secondary rounded-lg overflow-hidden relative">
                 {node.videoData.thumb ? (
                   <img src={node.videoData.thumb} alt="" className="w-full h-full object-cover" loading="lazy" />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
-                    <Video className="h-8 w-8 text-gray-600" />
+                    <Video className="h-8 w-8 text-muted-foreground" />
                   </div>
                 )}
-                <Badge className="absolute top-1 left-1 bg-gradient-to-r from-red-500 to-orange-500 text-white border-0 text-[10px] px-1.5 py-0.5">
+                <Badge className="absolute top-1 left-1 bg-primary/80 text-primary-foreground border-0 text-xs px-1.5 py-0.5">
                   {node.videoData.uts}
                 </Badge>
-                <Badge className="absolute top-1 right-1 bg-black/60 text-white border-0 text-[10px] px-1.5 py-0.5">
+                <Badge className="absolute top-1 right-1 bg-black/60 text-white border-0 text-xs px-1.5 py-0.5">
                   {platformIcons[node.videoData.platform]}
                 </Badge>
               </div>
-              <p className="text-[10px] text-muted-foreground truncate">{node.videoData.desc}</p>
+              <p className="text-xs text-muted-foreground truncate">{node.videoData.desc}</p>
             </div>
           ) : node.outputContent ? (
-            <div className="bg-secondary rounded-lg p-2 text-[10px] text-muted-foreground max-h-[80px] overflow-y-auto whitespace-pre-wrap cursor-pointer hover:bg-secondary/80"
+            <div className="bg-secondary rounded-lg p-2 text-xs text-muted-foreground max-h-[80px] overflow-y-auto whitespace-pre-wrap cursor-pointer hover:bg-secondary/80"
               onClick={(e) => { e.stopPropagation(); setConfigNode(node); }}
             >
               {node.outputContent.substring(0, 200)}{node.outputContent.length > 200 ? '...' : ''}
             </div>
           ) : node.config?.customPrompt || node.config?.model ? (
-            <div className="text-[10px] text-muted-foreground space-y-1">
+            <div className="text-xs text-muted-foreground space-y-1">
               {node.config?.customPrompt && (
                 <div className="flex justify-between">
-                  <span>Prompt</span>
-                  <span className="font-medium text-purple-400">Custom</span>
+                  <span>{t('nodeConfig.prompt')}</span>
+                  <span className="font-medium text-muted-foreground">{t('nodeConfig.custom')}</span>
                 </div>
               )}
               {node.config?.model && (
                 <div className="flex justify-between">
-                  <span>Model</span>
+                  <span>{t('nodeConfig.model')}</span>
                   <span className="font-medium text-foreground">{node.config.model}</span>
                 </div>
               )}
             </div>
           ) : (
-            <div className="text-[10px] text-muted-foreground">
-              <span className="font-medium text-foreground">Ready</span>
+            <div className="text-xs text-muted-foreground">
+              <span className="font-medium text-foreground">{t('nodeConfig.ready')}</span>
             </div>
           )}
         </div>
@@ -1260,23 +1351,23 @@ export function WorkflowBuilder() {
         <div className="flex justify-between px-3 pb-2">
           {nodeDef.hasInput ? (
             <div
-              className="port-handle w-4 h-4 bg-border border-2 border-card rounded-full -ml-5 cursor-crosshair hover:bg-green-500 hover:border-green-300"
+              className="port-handle w-4 h-4 bg-border border-2 border-card rounded-full -ml-5 cursor-crosshair hover:bg-blue-500 hover:border-blue-300"
               style={{ transition: 'background-color 100ms, border-color 100ms, transform 100ms', transform: 'scale(1)' }}
               onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.5)')}
               onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-              title="Input"
+              title={t('canvas.input')}
             />
           ) : <div />}
           {nodeDef.hasOutput ? (
             <div
               className={cn(
-                "port-handle w-4 h-4 bg-border border-2 border-card rounded-full -mr-5 cursor-crosshair hover:bg-purple-500 hover:border-purple-300",
-                connectingFrom?.nodeId === node.id && "bg-purple-500 border-purple-300"
+                "port-handle w-4 h-4 bg-border border-2 border-card rounded-full -mr-5 cursor-crosshair hover:bg-blue-500 hover:border-blue-300",
+                connectingFrom?.nodeId === node.id && "bg-blue-500 border-blue-300"
               )}
               style={{ transition: 'background-color 100ms, border-color 100ms, transform 100ms', transform: connectingFrom?.nodeId === node.id ? 'scale(1.5)' : 'scale(1)' }}
               onMouseEnter={(e) => { if (!connectingFrom) e.currentTarget.style.transform = 'scale(1.5)'; }}
               onMouseLeave={(e) => { if (!connectingFrom) e.currentTarget.style.transform = 'scale(1)'; }}
-              title="Drag to connect"
+              title={t('canvas.dragToConnect')}
               onMouseDown={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
@@ -1297,95 +1388,170 @@ export function WorkflowBuilder() {
   // RENDER
   // ============================================================================
 
-  const filteredVideos = platformFilter === 'All'
+  const filteredVideos = useMemo(() => platformFilter === 'All'
     ? savedVideos
-    : savedVideos.filter(v => v.platform === platformFilter);
+    : savedVideos.filter(v => v.platform === platformFilter),
+    [savedVideos, platformFilter]);
 
   // ModeIcon unused — mode selection is done via pills in header
 
   return (
     <DevAccessGate>
       <div className="flex h-full bg-background">
-        {/* Left Sidebar - Collapsible */}
-        <div className={cn(
-          "bg-card border-r border-border flex flex-col flex-shrink-0 transition-all duration-300",
-          leftSidebarCollapsed ? "w-12" : "w-64"
-        )}>
-          <button
-            onClick={() => setLeftSidebarCollapsed(!leftSidebarCollapsed)}
-            className="p-3 border-b border-border hover:bg-accent transition-colors flex items-center justify-center"
-          >
-            {leftSidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-          </button>
-
-          {!leftSidebarCollapsed && (
-            <>
-              <div className="flex border-b border-border">
-                {[
-                  { id: 'nodes', label: 'Nodes', icon: null },
-                  { id: 'saved', label: 'Saved', icon: null },
-                  { id: 'history', label: 'History', icon: History },
-                ].map((panel) => (
+        {/* Left: Icon Rail + Expandable Panel */}
+        <div className="flex flex-shrink-0 h-full">
+          {/* Icon Rail - clean outlined icons */}
+          <div className="w-[52px] bg-card/80 border-r border-border flex flex-col items-center py-3 flex-shrink-0">
+            <div className="flex flex-col items-center gap-1">
+              {[
+                { id: 'nodes' as const, icon: Component, label: t('sidebar.nodesTab') },
+                { id: 'saved' as const, icon: Heart, label: t('sidebar.savedTab') },
+                { id: 'history' as const, icon: RotateCcw, label: t('sidebar.historyTab') },
+              ].map((item) => {
+                const Icon = item.icon;
+                const isActive = openPanel === item.id;
+                return (
                   <button
-                    key={panel.id}
+                    key={item.id}
+                    onClick={() => setOpenPanel(isActive ? null : item.id)}
                     className={cn(
-                      "flex-1 py-2.5 px-2 text-xs font-medium transition-colors flex items-center justify-center gap-1",
-                      activePanel === panel.id ? "bg-secondary text-foreground border-b-2 border-purple-500" : "text-muted-foreground hover:bg-accent"
+                      "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
+                      isActive
+                        ? "bg-blue-500/15 text-blue-500"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary"
                     )}
-                    onClick={() => setActivePanel(panel.id as 'nodes' | 'saved' | 'history')}
+                    title={item.label}
                   >
-                    {panel.icon && <panel.icon className="h-3 w-3" />}
-                    {panel.label}
+                    <Icon className="h-5 w-5" strokeWidth={1.5} />
                   </button>
-                ))}
+                );
+              })}
+            </div>
+            {/* Separator */}
+            <div className="w-6 h-px bg-border my-2" />
+            {/* Chat icon */}
+            <button
+              onClick={() => setOpenPanel(openPanel === 'chat' ? null : 'chat')}
+              className={cn(
+                "w-10 h-10 rounded-lg flex items-center justify-center transition-colors",
+                openPanel === 'chat'
+                  ? "bg-blue-500/15 text-blue-500"
+                  : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+              )}
+              title={t('sidebar.aiChat')}
+            >
+              <MessageSquare className="h-5 w-5" strokeWidth={1.5} />
+            </button>
+          </div>
+
+          {/* Expandable Panel */}
+          {openPanel && (
+            <div className={cn(
+              "bg-card border-r border-border flex flex-col animate-in slide-in-from-left-2 duration-200",
+              openPanel === 'chat' ? "w-[340px]" : "w-[260px]"
+            )}>
+              <div className="flex items-center justify-between px-3.5 py-3 border-b border-border">
+                <div className="flex items-center gap-2">
+                  {openPanel === 'chat' && <MessageSquare className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />}
+                  <span className="text-[13px] font-semibold text-foreground capitalize">
+                    {openPanel === 'chat' ? t('sidebar.aiAssistant') : openPanel === 'nodes' ? t('sidebar.nodesTab') : openPanel === 'saved' ? t('sidebar.savedTab') : t('sidebar.historyTab')}
+                  </span>
+                  {openPanel === 'chat' && credits && (
+                    <Badge variant="outline" className="text-xs h-5 border-border text-muted-foreground">
+                      {credits.remaining} cr
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex items-center gap-1">
+                  {openPanel === 'chat' && (
+                    <button
+                      onClick={() => createSession()}
+                      className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                      title={t('sidebar.newChat')}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setOpenPanel(null)}
+                    className="p-1.5 rounded-md hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
 
-              <ScrollArea className="flex-1">
+              {openPanel === 'saved' && (
+                <div className="flex gap-1 bg-secondary rounded-lg p-0.5 mx-2.5 mt-2.5">
+                  {(['workflows', 'videos'] as const).map(tab => (
+                    <button
+                      key={tab}
+                      className={cn(
+                        "flex-1 py-1.5 text-xs font-medium rounded-md transition-colors capitalize",
+                        savedTab === tab
+                          ? "bg-card text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                      onClick={() => setSavedTab(tab)}
+                    >
+                      {t(`sidebar.${tab}`)}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {openPanel === 'history' && (
+                <div className="flex gap-1 bg-secondary rounded-lg p-0.5 mx-2.5 mt-2.5">
+                  {(['runs', 'chats'] as const).map(tab => (
+                    <button
+                      key={tab}
+                      className={cn(
+                        "flex-1 py-1.5 text-xs font-medium rounded-md transition-colors capitalize",
+                        historyTab === tab
+                          ? "bg-card text-foreground shadow-sm"
+                          : "text-muted-foreground hover:text-foreground"
+                      )}
+                      onClick={() => setHistoryTab(tab)}
+                    >
+                      {t(`sidebar.${tab}`)}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {openPanel !== 'chat' && <ScrollArea className="flex-1">
                 <div className="p-2.5">
-                  {activePanel === 'nodes' && (
+                  {openPanel === 'nodes' && (
                     <div className="space-y-3">
-                      {/* Templates - Premium look */}
-                      {templates.length > 0 && (
+                      {/* Templates */}
+                      {TEMPLATES.length > 0 && (
                         <div>
                           <div className="flex items-center gap-1.5 mb-2 px-1">
-                            <Sparkles className="h-3 w-3 text-purple-400" />
-                            <span className="text-[10px] uppercase text-purple-400 tracking-wider font-semibold">Quick Start</span>
+                            <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="text-sm uppercase text-muted-foreground tracking-wider font-semibold">{t('sidebar.quickStart')}</span>
                           </div>
                           <div className="space-y-1">
-                            {templates.map((tpl, idx) => {
+                            {TEMPLATES.map((tpl, idx) => {
                               const tplIcons = [Zap, PenTool, Sparkles];
-                              const tplGradients = [
-                                'from-blue-500/15 to-cyan-500/15 hover:from-blue-500/25 hover:to-cyan-500/25 border-blue-500/20 hover:border-blue-500/40',
-                                'from-purple-500/15 to-pink-500/15 hover:from-purple-500/25 hover:to-pink-500/25 border-purple-500/20 hover:border-purple-500/40',
-                                'from-amber-500/15 to-orange-500/15 hover:from-amber-500/25 hover:to-orange-500/25 border-amber-500/20 hover:border-amber-500/40',
-                              ];
-                              const tplIconGradients = [
-                                'from-blue-500 to-cyan-500',
-                                'from-purple-500 to-pink-500',
-                                'from-amber-500 to-orange-500',
-                              ];
                               const TplIcon = tplIcons[idx % 3];
                               return (
                                 <button
                                   key={tpl.id}
                                   onClick={() => handleUseTemplate(tpl.id)}
-                                  className={cn(
-                                    "w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg border transition-all duration-200 text-left group bg-gradient-to-r",
-                                    tplGradients[idx % 3]
-                                  )}
+                                  className="w-full flex items-center gap-2.5 px-2.5 py-2.5 rounded-lg border border-border hover:border-border/80 bg-secondary/40 hover:bg-secondary/70 transition-all duration-200 text-left group"
                                 >
-                                  <div className={cn("w-8 h-8 rounded-lg bg-gradient-to-br flex items-center justify-center flex-shrink-0 shadow-sm group-hover:shadow-md transition-shadow", tplIconGradients[idx % 3])}>
-                                    <TplIcon className="h-3.5 w-3.5 text-white" />
+                                  <div className="w-5 flex items-center justify-center flex-shrink-0 text-muted-foreground">
+                                    <TplIcon className="h-4 w-4" />
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <div className="text-[11px] font-semibold leading-tight group-hover:text-foreground transition-colors">{tpl.name}</div>
+                                    <div className="text-[13px] font-semibold leading-tight text-foreground/90 group-hover:text-foreground transition-colors">{tpl.name}</div>
                                     <div className="flex items-center gap-1.5 mt-0.5">
-                                      <span className="text-[9px] text-muted-foreground">{tpl.node_count} nodes</span>
-                                      <span className="text-[9px] text-muted-foreground/50">·</span>
-                                      <span className="text-[9px] font-medium text-purple-400">~{tpl.estimated_credits} cr</span>
+                                      <span className="text-xs text-muted-foreground">{t('sidebar.nodesCount', { count: tpl.node_count })}</span>
+                                      <span className="text-xs text-muted-foreground/50">·</span>
+                                      <span className="text-xs text-muted-foreground">{t('sidebar.creditsEstimate', { credits: tpl.estimated_credits })}</span>
                                     </div>
                                   </div>
-                                  <ChevronRight className="h-3 w-3 text-muted-foreground/40 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all" />
+                                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/50 group-hover:text-muted-foreground group-hover:translate-x-0.5 transition-all" />
                                 </button>
                               );
                             })}
@@ -1394,26 +1560,26 @@ export function WorkflowBuilder() {
                       )}
 
                       {/* Divider */}
-                      {templates.length > 0 && (
+                      {TEMPLATES.length > 0 && (
                         <div className="relative">
                           <div className="absolute inset-0 flex items-center px-2"><div className="w-full border-t border-border/50" /></div>
                           <div className="relative flex justify-center">
-                            <span className="bg-card px-2 text-[9px] uppercase tracking-wider text-muted-foreground/60">Drag to canvas</span>
+                            <span className="bg-card px-2 text-xs uppercase tracking-wider text-muted-foreground/60">{t('sidebar.dragToCanvas')}</span>
                           </div>
                         </div>
                       )}
 
                       {/* Node groups */}
                       {[
-                        { title: 'Input', types: ['video', 'brand'], accent: 'text-cyan-400', dot: 'bg-cyan-400' },
-                        { title: 'Process', types: ['analyze', 'extract', 'style'], accent: 'text-purple-400', dot: 'bg-purple-400' },
-                        { title: 'AI', types: ['generate', 'refine'], accent: 'text-emerald-400', dot: 'bg-emerald-400' },
-                        { title: 'Output', types: ['script', 'storyboard'], accent: 'text-amber-400', dot: 'bg-amber-400' },
+                        { title: t('sidebar.nodeGroupInput'), types: ['video', 'brand'] },
+                        { title: t('sidebar.nodeGroupProcess'), types: ['analyze', 'extract', 'style'] },
+                        { title: t('sidebar.nodeGroupAI'), types: ['generate', 'refine'] },
+                        { title: t('sidebar.nodeGroupOutput'), types: ['script', 'storyboard'] },
                       ].map(group => (
                         <div key={group.title}>
                           <div className="flex items-center gap-1.5 mb-1.5 px-1">
-                            <div className={cn("w-1.5 h-1.5 rounded-full", group.dot)} />
-                            <span className={cn("text-[10px] uppercase tracking-wider font-semibold", group.accent)}>{group.title}</span>
+                            <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50" />
+                            <span className="text-xs uppercase tracking-wider font-semibold text-muted-foreground">{group.title}</span>
                           </div>
                           <div className="space-y-0.5">
                             {group.types.map(type => (
@@ -1426,23 +1592,12 @@ export function WorkflowBuilder() {
                                 }}
                                 className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg cursor-grab border border-transparent hover:border-border hover:bg-secondary/60 transition-all duration-150 group active:scale-[0.98] active:opacity-80"
                               >
-                                <div className={cn(
-                                  "w-7 h-7 rounded-lg flex items-center justify-center bg-gradient-to-br shadow-sm flex-shrink-0",
-                                  "group-hover:shadow-md group-hover:scale-105 transition-all duration-150",
-                                  nodeTypes[type].color
-                                )}>
+                                <div className="w-5 flex items-center justify-center flex-shrink-0 text-muted-foreground">
                                   {nodeTypes[type].icon}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="text-[11px] font-medium leading-tight">{nodeTypes[type].title}</div>
-                                  <div className="text-[9px] text-muted-foreground/70 leading-tight">{nodeTypes[type].description}</div>
-                                </div>
-                                <div className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <div className="flex flex-col gap-[2px]">
-                                    <div className="w-3 h-[2px] bg-muted-foreground/30 rounded-full" />
-                                    <div className="w-3 h-[2px] bg-muted-foreground/30 rounded-full" />
-                                    <div className="w-3 h-[2px] bg-muted-foreground/30 rounded-full" />
-                                  </div>
+                                  <div className="text-sm font-medium leading-tight">{nodeTypes[type].title}</div>
+                                  <div className="text-xs text-muted-foreground/70 leading-tight">{nodeTypes[type].description}</div>
                                 </div>
                               </div>
                             ))}
@@ -1452,34 +1607,16 @@ export function WorkflowBuilder() {
                     </div>
                   )}
 
-                  {activePanel === 'saved' && (
+                  {openPanel === 'saved' && (
                     <div className="space-y-3">
-                      {/* Sub-tabs: Workflows / Videos */}
-                      <div className="flex gap-1 bg-secondary rounded-lg p-0.5">
-                        {(['workflows', 'videos'] as const).map(tab => (
-                          <button
-                            key={tab}
-                            className={cn(
-                              "flex-1 py-1.5 text-xs font-medium rounded-md transition-colors capitalize",
-                              savedTab === tab
-                                ? "bg-card text-foreground shadow-sm"
-                                : "text-muted-foreground hover:text-foreground"
-                            )}
-                            onClick={() => setSavedTab(tab)}
-                          >
-                            {tab}
-                          </button>
-                        ))}
-                      </div>
-
                       {savedTab === 'workflows' ? (
                         /* Saved Workflows List */
                         <div className="space-y-1.5">
                           {workflows.length === 0 ? (
                             <div className="text-center py-8">
                               <Wand2 className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
-                              <p className="text-sm text-muted-foreground">No saved workflows</p>
-                              <p className="text-xs text-muted-foreground mt-1">Save your first workflow</p>
+                              <p className="text-sm text-muted-foreground">{t('sidebar.noSavedWorkflows')}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{t('sidebar.saveFirstWorkflow')}</p>
                             </div>
                           ) : (
                             workflows.map(wf => (
@@ -1489,17 +1626,17 @@ export function WorkflowBuilder() {
                                 className={cn(
                                   "flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all",
                                   currentWorkflow?.id === wf.id
-                                    ? "border-purple-500 bg-purple-500/10"
-                                    : "border-border bg-secondary/50 hover:border-purple-400"
+                                    ? "border-blue-500/50 bg-blue-500/10"
+                                    : "border-border bg-secondary/30 hover:border-border/80"
                                 )}
                               >
-                                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center flex-shrink-0">
-                                  <Wand2 className="h-4 w-4 text-purple-500" />
+                                <div className="w-5 flex items-center justify-center flex-shrink-0 text-muted-foreground">
+                                  <Wand2 className="h-4 w-4" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="text-xs font-medium truncate">{wf.name}</div>
-                                  <div className="text-[10px] text-muted-foreground">
-                                    {wf.node_count} nodes · {wf.status}
+                                  <div className="text-xs text-muted-foreground">
+                                    {t('sidebar.nodesCount', { count: wf.node_count })} · {wf.status}
                                   </div>
                                 </div>
                                 <button
@@ -1522,25 +1659,25 @@ export function WorkflowBuilder() {
                                 className={cn(
                                   "px-2.5 py-1 text-xs rounded-full border transition-colors",
                                   platformFilter === platform
-                                    ? "bg-purple-500 text-white border-purple-500"
-                                    : "bg-secondary text-muted-foreground border-border hover:border-purple-500"
+                                    ? "bg-primary text-primary-foreground border-primary"
+                                    : "bg-secondary/50 text-muted-foreground border-border hover:border-border/80"
                                 )}
                                 onClick={() => setPlatformFilter(platform)}
                               >
-                                {platform}
+                                {platform === 'All' ? t('sidebar.all') : platform}
                               </button>
                             ))}
                           </div>
 
                           {loadingSaved ? (
                             <div className="flex items-center justify-center py-8">
-                              <Loader2 className="h-5 w-5 animate-spin text-purple-500" />
+                              <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                             </div>
                           ) : filteredVideos.length === 0 ? (
                             <div className="text-center py-8">
                               <FolderOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
-                              <p className="text-sm text-muted-foreground">No saved videos</p>
-                              <p className="text-xs text-muted-foreground mt-1">Save videos from Trends</p>
+                              <p className="text-sm text-muted-foreground">{t('sidebar.noSavedVideos')}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{t('sidebar.saveFromTrends')}</p>
                             </div>
                           ) : (
                             filteredVideos.map(video => (
@@ -1548,25 +1685,25 @@ export function WorkflowBuilder() {
                                 key={video.id}
                                 draggable
                                 onDragStart={(e) => e.dataTransfer.setData('videoData', JSON.stringify(video))}
-                                className="group flex gap-2 p-2 bg-secondary/50 border border-border rounded-lg cursor-grab hover:border-purple-500 transition-all relative"
+                                className="group flex gap-2 p-2 bg-secondary/50 border border-border rounded-lg cursor-grab hover:border-blue-500 transition-all relative"
                               >
-                                <div className="w-12 h-16 bg-gradient-to-br from-gray-800 to-gray-900 rounded overflow-hidden flex-shrink-0 relative">
+                                <div className="w-12 h-16 bg-secondary rounded overflow-hidden flex-shrink-0 relative">
                                   {video.thumb ? (
                                     <img src={video.thumb} alt="" className="w-full h-full object-cover" />
                                   ) : (
                                     <div className="w-full h-full flex items-center justify-center">
-                                      <Video className="h-4 w-4 text-gray-600" />
+                                      <Video className="h-4 w-4 text-muted-foreground" />
                                     </div>
                                   )}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-1 mb-0.5">
-                                    <Badge className="bg-gradient-to-r from-red-500 to-orange-500 text-white border-0 text-[9px] px-1.5 py-0">
+                                    <Badge className="bg-primary/80 text-primary-foreground border-0 text-[11px] px-1.5 py-0">
                                       {video.uts}
                                     </Badge>
-                                    <span className="text-[10px] font-medium truncate">@{video.author}</span>
+                                    <span className="text-xs font-medium truncate">@{video.author}</span>
                                   </div>
-                                  <p className="text-[9px] text-muted-foreground line-clamp-2">{video.desc}</p>
+                                  <p className="text-[11px] text-muted-foreground line-clamp-2">{video.desc}</p>
                                 </div>
                                 {/* Delete button */}
                                 <button
@@ -1575,14 +1712,14 @@ export function WorkflowBuilder() {
                                     e.preventDefault();
                                     try {
                                       await apiService.removeFavorite(video.id);
-                                      setSavedVideos(prev => prev.filter(v => v.id !== video.id));
-                                      toast.success('Video removed');
+                                      removeSavedVideo(video.id);
+                                      toast.success(t('toasts.videoRemoved'));
                                     } catch {
-                                      toast.error('Failed to remove video');
+                                      toast.error(t('toasts.failedRemoveVideo'));
                                     }
                                   }}
                                   className="absolute top-1 right-1 p-1 rounded-md bg-red-500/0 text-transparent group-hover:bg-red-500/10 group-hover:text-red-400 hover:!bg-red-500/20 transition-all"
-                                  title="Remove video"
+                                  title={t('sidebar.removeVideo')}
                                 >
                                   <X className="h-3 w-3" />
                                 </button>
@@ -1594,11 +1731,13 @@ export function WorkflowBuilder() {
                     </div>
                   )}
 
-                  {activePanel === 'history' && (
+                  {openPanel === 'history' && (
                     <div className="space-y-3">
+                      {historyTab === 'runs' && (
+                      <>
                       {/* Header with refresh */}
                       <div className="flex items-center justify-between">
-                        <div className="text-[10px] uppercase text-muted-foreground tracking-wide font-medium">Run History</div>
+                        <div className="text-xs uppercase text-muted-foreground tracking-wide font-medium">{t('sidebar.runHistory')}</div>
                         <button
                           onClick={loadRunHistory}
                           disabled={loadingHistory}
@@ -1610,13 +1749,13 @@ export function WorkflowBuilder() {
 
                       {loadingHistory ? (
                         <div className="flex items-center justify-center py-8">
-                          <Loader2 className="h-5 w-5 animate-spin text-purple-500" />
+                          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                         </div>
                       ) : runHistory.length === 0 ? (
                         <div className="text-center py-8">
                           <History className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
-                          <p className="text-sm text-muted-foreground">No workflow runs yet</p>
-                          <p className="text-xs text-muted-foreground mt-1">Run a workflow to see history</p>
+                          <p className="text-sm text-muted-foreground">{t('sidebar.noWorkflowRuns')}</p>
+                          <p className="text-xs text-muted-foreground mt-1">{t('sidebar.runWorkflowHint')}</p>
                         </div>
                       ) : (
                         <div className="space-y-1.5">
@@ -1636,20 +1775,20 @@ export function WorkflowBuilder() {
                             const diffMins = Math.floor(diffMs / 60000);
                             const diffHours = Math.floor(diffMs / 3600000);
                             const diffDays = Math.floor(diffMs / 86400000);
-                            let timeAgo = 'just now';
-                            if (diffMins > 0 && diffMins < 60) timeAgo = `${diffMins}m ago`;
-                            else if (diffHours > 0 && diffHours < 24) timeAgo = `${diffHours}h ago`;
-                            else if (diffDays > 0) timeAgo = `${diffDays}d ago`;
+                            let timeAgo = t('history.justNow');
+                            if (diffMins > 0 && diffMins < 60) timeAgo = t('history.minutesAgo', { count: diffMins });
+                            else if (diffHours > 0 && diffHours < 24) timeAgo = t('history.hoursAgo', { count: diffHours });
+                            else if (diffDays > 0) timeAgo = t('history.daysAgo', { count: diffDays });
 
                             return (
                               <div
                                 key={run.id}
-                                onClick={() => handleSelectRun(run)}
+                                onClick={() => handleLoadRunOnCanvas(run)}
                                 className={cn(
                                   "flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all",
                                   selectedRun?.id === run.id
-                                    ? "border-purple-500 bg-purple-500/10"
-                                    : "border-border bg-secondary/50 hover:border-purple-400"
+                                    ? "border-blue-500 bg-blue-500/10"
+                                    : "border-border bg-secondary/50 hover:border-border/80"
                                 )}
                               >
                                 <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0", statusStyle.bg, statusStyle.text)}>
@@ -1659,20 +1798,20 @@ export function WorkflowBuilder() {
                                   <div className="flex items-center gap-1.5">
                                     <span className="text-xs font-medium truncate">{run.workflow_name}</span>
                                     {run.run_number > 1 && (
-                                      <span className="text-[9px] text-muted-foreground">#{run.run_number}</span>
+                                      <span className="text-[11px] text-muted-foreground">#{run.run_number}</span>
                                     )}
                                   </div>
-                                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                     <span className="flex items-center gap-0.5">
                                       <Clock className="h-2.5 w-2.5" />
                                       {timeAgo}
                                     </span>
                                     <span>·</span>
-                                    <span>{run.node_count} nodes</span>
+                                    <span>{t('sidebar.nodesCount', { count: run.node_count })}</span>
                                     {run.credits_used > 0 && (
                                       <>
                                         <span>·</span>
-                                        <span className="text-purple-400">{run.credits_used} cr</span>
+                                        <span className="text-muted-foreground">{t('sidebar.creditsEstimate', { credits: run.credits_used })}</span>
                                       </>
                                     )}
                                   </div>
@@ -1682,11 +1821,11 @@ export function WorkflowBuilder() {
                                     e.stopPropagation();
                                     try {
                                       await apiService.deleteWorkflowRun(run.id);
-                                      setRunHistory(prev => prev.filter(r => r.id !== run.id));
+                                      removeRunHistoryItem(run.id);
                                       if (selectedRun?.id === run.id) setSelectedRun(null);
-                                      toast.success('Run deleted');
+                                      toast.success(t('toasts.runDeleted'));
                                     } catch (err) {
-                                      toast.error('Failed to delete run');
+                                      toast.error(t('toasts.failedDeleteRun'));
                                     }
                                   }}
                                   className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
@@ -1699,11 +1838,11 @@ export function WorkflowBuilder() {
                         </div>
                       )}
 
-                      {/* Selected Run Details */}
-                      {selectedRun && (
-                        <div className="mt-3 p-3 bg-secondary/50 border border-border rounded-lg space-y-2">
+                      {/* Selected Run — loaded on canvas indicator */}
+                      {selectedRun && selectedRunDetail && (
+                        <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-xs font-medium">Run Details</span>
+                            <span className="text-xs font-medium text-blue-400">{t('sidebar.loadedOnCanvas')}</span>
                             <button
                               onClick={() => { setSelectedRun(null); setSelectedRunDetail(null); }}
                               className="p-1 rounded hover:bg-secondary text-muted-foreground"
@@ -1711,95 +1850,428 @@ export function WorkflowBuilder() {
                               <X className="h-3 w-3" />
                             </button>
                           </div>
-
-                          {loadingRunDetail ? (
-                            <div className="flex items-center justify-center py-4">
-                              <Loader2 className="h-4 w-4 animate-spin text-purple-500" />
-                            </div>
-                          ) : selectedRunDetail ? (
-                            <div className="space-y-2">
-                              <div className="space-y-1.5 text-[10px]">
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Status</span>
-                                  <span className={cn(
-                                    "font-medium capitalize",
-                                    selectedRunDetail.status === 'completed' && "text-green-500",
-                                    selectedRunDetail.status === 'failed' && "text-red-500",
-                                    selectedRunDetail.status === 'running' && "text-yellow-500"
-                                  )}>
-                                    {selectedRunDetail.status}
-                                  </span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Nodes</span>
-                                  <span>{selectedRunDetail.node_count}</span>
-                                </div>
-                                <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Credits</span>
-                                  <span className="text-purple-400">{selectedRunDetail.credits_used}</span>
-                                </div>
-                                {selectedRunDetail.execution_time_ms && (
-                                  <div className="flex justify-between">
-                                    <span className="text-muted-foreground">Duration</span>
-                                    <span>{(selectedRunDetail.execution_time_ms / 1000).toFixed(1)}s</span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {selectedRunDetail.error_message && (
-                                <div className="p-2 bg-red-500/10 border border-red-500/30 rounded text-red-400 text-[10px]">
-                                  {selectedRunDetail.error_message}
-                                </div>
-                              )}
-
-                              {/* Action Buttons */}
-                              <div className="flex flex-col gap-1.5 pt-1">
-                                {(selectedRunDetail.final_script || selectedRunDetail.storyboard) && (
-                                  <Button
-                                    size="sm"
-                                    onClick={() => setShowRunDetailModal(true)}
-                                    className="w-full h-7 text-[10px] bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                                  >
-                                    <Eye className="h-3 w-3 mr-1" />
-                                    View Full Results
-                                  </Button>
-                                )}
-                                {selectedRunDetail.results?.length > 0 && (
-                                  <div className="text-[9px] text-muted-foreground text-center">
-                                    {selectedRunDetail.results.filter((r: any) => r.success).length}/{selectedRunDetail.results.length} nodes successful
-                                  </div>
-                                )}
-                              </div>
-
-                              {/* Quick Preview */}
-                              {selectedRunDetail.final_script && (
-                                <div>
-                                  <div className="text-[10px] text-muted-foreground mb-1">Script Preview:</div>
-                                  <div
-                                    className="p-2 bg-card border border-border rounded max-h-24 overflow-y-auto whitespace-pre-wrap text-[9px] cursor-pointer hover:border-purple-500 transition-colors"
-                                    onClick={() => setShowRunDetailModal(true)}
-                                  >
-                                    {selectedRunDetail.final_script.substring(0, 300)}{selectedRunDetail.final_script.length > 300 ? '...' : ''}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <div className="text-[10px] text-muted-foreground text-center py-2">
-                              Failed to load details
-                            </div>
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                            <span className={cn(
+                              "font-medium capitalize",
+                              selectedRunDetail.status === 'completed' && "text-green-500",
+                              selectedRunDetail.status === 'failed' && "text-red-500"
+                            )}>
+                              {selectedRunDetail.status}
+                            </span>
+                            <span>{selectedRunDetail.node_count} {t('sidebar.nodesLabel')}</span>
+                            {selectedRunDetail.execution_time_ms && (
+                              <span>{(selectedRunDetail.execution_time_ms / 1000).toFixed(1)}s</span>
+                            )}
+                          </div>
+                          {!showResultsView && (
+                            <Button
+                              size="sm"
+                              onClick={() => setShowResultsView(true)}
+                              className="w-full h-7 text-xs bg-blue-500 hover:bg-blue-600"
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              {t('sidebar.viewFullResults')}
+                            </Button>
                           )}
                         </div>
+                      )}
+
+                      </>
+                      )}
+
+                      {historyTab === 'chats' && (
+                      <>
+                        <div className="flex items-center justify-between">
+                          <div className="text-xs uppercase text-muted-foreground tracking-wide font-medium">{t('sidebar.chatHistory')}</div>
+                          <button
+                            onClick={() => { createSession(); setOpenPanel('chat'); }}
+                            className="p-1 rounded hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                            title={t('sidebar.newChat')}
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
+
+                        {chatSessions.length === 0 ? (
+                          <div className="text-center py-8">
+                            <MessageSquare className="h-10 w-10 text-muted-foreground mx-auto mb-3 opacity-50" />
+                            <p className="text-sm text-muted-foreground">{t('sidebar.noChatSessions')}</p>
+                            <p className="text-xs text-muted-foreground mt-1">{t('sidebar.startChatHint')}</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-1.5">
+                            {chatSessions.map(session => {
+                              const isActive = currentSessionId === session.session_id;
+                              const sessionDate = new Date(session.updated_at || session.created_at);
+                              const now = new Date();
+                              const diffMs = now.getTime() - sessionDate.getTime();
+                              const diffMins = Math.floor(diffMs / 60000);
+                              const diffHours = Math.floor(diffMs / 3600000);
+                              const diffDays = Math.floor(diffMs / 86400000);
+                              let timeAgo = t('history.justNow');
+                              if (diffMins > 0 && diffMins < 60) timeAgo = t('history.minutesAgo', { count: diffMins });
+                              else if (diffHours > 0 && diffHours < 24) timeAgo = t('history.hoursAgo', { count: diffHours });
+                              else if (diffDays > 0) timeAgo = t('history.daysAgo', { count: diffDays });
+
+                              return (
+                                <div
+                                  key={session.session_id}
+                                  onClick={() => { selectSession(session.session_id); setOpenPanel('chat'); }}
+                                  className={cn(
+                                    "flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all",
+                                    isActive
+                                      ? "border-blue-500/50 bg-blue-500/10"
+                                      : "border-border bg-secondary/30 hover:border-border/80"
+                                  )}
+                                >
+                                  <div className="w-5 flex items-center justify-center flex-shrink-0 text-muted-foreground">
+                                    <MessageSquare className="h-3.5 w-3.5" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="text-xs font-medium truncate">
+                                      {session.title || t('sidebar.untitledChat')}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                      <span>{t('sidebar.msgsCount', { count: session.message_count })}</span>
+                                      <span>·</span>
+                                      <span>{timeAgo}</span>
+                                    </div>
+                                  </div>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      deleteChatSession(session.session_id);
+                                    }}
+                                    className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </>
                       )}
                     </div>
                   )}
                 </div>
-              </ScrollArea>
-            </>
+              </ScrollArea>}
+
+              {/* Chat Panel Content */}
+              {openPanel === 'chat' && (
+                <div className="flex-1 flex flex-col overflow-hidden">
+                  {/* Mode Pills */}
+                  <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border overflow-x-auto scrollbar-none">
+                    {contentModes.map((mode) => {
+                      const Icon = mode.icon;
+                      return (
+                        <button
+                          key={mode.id}
+                          onClick={() => setSelectedMode(mode)}
+                          className={cn(
+                            "flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium whitespace-nowrap transition-all",
+                            selectedMode.id === mode.id
+                              ? "bg-blue-500/15 text-blue-400 ring-1 ring-blue-500/30"
+                              : "text-muted-foreground hover:text-foreground hover:bg-secondary"
+                          )}
+                        >
+                          <Icon className="h-3 w-3" />
+                          {mode.name}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Messages Area */}
+                  <ScrollArea className="flex-1 overflow-hidden">
+                    <div className="p-3 space-y-2">
+                      {messages.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-10 text-center">
+                          <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center mb-3">
+                            <Sparkles className="h-5 w-5 text-muted-foreground" />
+                          </div>
+                          <h3 className="text-sm font-medium text-foreground/70">{t('chat.whatCanIHelp')}</h3>
+                          <p className="text-xs text-muted-foreground mt-1">{t('chat.chatSubtitle')}</p>
+                        </div>
+                      ) : (
+                        messages.map((message) => (
+                          <div key={message.id} className="w-full">
+                            {message.role === 'user' ? (
+                              <div className="flex flex-col items-end mb-2">
+                                <div className="max-w-[85%] flex items-end gap-1.5">
+                                  <div className="bg-blue-500/15 text-foreground rounded-2xl rounded-br-sm px-3 py-2">
+                                    <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
+                                  </div>
+                                  <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                                    <User className="h-2.5 w-2.5 text-muted-foreground" />
+                                  </div>
+                                </div>
+                                <span className="text-[10px] text-muted-foreground/50 mr-7 mt-0.5">
+                                  {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex justify-start mb-2">
+                                <div className="max-w-[90%] flex items-start gap-1.5">
+                                  <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center flex-shrink-0 mt-1">
+                                    <Bot className="h-2.5 w-2.5 text-muted-foreground" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div
+                                      className="bg-secondary/60 border border-border rounded-2xl rounded-tl-sm px-3 py-2"
+                                      onClick={(e) => {
+                                        const target = e.target as HTMLElement;
+                                        if (target.tagName === 'IMG') {
+                                          setLightboxImage((target as HTMLImageElement).src);
+                                          setLightboxZoom(1);
+                                        }
+                                      }}
+                                    >
+                                      <div className="text-sm text-foreground [&>*]:break-words [&_pre]:overflow-x-auto [&_pre]:max-w-full [&_img]:cursor-pointer">
+                                        <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents as any}>
+                                          {message.content}
+                                        </ReactMarkdown>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-0.5 mt-0.5 ml-1">
+                                      <span className="text-[10px] text-muted-foreground/50 mr-1">
+                                        {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                      </span>
+                                      <button onClick={() => copyMessage(message.content, message.id)} className="p-1 rounded-md hover:bg-secondary transition-colors text-muted-foreground/60 hover:text-muted-foreground" title={t('chat.copy')}>
+                                        {copiedMessageId === message.id ? <Check className="h-2.5 w-2.5 text-green-500" /> : <Copy className="h-2.5 w-2.5" />}
+                                      </button>
+                                      {message === messages[messages.length - 1] && (
+                                        <button onClick={regenerateResponse} disabled={isStreaming} className="p-1 rounded-md hover:bg-secondary transition-colors text-muted-foreground/60 hover:text-muted-foreground disabled:opacity-50" title={t('chat.regenerate')}>
+                                          <RefreshCw className="h-2.5 w-2.5" />
+                                        </button>
+                                      )}
+                                      {extractImageUrls(message.content).map((imgUrl, idx) => {
+                                        const imgSrc = resolveImgSrc(imgUrl);
+                                        return (
+                                          <div key={idx} className="flex items-center gap-0.5">
+                                            <button onClick={() => { setLightboxImage(imgSrc); setLightboxZoom(1); }} className="p-1 rounded-md hover:bg-secondary transition-colors text-muted-foreground/60 hover:text-muted-foreground" title={t('chat.fullSize')}>
+                                              <ZoomIn className="h-2.5 w-2.5" />
+                                            </button>
+                                            <button onClick={() => handleDownloadImage(imgSrc)} className="p-1 rounded-md hover:bg-secondary transition-colors text-muted-foreground/60 hover:text-muted-foreground" title={t('chat.downloadImage')}>
+                                              <Download className="h-2.5 w-2.5" />
+                                            </button>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ))
+                      )}
+
+                      {isStreaming && (
+                        <div className="flex gap-1.5">
+                          <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center flex-shrink-0">
+                            <Bot className="h-2.5 w-2.5 text-muted-foreground" />
+                          </div>
+                          <div className="bg-secondary/60 rounded-2xl rounded-tl-sm px-3 py-2">
+                            <div className="flex gap-1">
+                              <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                              <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                              <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      <div ref={messagesEndRef} />
+                    </div>
+                  </ScrollArea>
+
+                  {/* Chat Input */}
+                  <div className="p-2.5 border-t border-border">
+                    <div className="relative">
+                      <div className="bg-secondary/50 border border-border rounded-xl overflow-hidden focus-within:border-blue-500/50 focus-within:ring-1 focus-within:ring-blue-500/20 transition-all">
+                        <textarea
+                          ref={inputRef}
+                          value={inputValue}
+                          onChange={(e) => {
+                            setInputValue(e.target.value);
+                            e.target.style.height = 'auto';
+                            e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px';
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleSendMessage();
+                            }
+                          }}
+                          placeholder={t('chat.askMeTo', { action: selectedMode.description.toLowerCase() })}
+                          className="w-full p-2.5 pb-8 bg-transparent resize-none focus:outline-none text-sm placeholder:text-muted-foreground/50 text-foreground min-h-[40px] max-h-[100px]"
+                          rows={1}
+                          disabled={isStreaming}
+                        />
+                        <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-2.5 py-1">
+                          <div className="relative">
+                            <button
+                              onClick={() => setShowModelMenu(!showModelMenu)}
+                              className="flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
+                            >
+                              <selectedModel.icon />
+                              <span>{selectedModel.name}</span>
+                              <span className="text-[11px] text-muted-foreground/50">
+                                {credits?.model_costs?.[selectedModel.id] ?? selectedModel.creditCost}cr
+                              </span>
+                              <ChevronDown className="h-2.5 w-2.5" />
+                            </button>
+                            {showModelMenu && (
+                              <div className="absolute bottom-full left-0 mb-2 w-60 bg-card border border-border rounded-xl shadow-xl py-1.5 z-50">
+                                <div className="px-3 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wider">{t('chat.modelLabel')}</div>
+                                {aiModels.map((model) => {
+                                  const IconComponent = model.icon;
+                                  const cost = credits?.model_costs?.[model.id] ?? model.creditCost;
+                                  return (
+                                    <button
+                                      key={model.id}
+                                      onClick={() => { if (model.available) { setSelectedModel(model); setShowModelMenu(false); }}}
+                                      disabled={!model.available}
+                                      className={cn(
+                                        "w-full flex items-center gap-2.5 px-3 py-1.5 text-sm transition-colors",
+                                        !model.available ? "opacity-40 cursor-not-allowed" : "hover:bg-secondary cursor-pointer"
+                                      )}
+                                    >
+                                      <IconComponent />
+                                      <div className="flex-1 text-left">
+                                        <div className="text-xs font-medium text-foreground">{model.name}</div>
+                                        <div className="text-[11px] text-muted-foreground">{model.description}</div>
+                                      </div>
+                                      <div className="flex items-center gap-1">
+                                        <span className="text-[11px] text-muted-foreground">{cost}cr</span>
+                                        {selectedModel.id === model.id && model.available && (
+                                          <Check className="h-3 w-3 text-blue-400" />
+                                        )}
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                          <Button
+                            onClick={() => handleSendMessage()}
+                            disabled={!inputValue.trim() || isStreaming}
+                            size="sm"
+                            className={cn(
+                              "rounded-lg px-2.5 h-6 text-xs transition-all",
+                              inputValue.trim()
+                                ? "bg-blue-500 hover:bg-blue-600 text-white"
+                                : "bg-secondary text-muted-foreground"
+                            )}
+                          >
+                            {isStreaming ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           )}
         </div>
 
-        {/* Canvas Area */}
+        {/* Main: Toolbar + Canvas */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Top Toolbar */}
+          <div className="h-12 bg-card/95 backdrop-blur-sm border-b border-border flex items-center justify-between px-3 gap-2 flex-shrink-0 z-50">
+            {/* Left: Back + Workflow Name */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => window.location.href = '/dashboard'}
+                title={t('toolbar.backToDashboard')}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <div className="w-px h-6 bg-border" />
+              {editingName ? (
+                <input
+                  autoFocus
+                  value={workflowName}
+                  onChange={(e) => setWorkflowName(e.target.value)}
+                  onBlur={() => setEditingName(false)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') setEditingName(false); }}
+                  className="bg-transparent text-sm font-medium outline-none border-b border-blue-500 w-48"
+                />
+              ) : (
+                <button
+                  onClick={() => setEditingName(true)}
+                  className="text-sm font-medium hover:text-muted-foreground transition-colors truncate max-w-[200px]"
+                >
+                  {workflowName}
+                </button>
+              )}
+              {isDirty && <span className="w-2 h-2 rounded-full bg-orange-500" title={t('toolbar.unsavedChanges')} />}
+              {currentWorkflow && (
+                <span className="text-xs text-muted-foreground">#{currentWorkflow.id}</span>
+              )}
+            </div>
+
+            {/* Center: Zoom controls */}
+            <div className="flex items-center gap-1">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom(prev => Math.max(0.3, prev - 0.1))}>
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <span className="text-xs font-medium w-10 text-center">{Math.round(zoom * 100)}%</span>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom(prev => Math.min(2, prev + 0.1))}>
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setZoom(1); setPanOffset({ x: 0, y: 0 }); }} title={t('toolbar.resetView')}>
+                <Maximize2 className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Right: Actions */}
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-destructive hover:text-destructive"
+                onClick={() => { setNodes([]); setConnections([]); }}
+                title={t('toolbar.clearCanvas')}
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+              <div className="w-px h-6 bg-border" />
+              <Button onClick={handleSaveWorkflow} disabled={nodes.length === 0} variant="outline" size="sm" className="h-8">
+                <Save className="h-3.5 w-3.5 mr-1.5" />
+                {t('toolbar.save')}
+              </Button>
+              <Button onClick={handleNewWorkflow} variant="outline" size="sm" className="h-8">
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+                {t('toolbar.new')}
+              </Button>
+              <Button
+                onClick={runWorkflow}
+                disabled={isRunning || nodes.length === 0}
+                size="sm"
+                className={cn(
+                  "h-8",
+                  isRunning
+                    ? "bg-muted-foreground"
+                    : "bg-blue-500 hover:bg-blue-600"
+                )}
+              >
+                {isRunning ? (
+                  <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />{t('toolbar.running')}</>
+                ) : (
+                  <><Play className="h-3.5 w-3.5 mr-1.5" />{estimatedCost > 0 ? t('toolbar.runWithCost', { cost: estimatedCost }) : t('toolbar.run')}</>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Canvas Area */}
         <div
           ref={canvasAreaRef}
           className="flex-1 relative overflow-hidden bg-background canvas-area"
@@ -1817,7 +2289,7 @@ export function WorkflowBuilder() {
               "absolute w-[3000px] h-[3000px]",
               "bg-[radial-gradient(circle,hsl(var(--border))_1px,transparent_1px)]",
               "[background-size:24px_24px]",
-              isPanning ? "cursor-grabbing" : "cursor-grab"
+              isPanning ? "cursor-grabbing" : "cursor-default"
             )}
             style={{
               transform: `translate3d(${panOffset.x}px, ${panOffset.y}px, 0) scale(${zoom})`,
@@ -1831,117 +2303,22 @@ export function WorkflowBuilder() {
             </svg>
 
             {nodes.map(renderNode)}
+          </div>
 
-            {nodes.length === 0 && (
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                  <Wand2 className="h-8 w-8 text-purple-500/50" />
+          {/* Empty state - always centered in viewport, outside canvas transform */}
+          {nodes.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-secondary flex items-center justify-center">
+                  <Wand2 className="h-8 w-8 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg font-semibold mb-2">Build Your Workflow</h3>
+                <h3 className="text-lg font-semibold mb-2">{t('canvas.buildYourWorkflow')}</h3>
                 <p className="text-muted-foreground text-sm max-w-xs">
-                  Drag nodes from the left panel to create a script generation pipeline
+                  {t('canvas.dragNodesHint')}
                 </p>
               </div>
-            )}
-          </div>
-
-          {/* Top Toolbar */}
-          <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between pointer-events-none">
-            {/* Left: Workflow Name */}
-            <div className="pointer-events-auto flex items-center gap-2 bg-card/90 backdrop-blur-sm border border-border rounded-xl px-3 py-2 shadow-lg">
-              {editingName ? (
-                <input
-                  autoFocus
-                  value={workflowName}
-                  onChange={(e) => setWorkflowName(e.target.value)}
-                  onBlur={() => setEditingName(false)}
-                  onKeyDown={(e) => { if (e.key === 'Enter') setEditingName(false); }}
-                  className="bg-transparent text-sm font-medium outline-none border-b border-purple-500 w-48"
-                />
-              ) : (
-                <button
-                  onClick={() => setEditingName(true)}
-                  className="text-sm font-medium hover:text-purple-400 transition-colors truncate max-w-[200px]"
-                >
-                  {workflowName}
-                </button>
-              )}
-              {isDirty && (
-                <span className="w-2 h-2 rounded-full bg-orange-500" title="Unsaved changes" />
-              )}
-              {currentWorkflow && (
-                <span className="text-[10px] text-muted-foreground">#{currentWorkflow.id}</span>
-              )}
             </div>
-
-            {/* Right: Save + Run */}
-            <div className="pointer-events-auto flex items-center gap-2">
-              <Button
-                onClick={handleSaveWorkflow}
-                disabled={nodes.length === 0}
-                variant="outline"
-                size="sm"
-                className="shadow-lg bg-card/90 backdrop-blur-sm"
-              >
-                <Save className="h-4 w-4 mr-1.5" />
-                Save
-              </Button>
-              <Button
-                onClick={handleNewWorkflow}
-                variant="outline"
-                size="sm"
-                className="shadow-lg bg-card/90 backdrop-blur-sm"
-              >
-                <Plus className="h-4 w-4 mr-1.5" />
-                New
-              </Button>
-              <Button
-                onClick={runWorkflow}
-                disabled={isRunning || nodes.length === 0}
-                size="sm"
-                className={cn(
-                  "shadow-lg",
-                  isRunning
-                    ? "bg-gradient-to-r from-orange-500 to-yellow-500"
-                    : "bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600"
-                )}
-              >
-                {isRunning ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
-                    Running...
-                  </>
-                ) : (
-                  <>
-                    <Play className="h-4 w-4 mr-1.5" />
-                    Run{estimatedCost > 0 ? ` (${estimatedCost} cr)` : ''}
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-
-          <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-card border border-border rounded-xl px-3 py-2 shadow-lg">
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom(prev => Math.max(0.3, prev - 0.1))}>
-              <ZoomOut className="h-4 w-4" />
-            </Button>
-            <span className="text-xs font-medium w-12 text-center">{Math.round(zoom * 100)}%</span>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setZoom(prev => Math.min(2, prev + 0.1))}>
-              <ZoomIn className="h-4 w-4" />
-            </Button>
-            <div className="w-px h-6 bg-border" />
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setZoom(1); setPanOffset({ x: 0, y: 0 }); }}>
-              <Maximize2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-destructive hover:text-destructive"
-              onClick={() => { setNodes([]); setConnections([]); }}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
+          )}
 
           {/* Node Config Panel */}
           {configNode && (
@@ -1957,318 +2334,33 @@ export function WorkflowBuilder() {
                 setConfigNode(prev => prev && prev.id === nodeId ? { ...prev, videoData } : prev);
                 markDirty();
               }}
+              onUploadVideo={async (nodeId, file) => {
+                try {
+                  const result = await apiService.uploadVideo(file);
+                  const uploadedVideo: SavedVideo = {
+                    id: Date.now(),
+                    platform: 'Upload',
+                    author: file.name.replace(/\.[^/.]+$/, ''),
+                    desc: `${file.name} (${result.size_mb}MB)`,
+                    views: '0',
+                    uts: 0,
+                    thumb: '',
+                    localPath: result.local_path,
+                  };
+                  setNodes(prev => prev.map(n =>
+                    n.id === nodeId ? { ...n, videoData: uploadedVideo } : n
+                  ));
+                  setConfigNode(prev => prev && prev.id === nodeId ? { ...prev, videoData: uploadedVideo } : prev);
+                  markDirty();
+                  toast.success(t('toasts.videoUploaded'));
+                } catch (error: any) {
+                  toast.error(error?.response?.data?.detail || t('nodeConfig.uploadFailed'));
+                }
+              }}
             />
           )}
+
         </div>
-
-        {/* Right Sidebar - AI Chat (Professional Design) */}
-        <div className="w-[400px] bg-card border-l border-border flex flex-col flex-shrink-0">
-          {/* Chat Header */}
-          <div className="p-4 border-b border-border bg-gradient-to-r from-purple-500/5 to-pink-500/5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
-                  <Bot className="h-5 w-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-sm">AI Script Assistant</h3>
-                  <p className="text-xs text-muted-foreground flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-green-500"></span>
-                    {selectedModel.name}
-                  </p>
-                </div>
-              </div>
-              <Button variant="ghost" size="icon" onClick={() => createSession()} className="h-8 w-8">
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {/* Credits Indicator */}
-            {credits && (
-              <div className="flex items-center gap-2 mt-2 px-1">
-                <div className="flex-1 h-2 bg-zinc-800 rounded-full overflow-hidden">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all duration-500",
-                      credits.remaining / credits.monthly_limit > 0.5
-                        ? "bg-gradient-to-r from-green-500 to-emerald-500"
-                        : credits.remaining / credits.monthly_limit > 0.2
-                        ? "bg-gradient-to-r from-yellow-500 to-orange-500"
-                        : "bg-gradient-to-r from-red-500 to-pink-500"
-                    )}
-                    style={{ width: `${Math.min(100, (credits.remaining / credits.monthly_limit) * 100)}%` }}
-                  />
-                </div>
-                <span className="text-[10px] text-muted-foreground whitespace-nowrap font-medium">
-                  {credits.remaining}/{credits.monthly_limit}
-                </span>
-              </div>
-            )}
-
-            {/* Mode Selector Pills */}
-            <div className="flex gap-1.5 mt-3 overflow-x-auto pb-1 scrollbar-none">
-              {contentModes.map((mode) => {
-                const Icon = mode.icon;
-                return (
-                  <button
-                    key={mode.id}
-                    onClick={() => setSelectedMode(mode)}
-                    className={cn(
-                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all",
-                      selectedMode.id === mode.id
-                        ? `bg-gradient-to-r ${mode.color} text-white shadow-md`
-                        : "bg-secondary hover:bg-secondary/80 text-muted-foreground"
-                    )}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    {mode.name}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Messages Area */}
-          <ScrollArea className="flex-1 overflow-hidden">
-            <div className="p-4 space-y-2 overflow-hidden">
-              {messages.length === 0 ? (
-                <div className="py-8">
-                  {/* Welcome Message */}
-                  <div className="text-center mb-8">
-                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                      <Sparkles className="h-8 w-8 text-purple-500" />
-                    </div>
-                    <h3 className="text-lg font-semibold mb-2">What can I help you create?</h3>
-                    <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-                      I can write viral scripts, generate ideas, analyze trends, and more.
-                    </p>
-                  </div>
-
-                  {/* Suggested Prompts */}
-                  <div className="space-y-2">
-                    <p className="text-xs text-muted-foreground font-medium mb-3">Try asking:</p>
-                    {suggestedPrompts.map((prompt, idx) => {
-                      const Icon = prompt.icon;
-                      return (
-                        <button
-                          key={idx}
-                          onClick={() => {
-                            setInputValue(prompt.text);
-                            inputRef.current?.focus();
-                          }}
-                          className="w-full flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border hover:border-purple-500 hover:bg-secondary transition-all text-left group"
-                        >
-                          <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center group-hover:bg-purple-500/20 transition-colors">
-                            <Icon className="h-4 w-4 text-purple-500" />
-                          </div>
-                          <span className="text-sm">{prompt.text}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                messages.map((message) => (
-                  <div key={message.id} className="w-full">
-                    {message.role === 'user' ? (
-                      /* User Message - Right aligned */
-                      <div className="flex justify-end mb-4">
-                        <div className="max-w-[85%] flex items-end gap-2">
-                          <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-2xl rounded-br-md px-4 py-2.5">
-                            <p className="text-sm whitespace-pre-wrap break-words">{message.content}</p>
-                          </div>
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center flex-shrink-0">
-                            <User className="h-3.5 w-3.5 text-white" />
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      /* Assistant Message - Left aligned */
-                      <div className="flex justify-start mb-4">
-                        <div className="max-w-[95%] flex items-start gap-2">
-                          <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0 mt-1">
-                            <Bot className="h-3.5 w-3.5 text-white" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="bg-zinc-800/50 border border-zinc-700/50 rounded-2xl rounded-tl-md px-4 py-3">
-                              <div className="text-sm text-zinc-100 [&>*]:break-words [&_pre]:overflow-x-auto [&_pre]:max-w-full">
-                                <ReactMarkdown
-                                  remarkPlugins={[remarkGfm]}
-                                  components={MarkdownComponents as any}
-                                >
-                                  {message.content}
-                                </ReactMarkdown>
-                              </div>
-                            </div>
-                            {/* Message Actions */}
-                            <div className="flex items-center gap-1 mt-1.5 ml-1">
-                              <button
-                                onClick={() => copyMessage(message.content, message.id)}
-                                className="p-1.5 rounded-md hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-300"
-                                title="Copy"
-                              >
-                                {copiedMessageId === message.id ? (
-                                  <Check className="h-3.5 w-3.5 text-green-500" />
-                                ) : (
-                                  <Copy className="h-3.5 w-3.5" />
-                                )}
-                              </button>
-                              {message === messages[messages.length - 1] && (
-                                <button
-                                  onClick={regenerateResponse}
-                                  disabled={isStreaming}
-                                  className="p-1.5 rounded-md hover:bg-zinc-800 transition-colors text-zinc-500 hover:text-zinc-300 disabled:opacity-50"
-                                  title="Regenerate"
-                                >
-                                  <RefreshCw className="h-3.5 w-3.5" />
-                                </button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-
-              {/* Streaming Indicator */}
-              {isStreaming && (
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
-                    <Bot className="h-4 w-4 text-white" />
-                  </div>
-                  <div className="bg-secondary rounded-2xl rounded-tl-sm px-4 py-3">
-                    <div className="flex gap-1.5">
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-purple-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div ref={messagesEndRef} />
-            </div>
-          </ScrollArea>
-
-          {/* Chat Input - Modern Design */}
-          <div className="p-4 border-t border-border">
-            <div className="relative">
-              <div className="bg-secondary border border-border rounded-2xl overflow-hidden focus-within:border-purple-500 focus-within:ring-2 focus-within:ring-purple-500/20 transition-all">
-                <textarea
-                  ref={inputRef}
-                  value={inputValue}
-                  onChange={(e) => {
-                    setInputValue(e.target.value);
-                    // Auto-resize
-                    e.target.style.height = 'auto';
-                    e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px';
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  placeholder={`Ask me to ${selectedMode.description.toLowerCase()}...`}
-                  className="w-full p-4 pb-14 bg-transparent resize-none focus:outline-none text-sm placeholder:text-muted-foreground min-h-[60px] max-h-[150px]"
-                  rows={1}
-                  disabled={isStreaming}
-                />
-
-                {/* Bottom Bar */}
-                <div className="absolute bottom-0 left-0 right-0 flex items-center justify-between px-3 py-2 bg-secondary/50 backdrop-blur-sm">
-                  {/* Model Selector */}
-                  <div className="relative">
-                    <button
-                      onClick={() => { setShowModelMenu(!showModelMenu); }}
-                      className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                    >
-                      <selectedModel.icon />
-                      <span className="hidden sm:inline">{selectedModel.name}</span>
-                      <span className={cn(
-                        "text-[9px] font-medium px-1 py-0.5 rounded",
-                        selectedModel.creditCost <= 1 ? "bg-green-500/20 text-green-400" :
-                        selectedModel.creditCost <= 4 ? "bg-yellow-500/20 text-yellow-400" :
-                        "bg-red-500/20 text-red-400"
-                      )}>
-                        {credits?.model_costs?.[selectedModel.id] ?? selectedModel.creditCost} cr
-                      </span>
-                      <ChevronDown className="h-3 w-3" />
-                    </button>
-
-                    {showModelMenu && (
-                      <div className="absolute bottom-full left-0 mb-2 w-64 bg-popover border border-border rounded-xl shadow-xl py-2 z-50">
-                        <div className="px-3 py-1.5 text-xs font-medium text-muted-foreground">Select Model</div>
-                        {aiModels.map((model) => {
-                          const IconComponent = model.icon;
-                          const cost = credits?.model_costs?.[model.id] ?? model.creditCost;
-                          return (
-                            <button
-                              key={model.id}
-                              onClick={() => { if (model.available) { setSelectedModel(model); setShowModelMenu(false); }}}
-                              disabled={!model.available}
-                              className={cn(
-                                "w-full flex items-center gap-3 px-3 py-2.5 text-sm transition-colors",
-                                !model.available ? "opacity-50 cursor-not-allowed" : "hover:bg-accent cursor-pointer"
-                              )}
-                            >
-                              <IconComponent />
-                              <div className="flex-1 text-left">
-                                <div className="font-medium">{model.name}</div>
-                                <div className="text-xs text-muted-foreground">{model.description}</div>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                <span className={cn(
-                                  "text-[10px] font-medium px-1.5 py-0.5 rounded-full",
-                                  cost <= 1 ? "bg-green-500/20 text-green-400" :
-                                  cost <= 4 ? "bg-yellow-500/20 text-yellow-400" :
-                                  "bg-red-500/20 text-red-400"
-                                )}>
-                                  {cost} cr
-                                </span>
-                                {selectedModel.id === model.id && model.available && (
-                                  <Check className="h-4 w-4 text-purple-500" />
-                                )}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Send Button */}
-                  <Button
-                    onClick={() => handleSendMessage()}
-                    disabled={!inputValue.trim() || isStreaming}
-                    size="sm"
-                    className={cn(
-                      "rounded-xl px-4 transition-all",
-                      inputValue.trim()
-                        ? "bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg"
-                        : "bg-muted text-muted-foreground"
-                    )}
-                  >
-                    {isStreaming ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Send className="h-4 w-4 mr-1.5" />
-                        Send
-                      </>
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              {/* Keyboard Shortcut Hint */}
-              <p className="text-[10px] text-muted-foreground text-center mt-2">
-                Press <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">Enter</kbd> to send, <kbd className="px-1.5 py-0.5 bg-muted rounded text-[10px] font-mono">Shift + Enter</kbd> for new line
-              </p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -2288,7 +2380,7 @@ export function WorkflowBuilder() {
                   className="gap-2 text-muted-foreground hover:text-foreground"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  Back to Canvas
+                  {t('results.backToCanvas')}
                 </Button>
                 <div className="w-px h-8 bg-border" />
                 <div className="flex items-center gap-3">
@@ -2296,17 +2388,17 @@ export function WorkflowBuilder() {
                     "w-10 h-10 rounded-xl flex items-center justify-center",
                     lastRunResults.error
                       ? "bg-red-500/20"
-                      : "bg-gradient-to-br from-green-500/20 to-emerald-500/20"
+                      : "bg-secondary"
                   )}>
                     {lastRunResults.error ? (
                       <XCircle className="h-5 w-5 text-red-500" />
                     ) : (
-                      <Award className="h-5 w-5 text-green-500" />
+                      <Award className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
                   <div>
                     <h1 className="text-lg font-bold">
-                      {lastRunResults.error ? 'Workflow Failed' : 'Workflow Results'}
+                      {lastRunResults.error ? t('results.workflowFailed') : t('results.workflowResults')}
                     </h1>
                     <p className="text-xs text-muted-foreground">{workflowName}</p>
                   </div>
@@ -2324,17 +2416,17 @@ export function WorkflowBuilder() {
                   </div>
                 )}
                 {lastRunResults.credits_used !== undefined && (
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20">
-                    <Coins className="h-3.5 w-3.5 text-purple-400" />
-                    <span className="text-xs font-medium text-purple-400">
-                      {lastRunResults.credits_used} credits
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20">
+                    <Coins className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {t('results.creditsCount', { count: lastRunResults.credits_used })}
                     </span>
                   </div>
                 )}
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
                   <CheckCircle2 className="h-3.5 w-3.5 text-green-400" />
                   <span className="text-xs font-medium text-green-400">
-                    {lastRunResults.results.filter(r => r.success).length}/{lastRunResults.results.length} nodes
+                    {t('results.nodesCount', { success: lastRunResults.results.filter(r => r.success).length, total: lastRunResults.results.length })}
                   </span>
                 </div>
               </div>
@@ -2343,10 +2435,10 @@ export function WorkflowBuilder() {
             {/* Tab Navigation */}
             <div className="max-w-6xl mx-auto px-6 flex gap-1">
               {[
-                { id: 'all' as const, label: 'Overview', icon: Eye },
-                ...(lastRunResults.final_script ? [{ id: 'script' as const, label: 'Script', icon: FileText }] : []),
-                ...(lastRunResults.storyboard ? [{ id: 'storyboard' as const, label: 'Storyboard', icon: LayoutGrid }] : []),
-                { id: 'nodes' as const, label: 'All Nodes', icon: Wand2 },
+                { id: 'all' as const, label: t('results.overview'), icon: Eye },
+                ...(lastRunResults.final_script ? [{ id: 'script' as const, label: t('results.scriptTab'), icon: FileText }] : []),
+                ...(lastRunResults.storyboard ? [{ id: 'storyboard' as const, label: t('results.storyboardTab'), icon: LayoutGrid }] : []),
+                { id: 'nodes' as const, label: t('results.allNodes'), icon: Wand2 },
               ].map(tab => {
                 const TabIcon = tab.icon;
                 return (
@@ -2356,7 +2448,7 @@ export function WorkflowBuilder() {
                     className={cn(
                       "flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all -mb-px",
                       resultsActiveTab === tab.id
-                        ? "border-purple-500 text-purple-400"
+                        ? "border-blue-500 text-foreground"
                         : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
                     )}
                   >
@@ -2376,7 +2468,7 @@ export function WorkflowBuilder() {
                 <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-xl flex items-start gap-3">
                   <XCircle className="h-5 w-5 text-red-500 mt-0.5 flex-shrink-0" />
                   <div>
-                    <p className="font-medium text-red-400">Execution Error</p>
+                    <p className="font-medium text-red-400">{t('results.executionError')}</p>
                     <p className="text-sm text-red-400/80 mt-1">{lastRunResults.error}</p>
                   </div>
                 </div>
@@ -2388,44 +2480,44 @@ export function WorkflowBuilder() {
                   {/* Quick Stats Cards */}
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="bg-card border border-border rounded-xl p-4 text-center">
-                      <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-gradient-to-br from-green-500/20 to-emerald-500/20 flex items-center justify-center">
-                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                      <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-secondary flex items-center justify-center">
+                        <CheckCircle2 className="h-5 w-5 text-muted-foreground" />
                       </div>
                       <p className="text-2xl font-bold">{lastRunResults.results.filter(r => r.success).length}</p>
-                      <p className="text-xs text-muted-foreground">Successful Nodes</p>
+                      <p className="text-xs text-muted-foreground">{t('results.successfulNodes')}</p>
                     </div>
                     <div className="bg-card border border-border rounded-xl p-4 text-center">
-                      <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-gradient-to-br from-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                        <Coins className="h-5 w-5 text-purple-500" />
+                      <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-secondary flex items-center justify-center">
+                        <Coins className="h-5 w-5 text-muted-foreground" />
                       </div>
                       <p className="text-2xl font-bold">{lastRunResults.credits_used || 0}</p>
-                      <p className="text-xs text-muted-foreground">Credits Used</p>
+                      <p className="text-xs text-muted-foreground">{t('results.creditsUsed')}</p>
                     </div>
                     <div className="bg-card border border-border rounded-xl p-4 text-center">
-                      <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-gradient-to-br from-blue-500/20 to-cyan-500/20 flex items-center justify-center">
-                        <Timer className="h-5 w-5 text-blue-500" />
+                      <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-secondary flex items-center justify-center">
+                        <Timer className="h-5 w-5 text-muted-foreground" />
                       </div>
                       <p className="text-2xl font-bold">
                         {lastRunResults.execution_time_ms ? `${(lastRunResults.execution_time_ms / 1000).toFixed(1)}s` : '-'}
                       </p>
-                      <p className="text-xs text-muted-foreground">Execution Time</p>
+                      <p className="text-xs text-muted-foreground">{t('results.executionTime')}</p>
                     </div>
                     <div className="bg-card border border-border rounded-xl p-4 text-center">
-                      <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-gradient-to-br from-orange-500/20 to-yellow-500/20 flex items-center justify-center">
-                        <Zap className="h-5 w-5 text-orange-500" />
+                      <div className="w-10 h-10 mx-auto mb-2 rounded-full bg-secondary flex items-center justify-center">
+                        <Zap className="h-5 w-5 text-muted-foreground" />
                       </div>
                       <p className="text-2xl font-bold">{lastRunResults.results.length}</p>
-                      <p className="text-xs text-muted-foreground">Total Nodes</p>
+                      <p className="text-xs text-muted-foreground">{t('results.totalNodes')}</p>
                     </div>
                   </div>
 
                   {/* Script Preview (if exists) */}
                   {lastRunResults.final_script && (
                     <div className="bg-card border border-border rounded-xl overflow-hidden">
-                      <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-gradient-to-r from-purple-500/5 to-pink-500/5">
+                      <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-secondary/30">
                         <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-purple-500" />
-                          <h3 className="font-semibold">Generated Script</h3>
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <h3 className="font-semibold">{t('results.generatedScript')}</h3>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
@@ -2439,20 +2531,20 @@ export function WorkflowBuilder() {
                             className="h-8"
                           >
                             {resultsCopied === 'script' ? <Check className="h-3.5 w-3.5 mr-1.5 text-green-500" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />}
-                            {resultsCopied === 'script' ? 'Copied!' : 'Copy'}
+                            {resultsCopied === 'script' ? t('results.copied') : t('results.copy')}
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => setResultsActiveTab('script')}
-                            className="h-8 text-purple-400 hover:text-purple-300"
+                            className="h-8 text-muted-foreground hover:text-foreground"
                           >
-                            View Full
+                            {t('results.viewFull')}
                             <ChevronRight className="h-3.5 w-3.5 ml-1" />
                           </Button>
                         </div>
                       </div>
-                      <div className="p-5 prose prose-invert prose-sm max-w-none max-h-64 overflow-y-auto">
+                      <div className="p-5 prose dark:prose-invert prose-sm max-w-none max-h-64 overflow-y-auto">
                         <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents as any}>
                           {lastRunResults.final_script.length > 1000 ? lastRunResults.final_script.substring(0, 1000) + '\n\n*...click "View Full" to see complete script*' : lastRunResults.final_script}
                         </ReactMarkdown>
@@ -2463,10 +2555,10 @@ export function WorkflowBuilder() {
                   {/* Storyboard Preview */}
                   {lastRunResults.storyboard && (
                     <div className="bg-card border border-border rounded-xl overflow-hidden">
-                      <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-gradient-to-r from-pink-500/5 to-orange-500/5">
+                      <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-secondary/30">
                         <div className="flex items-center gap-2">
-                          <LayoutGrid className="h-4 w-4 text-pink-500" />
-                          <h3 className="font-semibold">Storyboard</h3>
+                          <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+                          <h3 className="font-semibold">{t('results.storyboard')}</h3>
                         </div>
                         <div className="flex items-center gap-2">
                           <Button
@@ -2480,20 +2572,20 @@ export function WorkflowBuilder() {
                             className="h-8"
                           >
                             {resultsCopied === 'storyboard' ? <Check className="h-3.5 w-3.5 mr-1.5 text-green-500" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />}
-                            {resultsCopied === 'storyboard' ? 'Copied!' : 'Copy'}
+                            {resultsCopied === 'storyboard' ? t('results.copied') : t('results.copy')}
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => setResultsActiveTab('storyboard')}
-                            className="h-8 text-pink-400 hover:text-pink-300"
+                            className="h-8 text-muted-foreground hover:text-foreground"
                           >
-                            View Full
+                            {t('results.viewFull')}
                             <ChevronRight className="h-3.5 w-3.5 ml-1" />
                           </Button>
                         </div>
                       </div>
-                      <div className="p-5 prose prose-invert prose-sm max-w-none max-h-64 overflow-y-auto">
+                      <div className="p-5 prose dark:prose-invert prose-sm max-w-none max-h-64 overflow-y-auto">
                         <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents as any}>
                           {lastRunResults.storyboard.length > 800 ? lastRunResults.storyboard.substring(0, 800) + '\n\n*...click "View Full" to see complete storyboard*' : lastRunResults.storyboard}
                         </ReactMarkdown>
@@ -2505,8 +2597,8 @@ export function WorkflowBuilder() {
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="font-semibold flex items-center gap-2">
-                        <Wand2 className="h-4 w-4 text-cyan-500" />
-                        Processing Pipeline
+                        <Wand2 className="h-4 w-4 text-muted-foreground" />
+                        {t('results.processingPipeline')}
                       </h3>
                       <Button
                         variant="ghost"
@@ -2514,7 +2606,7 @@ export function WorkflowBuilder() {
                         onClick={() => setResultsActiveTab('nodes')}
                         className="text-muted-foreground"
                       >
-                        View Details
+                        {t('results.viewDetails')}
                         <ChevronRight className="h-3.5 w-3.5 ml-1" />
                       </Button>
                     </div>
@@ -2544,8 +2636,8 @@ export function WorkflowBuilder() {
                               {nodeTypes[result.node_type]?.title || result.node_type}
                             </span>
                           </div>
-                          <p className="text-[10px] text-muted-foreground line-clamp-2">
-                            {result.content ? result.content.substring(0, 80) + '...' : result.error || 'No output'}
+                          <p className="text-xs text-muted-foreground line-clamp-2">
+                            {result.content ? result.content.substring(0, 80) + '...' : result.error || t('results.noOutput')}
                           </p>
                         </div>
                       ))}
@@ -2559,8 +2651,8 @@ export function WorkflowBuilder() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-purple-500" />
-                      Generated Script
+                      <FileText className="h-5 w-5 text-muted-foreground" />
+                      {t('results.generatedScript')}
                     </h2>
                     <div className="flex items-center gap-2">
                       <Button
@@ -2573,7 +2665,7 @@ export function WorkflowBuilder() {
                         }}
                       >
                         {resultsCopied === 'script-full' ? <Check className="h-4 w-4 mr-1.5 text-green-500" /> : <Copy className="h-4 w-4 mr-1.5" />}
-                        {resultsCopied === 'script-full' ? 'Copied!' : 'Copy Script'}
+                        {resultsCopied === 'script-full' ? t('results.copied') : t('results.copyScript')}
                       </Button>
                       <Button
                         variant="outline"
@@ -2591,11 +2683,11 @@ export function WorkflowBuilder() {
                         }}
                       >
                         <Download className="h-4 w-4 mr-1.5" />
-                        Download
+                        {t('results.download')}
                       </Button>
                     </div>
                   </div>
-                  <div className="bg-card border border-border rounded-xl p-6 md:p-8 prose prose-invert prose-sm md:prose-base max-w-none">
+                  <div className="bg-card border border-border rounded-xl p-6 md:p-8 prose dark:prose-invert prose-sm md:prose-base max-w-none">
                     <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents as any}>
                       {lastRunResults.final_script}
                     </ReactMarkdown>
@@ -2608,8 +2700,8 @@ export function WorkflowBuilder() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h2 className="text-xl font-bold flex items-center gap-2">
-                      <LayoutGrid className="h-5 w-5 text-pink-500" />
-                      Storyboard
+                      <LayoutGrid className="h-5 w-5 text-muted-foreground" />
+                      {t('results.storyboard')}
                     </h2>
                     <div className="flex items-center gap-2">
                       <Button
@@ -2622,7 +2714,7 @@ export function WorkflowBuilder() {
                         }}
                       >
                         {resultsCopied === 'storyboard-full' ? <Check className="h-4 w-4 mr-1.5 text-green-500" /> : <Copy className="h-4 w-4 mr-1.5" />}
-                        {resultsCopied === 'storyboard-full' ? 'Copied!' : 'Copy Storyboard'}
+                        {resultsCopied === 'storyboard-full' ? t('results.copied') : t('results.copyStoryboard')}
                       </Button>
                       <Button
                         variant="outline"
@@ -2640,11 +2732,11 @@ export function WorkflowBuilder() {
                         }}
                       >
                         <Download className="h-4 w-4 mr-1.5" />
-                        Download
+                        {t('results.download')}
                       </Button>
                     </div>
                   </div>
-                  <div className="bg-card border border-border rounded-xl p-6 md:p-8 prose prose-invert prose-sm md:prose-base max-w-none">
+                  <div className="bg-card border border-border rounded-xl p-6 md:p-8 prose dark:prose-invert prose-sm md:prose-base max-w-none">
                     <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents as any}>
                       {lastRunResults.storyboard}
                     </ReactMarkdown>
@@ -2656,8 +2748,8 @@ export function WorkflowBuilder() {
               {resultsActiveTab === 'nodes' && (
                 <div className="space-y-4">
                   <h2 className="text-xl font-bold flex items-center gap-2">
-                    <Wand2 className="h-5 w-5 text-cyan-500" />
-                    Node Results
+                    <Wand2 className="h-5 w-5 text-muted-foreground" />
+                    {t('results.nodeResults')}
                     <Badge variant="secondary" className="ml-2">
                       {lastRunResults.results.filter(r => r.success).length}/{lastRunResults.results.length}
                     </Badge>
@@ -2676,7 +2768,7 @@ export function WorkflowBuilder() {
                           <div className={cn(
                             "flex items-center justify-between px-5 py-3 border-b",
                             result.success
-                              ? "bg-gradient-to-r from-green-500/5 to-emerald-500/5 border-border"
+                              ? "bg-secondary/30 border-border"
                               : "bg-red-500/5 border-red-500/20"
                           )}>
                             <div className="flex items-center gap-3">
@@ -2690,19 +2782,19 @@ export function WorkflowBuilder() {
                                 <h4 className="font-medium text-sm">
                                   {nodeDef?.title || result.node_type}
                                 </h4>
-                                <span className="text-xs text-muted-foreground">Node #{result.node_id}</span>
+                                <span className="text-xs text-muted-foreground">{t('results.nodeId', { id: result.node_id })}</span>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
                               {result.success ? (
                                 <Badge variant="secondary" className="bg-green-500/10 text-green-400 border-green-500/20">
                                   <CheckCircle2 className="h-3 w-3 mr-1" />
-                                  Success
+                                  {t('results.success')}
                                 </Badge>
                               ) : (
                                 <Badge variant="secondary" className="bg-red-500/10 text-red-400 border-red-500/20">
                                   <XCircle className="h-3 w-3 mr-1" />
-                                  Failed
+                                  {t('results.failed')}
                                 </Badge>
                               )}
                               {result.content && (
@@ -2726,7 +2818,7 @@ export function WorkflowBuilder() {
                             </div>
                           </div>
                           {result.content && (
-                            <div className="p-5 prose prose-invert prose-sm max-w-none">
+                            <div className="p-5 prose dark:prose-invert prose-sm max-w-none">
                               <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents as any}>
                                 {result.content}
                               </ReactMarkdown>
@@ -2747,12 +2839,12 @@ export function WorkflowBuilder() {
               {/* Empty Results */}
               {!lastRunResults.final_script && !lastRunResults.storyboard && lastRunResults.results.length === 0 && !lastRunResults.error && (
                 <div className="text-center py-20">
-                  <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-purple-500/10 to-pink-500/10 flex items-center justify-center">
-                    <Sparkles className="h-10 w-10 text-purple-500/50" />
+                  <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-secondary flex items-center justify-center">
+                    <Sparkles className="h-10 w-10 text-muted-foreground" />
                   </div>
-                  <h3 className="text-lg font-semibold mb-2">No Results Available</h3>
+                  <h3 className="text-lg font-semibold mb-2">{t('results.noResultsAvailable')}</h3>
                   <p className="text-muted-foreground text-sm">
-                    The workflow didn't produce any output. Check your node connections and try again.
+                    {t('results.noResultsHint')}
                   </p>
                 </div>
               )}
@@ -2769,7 +2861,7 @@ export function WorkflowBuilder() {
                 className="text-muted-foreground"
               >
                 <ArrowLeft className="h-4 w-4 mr-1.5" />
-                Back to Canvas
+                {t('results.backToCanvas')}
               </Button>
               <div className="flex items-center gap-2">
                 {(lastRunResults.final_script || lastRunResults.storyboard) && (
@@ -2778,11 +2870,11 @@ export function WorkflowBuilder() {
                     size="sm"
                     onClick={async () => {
                       const allContent = [
-                        lastRunResults.final_script ? `# Script\n\n${lastRunResults.final_script}` : '',
-                        lastRunResults.storyboard ? `# Storyboard\n\n${lastRunResults.storyboard}` : '',
+                        lastRunResults.final_script ? `# ${t('results.script')}\n\n${lastRunResults.final_script}` : '',
+                        lastRunResults.storyboard ? `# ${t('results.storyboard')}\n\n${lastRunResults.storyboard}` : '',
                         ...lastRunResults.results
                           .filter(r => r.success && r.content)
-                          .map(r => `# ${nodeTypes[r.node_type]?.title || r.node_type} (Node #${r.node_id})\n\n${r.content}`)
+                          .map(r => `# ${nodeTypes[r.node_type]?.title || r.node_type} (${t('results.nodeId', { id: r.node_id })})\n\n${r.content}`)
                       ].filter(Boolean).join('\n\n---\n\n');
                       await navigator.clipboard.writeText(allContent);
                       setResultsCopied('all');
@@ -2790,15 +2882,15 @@ export function WorkflowBuilder() {
                     }}
                   >
                     {resultsCopied === 'all' ? <Check className="h-4 w-4 mr-1.5 text-green-500" /> : <Copy className="h-4 w-4 mr-1.5" />}
-                    {resultsCopied === 'all' ? 'Copied All!' : 'Copy All'}
+                    {resultsCopied === 'all' ? t('results.copiedAll') : t('results.copyAll')}
                   </Button>
                 )}
                 <Button
                   size="sm"
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                  className="bg-blue-500 hover:bg-blue-600"
                   onClick={() => setShowResultsView(false)}
                 >
-                  Continue Editing
+                  {t('results.continueEditing')}
                 </Button>
               </div>
             </div>
@@ -2811,7 +2903,7 @@ export function WorkflowBuilder() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-card border border-border rounded-2xl shadow-2xl w-[90vw] max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border bg-gradient-to-r from-purple-500/5 to-pink-500/5">
+            <div className="flex items-center justify-between p-4 border-b border-border bg-secondary/30">
               <div className="flex items-center gap-3">
                 <div className={cn(
                   "w-10 h-10 rounded-xl flex items-center justify-center",
@@ -2826,11 +2918,11 @@ export function WorkflowBuilder() {
                 <div>
                   <h2 className="font-semibold">{selectedRunDetail.workflow_name}</h2>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                    <span>Run #{selectedRunDetail.run_number}</span>
+                    <span>{t('modal.run', { number: selectedRunDetail.run_number })}</span>
                     <span>·</span>
-                    <span>{selectedRunDetail.node_count} nodes</span>
+                    <span>{t('modal.nodesLabel', { count: selectedRunDetail.node_count })}</span>
                     <span>·</span>
-                    <span className="text-purple-400">{selectedRunDetail.credits_used} credits</span>
+                    <span className="text-muted-foreground">{t('modal.creditsLabel', { count: selectedRunDetail.credits_used })}</span>
                     {selectedRunDetail.execution_time_ms && (
                       <>
                         <span>·</span>
@@ -2853,7 +2945,7 @@ export function WorkflowBuilder() {
                   <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg">
                     <div className="flex items-center gap-2 text-red-500 font-medium mb-1">
                       <XCircle className="h-4 w-4" />
-                      Error
+                      {t('modal.error')}
                     </div>
                     <p className="text-sm text-red-400">{selectedRunDetail.error_message}</p>
                   </div>
@@ -2864,22 +2956,22 @@ export function WorkflowBuilder() {
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-semibold flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-purple-500" />
-                        Final Script
+                        <FileText className="h-4 w-4 text-muted-foreground" />
+                        {t('modal.finalScript')}
                       </h3>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={async () => {
                           await navigator.clipboard.writeText(selectedRunDetail.final_script);
-                          toast.success('Script copied to clipboard');
+                          toast.success(t('toasts.scriptCopied'));
                         }}
                       >
                         <Copy className="h-3.5 w-3.5 mr-1.5" />
-                        Copy
+                        {t('results.copy')}
                       </Button>
                     </div>
-                    <div className="bg-secondary/50 border border-border rounded-xl p-4 prose prose-invert prose-sm max-w-none">
+                    <div className="bg-secondary/50 border border-border rounded-xl p-4 prose dark:prose-invert prose-sm max-w-none">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={MarkdownComponents as any}
@@ -2895,22 +2987,22 @@ export function WorkflowBuilder() {
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="font-semibold flex items-center gap-2">
-                        <LayoutGrid className="h-4 w-4 text-pink-500" />
-                        Storyboard
+                        <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+                        {t('modal.storyboard')}
                       </h3>
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={async () => {
                           await navigator.clipboard.writeText(selectedRunDetail.storyboard);
-                          toast.success('Storyboard copied to clipboard');
+                          toast.success(t('toasts.storyboardCopied'));
                         }}
                       >
                         <Copy className="h-3.5 w-3.5 mr-1.5" />
-                        Copy
+                        {t('results.copy')}
                       </Button>
                     </div>
-                    <div className="bg-secondary/50 border border-border rounded-xl p-4 prose prose-invert prose-sm max-w-none">
+                    <div className="bg-secondary/50 border border-border rounded-xl p-4 prose dark:prose-invert prose-sm max-w-none">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={MarkdownComponents as any}
@@ -2925,8 +3017,8 @@ export function WorkflowBuilder() {
                 {selectedRunDetail.results?.length > 0 && (
                   <div>
                     <h3 className="font-semibold flex items-center gap-2 mb-3">
-                      <Wand2 className="h-4 w-4 text-cyan-500" />
-                      Node Results ({selectedRunDetail.results.filter((r: any) => r.success).length}/{selectedRunDetail.results.length} successful)
+                      <Wand2 className="h-4 w-4 text-muted-foreground" />
+                      {t('modal.nodeResultsCount', { success: selectedRunDetail.results.filter((r: any) => r.success).length, total: selectedRunDetail.results.length })}
                     </h3>
                     <div className="space-y-3">
                       {selectedRunDetail.results.map((result: any, idx: number) => (
@@ -2949,7 +3041,7 @@ export function WorkflowBuilder() {
                               )}
                               {nodeTypes[result.node_type]?.title || result.node_type}
                             </span>
-                            <span className="text-xs text-muted-foreground">Node #{result.node_id}</span>
+                            <span className="text-xs text-muted-foreground">{t('results.nodeId', { id: result.node_id })}</span>
                           </div>
                           {result.content && (
                             <div className="p-3 text-sm max-h-48 overflow-y-auto">
@@ -2976,7 +3068,7 @@ export function WorkflowBuilder() {
                 {!selectedRunDetail.final_script && !selectedRunDetail.storyboard && (!selectedRunDetail.results || selectedRunDetail.results.length === 0) && (
                   <div className="text-center py-12">
                     <History className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                    <p className="text-muted-foreground">No results available for this run</p>
+                    <p className="text-muted-foreground">{t('modal.noResultsForRun')}</p>
                   </div>
                 )}
               </div>
@@ -2985,9 +3077,36 @@ export function WorkflowBuilder() {
             {/* Modal Footer */}
             <div className="p-4 border-t border-border bg-secondary/30 flex justify-end gap-2">
               <Button variant="outline" onClick={() => setShowRunDetailModal(false)}>
-                Close
+                {t('modal.close')}
               </Button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Image Lightbox */}
+      {lightboxImage && (
+        <div className="fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center" onClick={() => { setLightboxImage(null); setLightboxZoom(1); }}>
+          <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 py-3 z-10">
+            <div className="text-white/60 text-sm">{Math.round(lightboxZoom * 100)}%</div>
+            <div className="flex items-center gap-2">
+              <button onClick={(e) => { e.stopPropagation(); setLightboxZoom(z => Math.max(0.25, z - 0.25)); }} className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors">
+                <ZoomOut className="h-5 w-5" />
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); setLightboxZoom(z => Math.min(4, z + 0.25)); }} className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors">
+                <ZoomIn className="h-5 w-5" />
+              </button>
+              <button onClick={(e) => { e.stopPropagation(); setLightboxZoom(1); }} className="px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm transition-colors">1:1</button>
+              <div className="w-px h-6 bg-white/20 mx-1" />
+              <button onClick={(e) => { e.stopPropagation(); handleDownloadImage(lightboxImage); }} className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors">
+                <Download className="h-5 w-5" />
+              </button>
+              <button onClick={() => { setLightboxImage(null); setLightboxZoom(1); }} className="p-2 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+          <div className="overflow-auto max-h-[calc(100vh-80px)] max-w-[calc(100vw-40px)]" onClick={(e) => e.stopPropagation()}>
+            <img src={lightboxImage} alt="Generated image" className="transition-transform duration-200" style={{ transform: `scale(${lightboxZoom})`, transformOrigin: 'center center' }} draggable={false} />
           </div>
         </div>
       )}

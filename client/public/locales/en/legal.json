@@ -1,0 +1,56 @@
+{
+  "privacy": {
+    "title": "Privacy Policy"
+  },
+  "terms": {
+    "title": "Terms of Service"
+  },
+  "dataDeletion": {
+    "title": "Data Deletion Request",
+    "subtitle": "Request deletion of your personal data from Rizko.ai",
+    "yourPrivacyRights": "Your Privacy Rights",
+    "privacyRightsDescription": "Under GDPR, CCPA, and other privacy regulations, you have the right to request deletion of your personal data. We will process your request within 30 days.",
+    "whatGetsDeleted": "What data will be deleted?",
+    "whatGetsDeletedDescription": "Upon processing your request, we will permanently delete:",
+    "deleteAccountInfo": "Your account information (email, name, profile)",
+    "deleteOAuthData": "Connected social media account data and OAuth tokens",
+    "deleteSavedData": "Saved videos, analytics history, and preferences",
+    "deleteUsageLogs": "Usage logs and activity data",
+    "retentionNote": "Some data may be retained for legal or compliance purposes (e.g., payment records for tax purposes). This retained data will be anonymized where possible.",
+    "submitRequest": "Submit Deletion Request",
+    "submitRequestDescription": "Enter the email address associated with your Rizko.ai account",
+    "emailLabel": "Email Address",
+    "emailPlaceholder": "your@email.com",
+    "consentNotice": "By submitting this request, you confirm that you are the owner of this account and understand that this action is irreversible.",
+    "processing": "Processing...",
+    "requestDataDeletion": "Request Data Deletion",
+    "requestSubmitted": "Request Submitted Successfully",
+    "confirmationEmailSent": "We've received your data deletion request. You will receive a confirmation email at <strong>{{email}}</strong>.",
+    "confirmationCode": "Your confirmation code:",
+    "saveCode": "Please save this code for your records",
+    "processedWithin30Days": "Your request will be processed within 30 days",
+    "emailConfirmation": "You will receive email confirmation when deletion is complete",
+    "questionsContact": "For questions, contact",
+    "errorMessage": "Something went wrong. Please try again.",
+    "alternativeMethods": "Alternative Methods",
+    "emailRequest": "Email Request",
+    "emailRequestDescription": "Send an email to <1>privacy@rizko.ai</1> with subject \"Data Deletion Request\" and include your account email.",
+    "selfService": "Self-Service (Logged-in Users)",
+    "selfServiceDescription": "If you can access your account, go to <1>Settings -> Account -> Delete Account</1>",
+    "instagramMetaUsers": "Instagram/Meta Users",
+    "instagramMetaDescription": "If you connected your Instagram account and want to delete data through Meta's system, you can also use the Data Deletion callback that Meta provides. When you disconnect Rizko.ai from your Instagram settings, we automatically receive a deletion callback and process your data removal.",
+    "callbackUrl": "Callback URL:"
+  },
+  "dataPolicy": {
+    "title": "Data Policy"
+  },
+  "usage": {
+    "title": "Usage Policy"
+  },
+  "backToHome": "Back to Home",
+  "backToDashboard": "Back to Dashboard",
+  "privacyPolicyLink": "Privacy Policy",
+  "termsOfServiceLink": "Terms of Service",
+  "dataPolicyLink": "Data Policy",
+  "usagePolicyLink": "Usage Policy"
+}

@@ -1,0 +1,140 @@
+{
+  "title": "Настройки",
+  "subtitle": "Управление настройками аккаунта и уведомлениями",
+  "tabs": {
+    "general": "Общие",
+    "accounts": "Аккаунты",
+    "usage": "Использование",
+    "billing": "Оплата"
+  },
+  "general": {
+    "profile": {
+      "title": "Профиль",
+      "fullName": "Полное имя",
+      "email": "Электронная почта",
+      "saveChanges": "Сохранить изменения"
+    },
+    "preferences": {
+      "title": "Параметры",
+      "darkMode": "Тёмная тема",
+      "darkModeDescription": "Включить тёмную тему",
+      "language": "Язык",
+      "region": "Регион",
+      "languages": {
+        "english": "Английский",
+        "spanish": "Испанский",
+        "french": "Французский",
+        "german": "Немецкий"
+      },
+      "regions": {
+        "us": "США",
+        "uk": "Великобритания",
+        "ca": "Канада",
+        "au": "Австралия"
+      }
+    },
+    "notifications": {
+      "title": "Уведомления",
+      "emailNotifications": "Уведомления по почте",
+      "emailDescription": "Получайте письма о трендах и обновлениях",
+      "weeklySummary": "Еженедельная сводка",
+      "weeklyDescription": "Получайте еженедельные отчёты об использовании"
+    },
+    "about": {
+      "title": "О приложении",
+      "version": "Версия",
+      "installApp": "Установить приложение",
+      "installed": "Установлено"
+    }
+  },
+  "accounts": {
+    "title": "Подключённые аккаунты",
+    "connectedCount": "{{count}} подключено",
+    "securityNote": "Ваши данные в безопасности. Мы используем официальные OAuth-подключения и никогда не храним ваши пароли.",
+    "connect": "Подключить",
+    "disconnect": "Отключить",
+    "connecting": "Подключение...",
+    "disconnecting": "Отключение...",
+    "platforms": {
+      "tiktok": {
+        "name": "TikTok",
+        "description": "Аналитика видео и показатели эффективности."
+      },
+      "instagram": {
+        "name": "Instagram",
+        "description": "Отслеживание постов, рилсов и историй."
+      },
+      "youtube": {
+        "name": "YouTube",
+        "description": "Анализ видео и шортсов."
+      },
+      "twitter": {
+        "name": "X (Twitter)",
+        "description": "Отслеживание твитов и метрик вовлечённости."
+      },
+      "reddit": {
+        "name": "Reddit",
+        "description": "Мониторинг трендов и постов в сабреддитах."
+      },
+      "discord": {
+        "name": "Discord",
+        "description": "Отслеживание вовлечённости и роста сервера."
+      },
+      "telegram": {
+        "name": "Telegram",
+        "description": "Анализ метрик каналов и групп."
+      }
+    },
+    "security": {
+      "title": "Безопасность аккаунта",
+      "password": "Пароль",
+      "changePassword": "Изменить пароль"
+    },
+    "dangerZone": {
+      "title": "Опасная зона",
+      "deleteAccount": "Удалить аккаунт",
+      "deleteWarning": "После удаления аккаунта данные восстановить невозможно. Убедитесь в своём решении."
+    }
+  },
+  "usage": {
+    "title": "Статистика использования",
+    "plan": "Текущий план",
+    "resetDate": "Кредиты обновляются",
+    "credits": {
+      "title": "Использование кредитов",
+      "used": "Использовано",
+      "limit": "Лимит",
+      "bonus": "Бонус",
+      "rollover": "Перенос",
+      "totalAvailable": "Всего доступно"
+    },
+    "stats": {
+      "scriptsGenerated": "Сгенерировано сценариев",
+      "chatMessages": "Сообщений в чате",
+      "deepAnalyze": "Глубокий анализ"
+    },
+    "autoMode": {
+      "title": "Автоматический режим",
+      "description": "Автоматически использовать самую дешёвую ИИ-модель для экономии кредитов",
+      "enabled": "Включён",
+      "disabled": "Выключен",
+      "savings": "Примерная экономия"
+    }
+  },
+  "billing": {
+    "title": "Оплата",
+    "currentPlan": "Текущий план",
+    "managePlan": "Управление планом",
+    "billingHistory": "История платежей",
+    "noBilling": "Истории платежей пока нет"
+  },
+  "toast": {
+    "connectSuccess": "Ваш аккаунт {{platform}} успешно подключён!",
+    "connectError": "Не удалось подключить аккаунт. Попробуйте ещё раз.",
+    "disconnectSuccess": "Ваш аккаунт {{platform}} отключён.",
+    "disconnectError": "Не удалось отключить аккаунт. Попробуйте ещё раз.",
+    "loginRequired": "Войдите, чтобы подключить аккаунт",
+    "usageLoadError": "Не удалось загрузить статистику использования",
+    "autoModeError": "Не удалось переключить автоматический режим"
+  }
+}

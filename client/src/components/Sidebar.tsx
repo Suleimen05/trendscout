@@ -22,6 +22,9 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useState } from 'react';
 import { REVIEW_MODE } from '@/config/features';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/hooks/useLanguage';
+import type { TFunction } from 'i18next';
 
 interface NavItem {
   title: string;
@@ -31,105 +34,52 @@ interface NavItem {
   disabled?: boolean;
 }
 
-// Main navigation items
-const mainNavItems: NavItem[] = [
-  {
-    title: 'Dashboard',
-    href: '/dashboard',
-    icon: LayoutDashboard,
-  },
-  {
-    title: 'My Posts',
-    href: '/dashboard/my-videos',
-    icon: Video,
-  },
+const getMainNavItems = (t: TFunction): NavItem[] => [
+  { title: t('common:nav.dashboard'), href: '/dashboard', icon: LayoutDashboard },
+  { title: t('common:nav.myPosts'), href: '/dashboard/my-videos', icon: Video },
 ];
 
-// Tools section
-const toolsNavItems: NavItem[] = REVIEW_MODE
+const getToolsNavItems = (t: TFunction): NavItem[] => REVIEW_MODE
   ? [
-      {
-        title: 'Trending Now',
-        href: '/dashboard/trending',
-        icon: TrendingUp,
-        badge: 'NEW',
-      },
-      {
-        title: 'Discover Videos',
-        href: '/dashboard/discover',
-        icon: Search,
-      },
-      {
-        title: 'Saved',
-        href: '/dashboard/saved',
-        icon: Bookmark,
-      },
+      { title: t('common:nav.trending'), href: '/dashboard/trending', icon: TrendingUp, badge: 'NEW' },
+      { title: t('common:nav.discover'), href: '/dashboard/discover', icon: Search },
+      { title: t('common:nav.saved'), href: '/dashboard/saved', icon: Bookmark },
     ]
   : [
-      {
-        title: 'Trending Now',
-        href: '/dashboard/trending',
-        icon: TrendingUp,
-        badge: 'NEW',
-      },
-      {
-        title: 'Discover Videos',
-        href: '/dashboard/discover',
-        icon: Search,
-      },
-      {
-        title: 'Deep Analysis',
-        href: '/dashboard/analytics',
-        icon: BarChart3,
-      },
-      {
-        title: 'Saved',
-        href: '/dashboard/saved',
-        icon: Bookmark,
-      },
-      {
-        title: 'Competitors',
-        href: '/dashboard/competitors',
-        icon: Users,
-      },
+      { title: t('common:nav.trending'), href: '/dashboard/trending', icon: TrendingUp, badge: 'NEW' },
+      { title: t('common:nav.discover'), href: '/dashboard/discover', icon: Search },
+      { title: t('common:nav.deepAnalysis'), href: '/dashboard/analytics', icon: BarChart3 },
+      { title: t('common:nav.saved'), href: '/dashboard/saved', icon: Bookmark },
+      { title: t('common:nav.competitors'), href: '/dashboard/competitors', icon: Users },
     ];
 
-// AI Tools section (only outside Review Mode)
-const aiNavItems: NavItem[] = REVIEW_MODE
+const getAiNavItems = (t: TFunction): NavItem[] => REVIEW_MODE
   ? []
   : [
-      {
-        title: 'AI Scripts',
-        href: '/dashboard/ai-scripts',
-        icon: Sparkles,
-        badge: 'AI',
-      },
+      { title: t('common:nav.aiScripts'), href: '/dashboard/ai-scripts', icon: Sparkles, badge: 'AI' },
     ];
 
-// Support items
-const supportNavItems: NavItem[] = [
-  {
-    title: 'Feedback',
-    href: '/dashboard/feedback',
-    icon: MessageSquare,
-  },
-  {
-    title: 'Help & FAQ',
-    href: '/dashboard/help',
-    icon: HelpCircle,
-  },
+const getSupportNavItems = (t: TFunction): NavItem[] => [
+  { title: t('common:nav.feedback'), href: '/dashboard/feedback', icon: MessageSquare },
+  { title: t('common:nav.help'), href: '/dashboard/help', icon: HelpCircle },
 ];
 
 export function Sidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user: authUser, logout } = useAuth();
+  const { t } = useTranslation('common');
+  const { currentLanguage, changeLanguage, languages } = useLanguage();
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showLanguageMenu, setShowLanguageMenu] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState('English');
+
+  const mainNavItems = getMainNavItems(t);
+  const toolsNavItems = getToolsNavItems(t);
+  const aiNavItems = getAiNavItems(t);
+  const supportNavItems = getSupportNavItems(t);
 
   const user = {
-    name: authUser?.name || 'Demo User',
+    name: authUser?.name || t('demo.user'),
     email: authUser?.email || 'demo@example.com',
     plan: authUser?.subscription || 'Free',
   };
@@ -140,7 +90,6 @@ export function Sidebar() {
     navigate('/');
   };
 
-  // Check if route is active (exact match or child route)
   const isActive = (href: string) => {
     if (href === '/dashboard') {
       return location.pathname === '/dashboard';
@@ -162,12 +111,9 @@ export function Sidebar() {
             : 'text-muted-foreground hover:text-foreground'
         )}
       >
-        {/* Active indicator bar */}
         {active && (
           <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-full bg-gradient-to-b from-nl-indigo via-nl-purple to-nl-pink" />
         )}
-
-        {/* Icon */}
         <div className={cn(
           'flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200',
           active
@@ -176,11 +122,7 @@ export function Sidebar() {
         )}>
           <Icon className="h-[18px] w-[18px]" strokeWidth={1.5} />
         </div>
-
-        {/* Label */}
         <span className="flex-1">{item.title}</span>
-
-        {/* Badge */}
         {item.badge && (
           <Badge
             variant="outline"
@@ -213,7 +155,6 @@ export function Sidebar() {
 
   return (
     <aside className="hidden md:flex flex-col w-60 h-screen sticky top-0 border-r border-border/50 bg-background/80 backdrop-blur-xl">
-      {/* Logo */}
       <div className="flex h-16 items-center px-5">
         <div
           className="flex items-center gap-2.5 cursor-pointer"
@@ -226,28 +167,19 @@ export function Sidebar() {
         </div>
       </div>
 
-      {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4 px-2 space-y-6">
-        {/* Main */}
         <nav className="space-y-0.5">
           {mainNavItems.map((item) => (
             <NavItemComponent key={item.href} item={item} />
           ))}
         </nav>
-
-        {/* Tools */}
-        <NavSection title="Tools" items={toolsNavItems} />
-
-        {/* AI Tools */}
+        <NavSection title={t('section.tools')} items={toolsNavItems} />
         {aiNavItems.length > 0 && (
-          <NavSection title="AI Tools" items={aiNavItems} />
+          <NavSection title={t('section.aiTools')} items={aiNavItems} />
         )}
-
-        {/* Support */}
-        <NavSection title="Support" items={supportNavItems} />
+        <NavSection title={t('section.support')} items={supportNavItems} />
       </div>
 
-      {/* User Section */}
       <div className="border-t border-border/50 p-3">
         <div className="relative">
           <button
@@ -257,21 +189,13 @@ export function Sidebar() {
               showUserMenu ? 'bg-secondary' : 'hover:bg-secondary/50'
             )}
           >
-            {/* Avatar */}
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-nl-indigo to-nl-purple text-white font-medium text-sm">
-              {user.name
-                .split(' ')
-                .map((n) => n[0])
-                .join('')}
+              {user.name.split(' ').map((n) => n[0]).join('')}
             </div>
-
-            {/* Info */}
             <div className="flex-1 text-left overflow-hidden">
               <p className="font-medium text-sm text-foreground truncate">{user.name}</p>
-              <p className="text-xs text-muted-foreground capitalize">{user.plan} Plan</p>
+              <p className="text-xs text-muted-foreground capitalize">{t('plan.label', { plan: user.plan })}</p>
             </div>
-
-            {/* Chevron */}
             <ChevronUp
               className={cn('h-4 w-4 text-muted-foreground transition-transform duration-200',
                 showUserMenu ? 'rotate-180' : ''
@@ -279,24 +203,21 @@ export function Sidebar() {
             />
           </button>
 
-          {/* Dropdown */}
           {showUserMenu && (
             <div className="absolute bottom-full left-0 right-0 mb-2 glass-card py-2 z-50 shadow-xl">
               <div className="px-4 py-2 text-xs text-muted-foreground border-b border-border/30 mb-1">
                 {user.email}
               </div>
 
-              {/* Settings */}
               <NavLink
                 to="/dashboard/settings"
                 className="flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-secondary/50 transition-all rounded-lg mx-1"
                 onClick={() => setShowUserMenu(false)}
               >
                 <Settings className="h-4 w-4 text-muted-foreground" />
-                <span>Settings</span>
+                <span>{t('nav.settings')}</span>
               </NavLink>
 
-              {/* Language */}
               <div className="relative">
                 <button
                   className="w-full flex items-center justify-between px-4 py-2.5 text-sm hover:bg-secondary/50 transition-all rounded-lg mx-1"
@@ -304,63 +225,36 @@ export function Sidebar() {
                 >
                   <div className="flex items-center gap-3">
                     <Globe className="h-4 w-4 text-muted-foreground" />
-                    <span>Language</span>
+                    <span>{t('nav.language')}</span>
                   </div>
                   <ChevronRight className={cn('h-4 w-4 text-muted-foreground transition-transform', showLanguageMenu && 'rotate-90')} />
                 </button>
 
-                {/* Language Submenu */}
                 {showLanguageMenu && (
                   <div className="absolute left-full top-0 ml-1 bg-popover border rounded-lg shadow-xl py-1 min-w-[140px] z-50">
-                    <button
-                      className={cn(
-                        "w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent transition-all",
-                        currentLanguage === 'English' && "text-purple-500"
-                      )}
-                      onClick={() => {
-                        setCurrentLanguage('English');
-                        setShowLanguageMenu(false);
-                        setShowUserMenu(false);
-                      }}
-                    >
-                      {currentLanguage === 'English' && <span className="text-purple-500">•</span>}
-                      <span>English</span>
-                    </button>
-                    <button
-                      className={cn(
-                        "w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent transition-all",
-                        currentLanguage === 'Russian' && "text-purple-500"
-                      )}
-                      onClick={() => {
-                        setCurrentLanguage('Russian');
-                        setShowLanguageMenu(false);
-                        setShowUserMenu(false);
-                      }}
-                    >
-                      {currentLanguage === 'Russian' && <span className="text-purple-500">•</span>}
-                      <span>Русский</span>
-                    </button>
-                    <button
-                      className={cn(
-                        "w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent transition-all",
-                        currentLanguage === 'Spanish' && "text-purple-500"
-                      )}
-                      onClick={() => {
-                        setCurrentLanguage('Spanish');
-                        setShowLanguageMenu(false);
-                        setShowUserMenu(false);
-                      }}
-                    >
-                      {currentLanguage === 'Spanish' && <span className="text-purple-500">•</span>}
-                      <span>Español</span>
-                    </button>
+                    {languages.map((lang) => (
+                      <button
+                        key={lang.code}
+                        className={cn(
+                          "w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent transition-all",
+                          currentLanguage === lang.code && "text-purple-500"
+                        )}
+                        onClick={() => {
+                          changeLanguage(lang.code);
+                          setShowLanguageMenu(false);
+                          setShowUserMenu(false);
+                        }}
+                      >
+                        {currentLanguage === lang.code && <span className="text-purple-500">•</span>}
+                        <span>{lang.label}</span>
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
 
               <div className="border-t border-border/30 my-1" />
 
-              {/* Upgrade Plan */}
               {!REVIEW_MODE && (
                 <button
                   className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-secondary/50 transition-all rounded-lg mx-1"
@@ -370,19 +264,18 @@ export function Sidebar() {
                   }}
                 >
                   <ArrowUpCircle className="h-4 w-4 text-muted-foreground" />
-                  <span>Upgrade Plan</span>
+                  <span>{t('nav.upgradePlan')}</span>
                 </button>
               )}
 
               <div className="border-t border-border/30 my-1" />
 
-              {/* Logout */}
               <button
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-destructive/10 transition-all rounded-lg mx-1 text-muted-foreground hover:text-destructive"
                 onClick={handleLogout}
               >
                 <LogOut className="h-4 w-4" />
-                <span>Log out</span>
+                <span>{t('nav.logOut')}</span>
               </button>
             </div>
           )}

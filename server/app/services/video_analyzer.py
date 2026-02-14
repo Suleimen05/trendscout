@@ -126,9 +126,11 @@ def analyze_video_with_gemini(
     video_url: str,
     video_metadata: dict = None,
     custom_prompt: str = None,
+    local_path: str = None,
 ) -> str:
     """
     Full pipeline: download video -> upload to Gemini -> analyze.
+    If local_path is provided, skip download and use the local file directly.
 
     Returns detailed AI analysis of the actual video content.
     """
@@ -139,13 +141,19 @@ def analyze_video_with_gemini(
         return "GEMINI_API_KEY not configured"
 
     file_path = None
+    is_local_upload = False
     uploaded_file = None
 
     try:
-        # Step 1: Download
-        file_path = download_video(video_url)
-        if not file_path:
-            return _fallback_text_analysis(video_metadata, custom_prompt)
+        # Step 1: Use local file or download from URL
+        if local_path and os.path.exists(local_path):
+            file_path = local_path
+            is_local_upload = True
+            logger.info(f"[VIDEO] Using local file: {file_path}")
+        else:
+            file_path = download_video(video_url)
+            if not file_path:
+                return _fallback_text_analysis(video_metadata, custom_prompt)
 
         # Step 2: Upload to Gemini
         uploaded_file = upload_to_gemini(file_path)
@@ -184,14 +192,14 @@ Analyze this video in detail and provide:
 - Color palette and visual aesthetic
 
 ## Audio Analysis
-- Background music/sound — describe the mood, tempo, genre
-- Voice-over or spoken content — transcribe key phrases
+- Background music/sound -- describe the mood, tempo, genre
+- Voice-over or spoken content -- transcribe key phrases
 - Sound effects or audio transitions
 - How audio enhances the visual content
 
 ## Content Strategy
-- The hook (first 1-3 seconds) — what grabs attention?
-- Story structure and pacing — how does the narrative flow?
+- The hook (first 1-3 seconds) -- what grabs attention?
+- Story structure and pacing -- how does the narrative flow?
 - Call-to-action or engagement trigger
 - Target audience and content niche
 
@@ -226,8 +234,8 @@ Be specific about what you ACTUALLY SEE and HEAR in the video. Reference exact m
         return f"Video analysis error: {str(e)}\n\n{_fallback_text_analysis(video_metadata, custom_prompt)}"
 
     finally:
-        # Cleanup: remove downloaded file
-        if file_path and os.path.exists(file_path):
+        # Cleanup: remove downloaded file (but NOT user-uploaded files)
+        if file_path and os.path.exists(file_path) and not is_local_upload:
             try:
                 os.remove(file_path)
                 logger.info(f"[VIDEO] Cleaned up: {file_path}")
@@ -245,7 +253,7 @@ Be specific about what you ACTUALLY SEE and HEAR in the video. Reference exact m
 
 
 def _fallback_text_analysis(metadata: dict = None, custom_prompt: str = None) -> str:
-    """Fallback when video download/upload fails — analyze from metadata only."""
+    """Fallback when video download/upload fails -- analyze from metadata only."""
     if not metadata:
         return "Could not download video and no metadata available."
 

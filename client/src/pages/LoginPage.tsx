@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useOnlineStatus } from '@/hooks/useFormValidation';
+import { useTranslation } from 'react-i18next';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -27,13 +28,14 @@ const LoginPage = () => {
   const sectionRef = useRef<HTMLElement>(null);
   const isInView = useInView(sectionRef, { once: true, margin: '-100px' });
   const isOnline = useOnlineStatus();
+  const { t } = useTranslation('auth');
 
   // Simple inline validation
-  const emailError = touched.email && !email.trim() ? 'Email is required'
-    : touched.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? 'Invalid email address'
+  const emailError = touched.email && !email.trim() ? t('validation.emailRequired')
+    : touched.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? t('validation.emailInvalid')
     : '';
-  const passwordError = touched.password && !password ? 'Password is required'
-    : touched.password && password.length < 6 ? 'Minimum 6 characters'
+  const passwordError = touched.password && !password ? t('validation.passwordRequired')
+    : touched.password && password.length < 6 ? t('validation.passwordMinLength', { min: 6 })
     : '';
   const isValid = email && password.length >= 6 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
@@ -43,7 +45,7 @@ const LoginPage = () => {
     setTouched({ email: true, password: true });
 
     if (!isOnline) {
-      setSubmitError('No internet connection. Please check your network and try again.');
+      setSubmitError(t('errors.noInternet'));
       return;
     }
 
@@ -54,32 +56,32 @@ const LoginPage = () => {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      const message = err instanceof Error ? err.message : t('errors.loginFailed');
       if (message.includes('Failed to fetch') || message.includes('NetworkError')) {
-        setSubmitError('Cannot connect to server. Please try again later.');
+        setSubmitError(t('errors.cannotConnect'));
       } else if (message.includes('Invalid') || message.includes('credentials')) {
-        setSubmitError('Invalid email or password. Please check your credentials.');
+        setSubmitError(t('errors.invalidCredentials'));
       } else {
         setSubmitError(message);
       }
     } finally {
       setIsLoading(false);
     }
-  }, [isOnline, isValid, login, email, password, navigate]);
+  }, [isOnline, isValid, login, email, password, navigate, t]);
 
   const handleGoogleSignIn = useCallback(async () => {
     setSubmitError('');
     if (!isOnline) {
-      setSubmitError('No internet connection. Please check your network and try again.');
+      setSubmitError(t('errors.noInternet'));
       return;
     }
     try {
       await signInWithGoogle();
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Google sign-in failed. Please try again.';
+      const message = err instanceof Error ? err.message : t('errors.googleSignInFailed');
       setSubmitError(message);
     }
-  }, [isOnline, signInWithGoogle]);
+  }, [isOnline, signInWithGoogle, t]);
 
   const inputClass = (hasError: boolean, isValid: boolean) =>
     `w-full pl-12 pr-4 py-4 bg-white/5 border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 transition-all ${
@@ -138,8 +140,8 @@ const LoginPage = () => {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              Unlock your{' '}
-              <span className="gradient-text">viral potential</span>
+              {t('hero.loginTitle')}{' '}
+              <span className="gradient-text">{t('hero.loginTitleHighlight')}</span>
             </motion.h1>
 
             <motion.p
@@ -148,8 +150,7 @@ const LoginPage = () => {
               animate={isInView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              Join thousands of creators who use Rizko.ai to discover trends,
-              generate viral content, and grow their audience faster than ever.
+              {t('hero.description')}
             </motion.p>
 
             <motion.div
@@ -159,13 +160,13 @@ const LoginPage = () => {
               transition={{ duration: 0.5, delay: 0.5 }}
             >
               {[
-                'AI-powered trend detection',
-                'Viral script generation',
-                'Competitor analysis',
-                'Real-time analytics',
+                t('hero.features.aiTrend'),
+                t('hero.features.viralScript'),
+                t('hero.features.competitor'),
+                t('hero.features.realtime'),
               ].map((feature, index) => (
                 <motion.div
-                  key={feature}
+                  key={index}
                   className="flex items-center gap-3"
                   initial={{ opacity: 0, x: -20 }}
                   animate={isInView ? { opacity: 1, x: 0 } : {}}
@@ -187,9 +188,9 @@ const LoginPage = () => {
               transition={{ duration: 0.5, delay: 1 }}
             >
               {[
-                { value: '50K+', label: 'Active creators' },
-                { value: '1M+', label: 'Trends analyzed' },
-                { value: '99%', label: 'Satisfaction' },
+                { value: '50K+', label: t('hero.stats.creators') },
+                { value: '1M+', label: t('hero.stats.trends') },
+                { value: '99%', label: t('hero.stats.satisfaction') },
               ].map((stat, index) => (
                 <div key={index} className="text-center">
                   <div className="text-2xl font-bold gradient-text">{stat.value}</div>
@@ -219,14 +220,14 @@ const LoginPage = () => {
             </div>
 
             <div className="glass-card p-8">
-              <h2 className="text-2xl font-bold text-foreground mb-2">Welcome back</h2>
-              <p className="text-muted-foreground mb-6">Sign in to access your analytics dashboard</p>
+              <h2 className="text-2xl font-bold text-foreground mb-2">{t('login.title')}</h2>
+              <p className="text-muted-foreground mb-6">{t('login.subtitle')}</p>
 
               {/* Offline Warning */}
               {!isOnline && (
                 <div className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-400 text-sm flex items-center gap-2 mb-5">
                   <WifiOff className="w-4 h-4" />
-                  <span>No internet connection</span>
+                  <span>{t('offline')}</span>
                 </div>
               )}
 
@@ -239,7 +240,7 @@ const LoginPage = () => {
 
               <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground/80">Email Address</label>
+                  <label className="text-sm font-medium text-foreground/80">{t('login.emailLabel')}</label>
                   <div className="relative group">
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     <input
@@ -247,7 +248,7 @@ const LoginPage = () => {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       onBlur={() => setTouched(p => ({ ...p, email: true }))}
-                      placeholder="Enter your email"
+                      placeholder={t('login.emailPlaceholder')}
                       className={inputClass(!!emailError, !!touched.email && !emailError && !!email)}
                       disabled={isLoading}
                     />
@@ -258,7 +259,7 @@ const LoginPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground/80">Password</label>
+                  <label className="text-sm font-medium text-foreground/80">{t('login.passwordLabel')}</label>
                   <div className="relative group">
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     <input
@@ -266,7 +267,7 @@ const LoginPage = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       onBlur={() => setTouched(p => ({ ...p, password: true }))}
-                      placeholder="Enter your password"
+                      placeholder={t('login.passwordPlaceholder')}
                       className={`${inputClass(!!passwordError, !!touched.password && !passwordError && !!password)} !pr-12`}
                       disabled={isLoading}
                     />
@@ -293,7 +294,7 @@ const LoginPage = () => {
                     <Loader2 className="w-5 h-5 animate-spin" />
                   ) : (
                     <>
-                      <span>Sign In</span>
+                      <span>{t('login.signIn')}</span>
                       <ArrowRight className="w-5 h-5" />
                     </>
                   )}
@@ -302,7 +303,7 @@ const LoginPage = () => {
 
               <div className="flex items-center gap-4 my-6">
                 <div className="flex-1 h-px bg-border/50" />
-                <span className="text-muted-foreground text-sm">or</span>
+                <span className="text-muted-foreground text-sm">{t('login.or')}</span>
                 <div className="flex-1 h-px bg-border/50" />
               </div>
 
@@ -318,20 +319,20 @@ const LoginPage = () => {
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
                   <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                 </svg>
-                <span className="whitespace-nowrap">Continue with Google</span>
+                <span className="whitespace-nowrap">{t('login.continueWithGoogle')}</span>
               </button>
 
               <p className="text-center text-muted-foreground text-sm mt-6">
-                Don&apos;t have an account?{' '}
+                {t('login.noAccount')}{' '}
                 <Link to="/register" className="text-primary hover:text-primary/80 font-medium transition-colors">
-                  Sign up
+                  {t('login.signUp')}
                 </Link>
               </p>
             </div>
 
             <div className="mt-6 text-center">
               <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors inline-flex items-center gap-2">
-                ← Back to home
+                {`\u2190 ${t('login.backToHome')}`}
               </Link>
             </div>
           </div>

@@ -83,7 +83,7 @@ class User(Base):
 
     # Subscription & Credits
     subscription_tier = Column(
-        SQLEnum(SubscriptionTier),
+        SQLEnum(SubscriptionTier, values_callable=lambda x: [e.value for e in x]),
         default=SubscriptionTier.FREE,
         nullable=False
     )
@@ -213,7 +213,7 @@ class UserSettings(Base):
     # Feature Preferences
     auto_generate_scripts = Column(Boolean, default=True, nullable=False)
     default_search_mode = Column(
-        SQLEnum(SearchMode),
+        SQLEnum(SearchMode, values_callable=lambda x: [e.value for e in x]),
         default=SearchMode.KEYWORDS,
         nullable=False
     )
@@ -303,7 +303,7 @@ class Trend(Base):
 
     # Search Context
     search_query = Column(String(255), nullable=True)  # Original search query
-    search_mode = Column(SQLEnum(SearchMode), default=SearchMode.KEYWORDS)
+    search_mode = Column(SQLEnum(SearchMode, values_callable=lambda x: [e.value for e in x]), default=SearchMode.KEYWORDS)
     is_deep_scan = Column(Boolean, default=False)
 
     # Timestamps
@@ -387,7 +387,7 @@ class UserSearch(Base):
 
     # Search parameters
     query = Column(String(255), nullable=False, index=True)
-    mode = Column(SQLEnum(SearchMode), default=SearchMode.KEYWORDS, nullable=False)
+    mode = Column(SQLEnum(SearchMode, values_callable=lambda x: [e.value for e in x]), default=SearchMode.KEYWORDS, nullable=False)
     is_deep = Column(Boolean, default=False, nullable=False)
     filters = Column(JSONB, default={}, nullable=False)
 
@@ -672,7 +672,7 @@ class UserAccount(Base):
     )
 
     # Platform & Account Info
-    platform = Column(SQLEnum(SocialPlatform), nullable=False, index=True)
+    platform = Column(SQLEnum(SocialPlatform, values_callable=lambda x: [e.value for e in x]), nullable=False, index=True)
     username = Column(String(100), nullable=False)
     display_name = Column(String(255), nullable=True)
     avatar_url = Column(String(500), nullable=True)

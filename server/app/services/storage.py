@@ -24,9 +24,9 @@ logger = logging.getLogger(__name__)
 try:
     from pillow_heif import register_heif_opener
     register_heif_opener()
-    logger.info("✅ HEIC/HEIF support registered via pillow-heif")
+    logger.info("[OK] HEIC/HEIF support registered via pillow-heif")
 except ImportError:
-    logger.warning("⚠️ pillow-heif not installed — HEIC images won't be converted")
+    logger.warning("[WARNING] pillow-heif not installed -- HEIC images won't be converted")
 
 # Initialize Supabase client lazily (don't crash at import if env vars missing)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -35,13 +35,13 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 _supabase_client: Optional[Client] = None
 
 def _get_supabase() -> Optional[Client]:
-    """Lazy init Supabase client — only connect when actually needed."""
+    """Lazy init Supabase client -- only connect when actually needed."""
     global _supabase_client
     if _supabase_client is None:
         url = SUPABASE_URL or os.getenv("SUPABASE_URL")
         key = SUPABASE_KEY or os.getenv("SUPABASE_KEY")
         if not url or not key:
-            logger.warning("⚠️  SUPABASE_URL or SUPABASE_KEY not set — storage disabled")
+            logger.warning("[WARNING] SUPABASE_URL or SUPABASE_KEY not set -- storage disabled")
             return None
         _supabase_client = create_client(url, key)
     return _supabase_client
@@ -53,9 +53,9 @@ IMAGES_BUCKET = "rizko-images"
 class SupabaseStorage:
     """Helper for uploading images to Supabase Storage"""
 
-    # Formats that browsers can't display — must convert to JPEG
+    # Formats that browsers can't display -- must convert to JPEG
     UNSUPPORTED_FORMATS = {'image/heic', 'image/heif', 'image/tiff', 'image/bmp'}
-    # Formats browsers support natively — keep as-is
+    # Formats browsers support natively -- keep as-is
     SUPPORTED_FORMATS = {'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif', 'image/svg+xml'}
 
     @staticmethod
@@ -91,10 +91,10 @@ class SupabaseStorage:
             output = BytesIO()
             img.save(output, format='JPEG', quality=85, optimize=True)
             converted = output.getvalue()
-            logger.info(f"🔄 Converted {ct} → image/jpeg ({len(image_data)} → {len(converted)} bytes)")
+            logger.info(f"[REFRESH] Converted {ct} --> image/jpeg ({len(image_data)} --> {len(converted)} bytes)")
             return converted, 'image/jpeg'
         except Exception as e:
-            logger.warning(f"⚠️ Failed to convert {ct} to JPEG: {e} — uploading as-is")
+            logger.warning(f"[WARNING] Failed to convert {ct} to JPEG: {e} -- uploading as-is")
             return image_data, ct
 
     @staticmethod
@@ -142,7 +142,7 @@ class SupabaseStorage:
 
             client = _get_supabase()
             if not client:
-                logger.warning("Supabase not configured — skipping upload")
+                logger.warning("Supabase not configured -- skipping upload")
                 return None
 
             # Upload to Supabase Storage
@@ -159,7 +159,7 @@ class SupabaseStorage:
             # Get public URL
             public_url = client.storage.from_(IMAGES_BUCKET).get_public_url(filename)
 
-            logger.info(f"✅ Uploaded image to Supabase: {filename} ({final_content_type})")
+            logger.info(f"[OK] Uploaded image to Supabase: {filename} ({final_content_type})")
             return public_url
 
         except requests.exceptions.RequestException as e:
@@ -187,7 +187,7 @@ class SupabaseStorage:
             if not client:
                 return False
             client.storage.from_(IMAGES_BUCKET).remove([file_path])
-            logger.info(f"🗑️ Deleted image from Supabase: {file_path}")
+            logger.info(f"[DELETE] Deleted image from Supabase: {file_path}")
             return True
         except Exception as e:
             logger.error(f"Failed to delete image: {e}")
@@ -240,7 +240,7 @@ class SupabaseStorage:
                 return 0
             client.storage.from_(IMAGES_BUCKET).remove(paths_to_delete)
             deleted = len(paths_to_delete)
-            logger.info(f"🗑️ Cleaned up {deleted} images from Supabase Storage")
+            logger.info(f"[DELETE] Cleaned up {deleted} images from Supabase Storage")
         except Exception as e:
             logger.error(f"Failed to cleanup competitor images: {e}")
 
@@ -262,16 +262,16 @@ def _ensure_bucket_exists():
         bucket_names = [b.get("name") or b.get("id") for b in buckets]
 
         if IMAGES_BUCKET in bucket_names:
-            logger.info(f"✅ Bucket '{IMAGES_BUCKET}' exists")
+            logger.info(f"[OK] Bucket '{IMAGES_BUCKET}' exists")
         else:
             try:
                 client.storage.from_(IMAGES_BUCKET).list()
-                logger.info(f"✅ Bucket '{IMAGES_BUCKET}' exists (verified via list)")
+                logger.info(f"[OK] Bucket '{IMAGES_BUCKET}' exists (verified via list)")
             except:
-                logger.warning(f"⚠️ Bucket '{IMAGES_BUCKET}' not found.")
+                logger.warning(f"[WARNING] Bucket '{IMAGES_BUCKET}' not found.")
     except Exception as e:
         try:
             client.storage.from_(IMAGES_BUCKET).list()
-            logger.info(f"✅ Bucket '{IMAGES_BUCKET}' accessible")
+            logger.info(f"[OK] Bucket '{IMAGES_BUCKET}' accessible")
         except:
-            logger.warning(f"⚠️ Could not verify bucket: {e}")
+            logger.warning(f"[WARNING] Could not verify bucket: {e}")

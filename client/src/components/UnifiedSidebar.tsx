@@ -30,6 +30,8 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { ComingSoonModal } from '@/components/ComingSoonModal';
 import { features, REVIEW_MODE } from '@/config/features';
+import { useTranslation } from 'react-i18next';
+import { useLanguage } from '@/hooks/useLanguage';
 
 interface UnifiedSidebarProps {
   variant: 'A' | 'B';
@@ -147,7 +149,8 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
   const [showLearnMoreMenu, setShowLearnMoreMenu] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
   const [showMarketplaceModal, setShowMarketplaceModal] = useState(false);
-  const [currentLanguage, setCurrentLanguage] = useState('English');
+  const { t } = useTranslation('common');
+  const { currentLanguage, changeLanguage, languages } = useLanguage();
 
   const user = {
     name: authUser?.name || 'Demo User',
@@ -202,7 +205,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              Trends
+              {t('tabs.trends')}
             </button>
             <button
               onClick={() => {
@@ -216,7 +219,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
                   : 'text-muted-foreground hover:text-foreground'
               )}
             >
-              Scripts
+              {t('tabs.scripts')}
             </button>
           </div>
         </div>
@@ -295,12 +298,12 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
                   onClick={() => navigate('/dashboard/discover')}
                 >
                   <Plus className="h-4 w-4" />
-                  New Search
+                  {t('button.newSearch')}
                 </Button>
 
                 <div className="space-y-1">
                   <p className="text-xs font-medium text-muted-foreground px-2 py-1">
-                    Recent Searches
+                    {t('search.recentSearches')}
                   </p>
                   {mockTrendsHistory.map((item) => (
                     <button
@@ -329,7 +332,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
               }}
             >
               <Plus className="h-4 w-4" />
-              New Chat
+              {t('button.newChat')}
             </Button>
 
             <div className="space-y-1">
@@ -407,7 +410,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
           </div>
           <div className="flex-1 text-left overflow-hidden">
             <p className="font-medium text-sm text-foreground truncate">{user.name}</p>
-            <p className="text-xs text-muted-foreground">{user.plan} plan</p>
+            <p className="text-xs text-muted-foreground">{t('plan.label', { plan: user.plan })}</p>
           </div>
           <ChevronUp
             className={cn(
@@ -430,7 +433,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
               onClick={() => setShowUserMenu(false)}
             >
               <Settings className="h-4 w-4 text-muted-foreground" />
-              <span>Settings</span>
+              <span>{t('nav.settings')}</span>
             </NavLink>
 
             {/* Language - Hidden in Review Mode */}
@@ -442,7 +445,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
                 >
                   <div className="flex items-center gap-3">
                     <Globe className="h-4 w-4 text-muted-foreground" />
-                    <span>Language</span>
+                    <span>{t('nav.language')}</span>
                   </div>
                   <ChevronRight
                     className={cn(
@@ -454,21 +457,21 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
 
                 {showLanguageMenu && (
                   <div className="absolute left-full top-0 ml-1 bg-popover border rounded-lg shadow-xl py-1 min-w-[140px] z-50">
-                    {['English', 'Russian', 'Spanish'].map((lang) => (
+                    {languages.map((lang) => (
                       <button
-                        key={lang}
+                        key={lang.code}
                         className={cn(
                           'w-full flex items-center gap-2 px-4 py-2 text-sm hover:bg-accent transition-all',
-                          currentLanguage === lang && 'text-purple-500'
+                          currentLanguage === lang.code && 'text-purple-500'
                         )}
                         onClick={() => {
-                          setCurrentLanguage(lang);
+                          changeLanguage(lang.code);
                           setShowLanguageMenu(false);
                           setShowUserMenu(false);
                         }}
                       >
-                        {currentLanguage === lang && <span className="text-purple-500">•</span>}
-                        <span>{lang === 'Russian' ? 'Русский' : lang === 'Spanish' ? 'Español' : lang}</span>
+                        {currentLanguage === lang.code && <span className="text-purple-500">•</span>}
+                        <span>{lang.label}</span>
                       </button>
                     ))}
                   </div>
@@ -482,7 +485,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
               onClick={() => setShowUserMenu(false)}
             >
               <HelpCircle className="h-4 w-4 text-muted-foreground" />
-              <span>Get help</span>
+              <span>{t('nav.getHelp')}</span>
             </NavLink>
 
             {/* Upgrade plan - Hidden in Review Mode */}
@@ -497,7 +500,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
                   }}
                 >
                   <ArrowUpCircle className="h-4 w-4 text-muted-foreground" />
-                  <span>Upgrade plan</span>
+                  <span>{t('nav.upgradePlan')}</span>
                 </button>
               </>
             )}
@@ -510,7 +513,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
               >
                 <div className="flex items-center gap-3">
                   <Info className="h-4 w-4 text-muted-foreground" />
-                  <span>Learn more</span>
+                  <span>{t('nav.learnMore')}</span>
                 </div>
                 <ChevronRight
                   className={cn(
@@ -532,7 +535,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
                         setShowUserMenu(false);
                       }}
                     >
-                      About
+                      {t('nav.about')}
                     </NavLink>
                   )}
                   <NavLink
@@ -543,7 +546,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
                       setShowUserMenu(false);
                     }}
                   >
-                    Usage policy
+                    {t('nav.usagePolicy')}
                   </NavLink>
                   <NavLink
                     to="/dashboard/privacy-policy"
@@ -553,7 +556,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
                       setShowUserMenu(false);
                     }}
                   >
-                    Privacy policy
+                    {t('nav.privacyPolicy')}
                   </NavLink>
                 </div>
               )}
@@ -566,7 +569,7 @@ export function UnifiedSidebar({ variant }: UnifiedSidebarProps) {
               onClick={handleLogout}
             >
               <LogOut className="h-4 w-4" />
-              <span>Log out</span>
+              <span>{t('nav.logOut')}</span>
             </button>
           </div>
         )}

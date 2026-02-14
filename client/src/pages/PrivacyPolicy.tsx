@@ -1,14 +1,16 @@
 import { Shield, ExternalLink } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export function PrivacyPolicy() {
+  const { t } = useTranslation('legal');
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
           <Shield className="h-8 w-8 text-purple-500" />
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Privacy Policy</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('privacy.title')}</h1>
         </div>
 
         <Card>
@@ -242,11 +244,11 @@ export function PrivacyPolicy() {
         </Card>
 
         <div className="text-center space-x-4">
-          <Link to="/terms-of-service" className="text-blue-500 hover:underline">Terms of Service</Link>
+          <Link to="/terms-of-service" className="text-blue-500 hover:underline">{t('termsOfServiceLink')}</Link>
           <span className="text-muted-foreground">|</span>
-          <Link to="/data-policy" className="text-blue-500 hover:underline">Data Policy</Link>
+          <Link to="/data-policy" className="text-blue-500 hover:underline">{t('dataPolicyLink')}</Link>
           <span className="text-muted-foreground">|</span>
-          <Link to="/" className="text-blue-500 hover:underline">Back to Home</Link>
+          <Link to="/" className="text-blue-500 hover:underline">{t('backToHome')}</Link>
         </div>
       </div>
     </div>

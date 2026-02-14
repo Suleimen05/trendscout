@@ -1,14 +1,16 @@
 import { FileText, ExternalLink } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export function TermsOfService() {
+  const { t } = useTranslation('legal');
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 py-12 px-4">
       <div className="max-w-4xl mx-auto space-y-6">
         <div className="flex items-center gap-3">
           <FileText className="h-8 w-8 text-blue-500" />
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Terms of Service</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">{t('terms.title')}</h1>
         </div>
 
         <Card>
@@ -275,11 +277,11 @@ export function TermsOfService() {
         </Card>
 
         <div className="text-center space-x-4">
-          <Link to="/privacy-policy" className="text-blue-500 hover:underline">Privacy Policy</Link>
+          <Link to="/privacy-policy" className="text-blue-500 hover:underline">{t('privacyPolicyLink')}</Link>
           <span className="text-muted-foreground">|</span>
-          <Link to="/data-policy" className="text-blue-500 hover:underline">Data Policy</Link>
+          <Link to="/data-policy" className="text-blue-500 hover:underline">{t('dataPolicyLink')}</Link>
           <span className="text-muted-foreground">|</span>
-          <Link to="/" className="text-blue-500 hover:underline">Back to Home</Link>
+          <Link to="/" className="text-blue-500 hover:underline">{t('backToHome')}</Link>
         </div>
       </div>
     </div>
