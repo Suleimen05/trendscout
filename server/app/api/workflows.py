@@ -236,6 +236,7 @@ class WorkflowRunListItem(BaseModel):
     execution_time_ms: Optional[int] = None
     has_script: bool
     has_storyboard: bool
+    is_pinned: bool = False
     started_at: str
     completed_at: Optional[str] = None
 
@@ -259,6 +260,12 @@ class WorkflowRunDetail(BaseModel):
     completed_at: Optional[str] = None
 
 
+class WorkflowRunUpdate(BaseModel):
+    """Update workflow run (rename / pin)"""
+    workflow_name: Optional[str] = None
+    is_pinned: Optional[bool] = None
+
+
 def _run_to_list_item(run: WorkflowRun) -> dict:
     """Convert WorkflowRun ORM to list item dict"""
     return {
@@ -272,6 +279,7 @@ def _run_to_list_item(run: WorkflowRun) -> dict:
         "execution_time_ms": run.execution_time_ms,
         "has_script": run.final_script is not None and len(run.final_script) > 0,
         "has_storyboard": run.storyboard is not None and len(run.storyboard) > 0,
+        "is_pinned": getattr(run, 'is_pinned', False),
         "started_at": run.started_at.isoformat() if run.started_at else None,
         "completed_at": run.completed_at.isoformat() if run.completed_at else None,
     }
@@ -574,11 +582,11 @@ async def list_workflow_runs(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
-    """List all workflow runs for the current user (most recent first)"""
+    """List all workflow runs for the current user (pinned first, then most recent)"""
     runs = (
         db.query(WorkflowRun)
         .filter(WorkflowRun.user_id == current_user.id)
-        .order_by(WorkflowRun.started_at.desc())
+        .order_by(WorkflowRun.is_pinned.desc(), WorkflowRun.started_at.desc())
         .offset(offset)
         .limit(limit)
         .all()
@@ -617,6 +625,30 @@ async def delete_workflow_run(
     db.delete(run)
     db.commit()
     logger.info(f"[WORKFLOW] User {current_user.id} deleted run {run_id}")
+
+
+@router.patch("/history/{run_id}", response_model=WorkflowRunListItem)
+async def update_workflow_run(
+    run_id: int,
+    data: WorkflowRunUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update a workflow run (rename / pin)"""
+    run = db.query(WorkflowRun).filter(WorkflowRun.id == run_id).first()
+    if not run:
+        raise HTTPException(status_code=404, detail="Workflow run not found")
+    if run.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+
+    if data.workflow_name is not None:
+        run.workflow_name = data.workflow_name
+    if data.is_pinned is not None:
+        run.is_pinned = data.is_pinned
+
+    db.commit()
+    db.refresh(run)
+    return _run_to_list_item(run)
 
 
 @router.delete("/history/clear", status_code=status.HTTP_204_NO_CONTENT)
@@ -758,6 +790,40 @@ def topological_sort(nodes: List[WorkflowNode], connections: List[Connection]) -
     return result
 
 
+def analyze_with_video(video_data: 'VideoData', prompt: str, language: str = "English") -> Optional[str]:
+    """
+    Analyze video with Gemini Vision using a custom prompt.
+    Returns result text or None if video analysis is unavailable.
+    """
+    try:
+        from ..services.video_analyzer import analyze_video_with_gemini
+
+        lang_instr = _lang_instruction(language)
+        full_prompt = lang_instr + prompt
+
+        metadata = {
+            'platform': video_data.platform,
+            'author': video_data.author,
+            'views': video_data.views,
+            'uts': video_data.uts,
+            'desc': video_data.desc,
+            'url': video_data.url or 'Local upload',
+        }
+
+        if video_data.url or video_data.localPath:
+            result = analyze_video_with_gemini(
+                video_url=video_data.url or "",
+                video_metadata=metadata,
+                custom_prompt=full_prompt,
+                local_path=video_data.localPath,
+            )
+            return result
+    except Exception as e:
+        logger.error(f"[WORKFLOW] Video analysis failed in AI node: {e}")
+
+    return None
+
+
 def process_video_node(node: WorkflowNode, language: str = "English") -> str:
     """Process video input node - downloads actual video and analyzes it with Gemini Vision."""
     if not node.videoData:
@@ -854,10 +920,38 @@ To get better results, double-click this node and add:
 **Instructions for downstream nodes:** All generated content MUST align with this brand identity."""
 
 
-def process_analyze_node(input_content: str, config: Optional[NodeConfig] = None, language: str = "English") -> str:
-    """Deep content analysis."""
+def process_analyze_node(input_content: str, config: Optional[NodeConfig] = None, language: str = "English", video_data: Optional['VideoData'] = None) -> str:
+    """Deep content analysis. Uses Gemini Vision when video is available upstream."""
     if not input_content or input_content.strip() == "":
         return "No input content to analyze. Connect a Video Input or Brand Brief node."
+
+    # If video data is available, use Gemini Vision for direct video analysis
+    if video_data:
+        custom_prompt = config.customPrompt if config and config.customPrompt else None
+        if custom_prompt:
+            vision_prompt = f"""You are an expert content strategist analyzing viral content.
+
+{custom_prompt}
+
+Also consider this context from the pipeline:
+{input_content[:500]}"""
+        else:
+            vision_prompt = f"""You are an expert viral content strategist. Analyze this video deeply.
+
+Provide a concise analysis:
+## HOOK ANALYSIS (First 3 Seconds)
+## CONTENT STRUCTURE
+## AUDIO ANALYSIS (music, sound, voice)
+## PSYCHOLOGICAL TRIGGERS
+## VIRAL MECHANICS
+## REPLICABLE ELEMENTS (5 actionable items)
+
+Be specific about what you actually see and hear in the video."""
+
+        result = analyze_with_video(video_data, vision_prompt, language)
+        if result:
+            return result
+        logger.warning("[WORKFLOW] Video vision failed for analyze node, falling back to text")
 
     model = (config.model if config and config.model else "gemini")
     lang = _lang_instruction(language)
@@ -911,10 +1005,26 @@ Be specific and actionable."""
         return f"Analysis error: {str(e)}"
 
 
-def process_extract_node(input_content: str, config: Optional[NodeConfig] = None, language: str = "English") -> str:
-    """Extract key elements."""
+def process_extract_node(input_content: str, config: Optional[NodeConfig] = None, language: str = "English", video_data: Optional['VideoData'] = None) -> str:
+    """Extract key elements. Uses Gemini Vision when video is available upstream."""
     if not input_content or input_content.strip() == "":
         return "No input content to extract from. Connect upstream nodes first."
+
+    # If video data is available, use Gemini Vision
+    if video_data:
+        custom_prompt = config.customPrompt if config and config.customPrompt else None
+        vision_prompt = custom_prompt or """Extract all reusable elements from this video:
+## HOOKS (Copy-Paste Ready)
+## KEY PHRASES & LANGUAGE
+## VISUAL FRAMEWORK (shots, transitions, text overlays)
+## HASHTAG STRATEGY
+## CTA TEMPLATES
+## SUCCESS FORMULA
+Be specific about what you see and hear."""
+
+        result = analyze_with_video(video_data, vision_prompt, language)
+        if result:
+            return result
 
     model = (config.model if config and config.model else "gemini")
     lang = _lang_instruction(language)
@@ -964,10 +1074,25 @@ Keep it brief and immediately usable."""
         return f"Extraction error: {str(e)}"
 
 
-def process_style_node(input_content: str, config: Optional[NodeConfig] = None, language: str = "English") -> str:
-    """Style matching."""
+def process_style_node(input_content: str, config: Optional[NodeConfig] = None, language: str = "English", video_data: Optional['VideoData'] = None) -> str:
+    """Style matching. Uses Gemini Vision when video is available upstream."""
     if not input_content or input_content.strip() == "":
         return "No input content for style matching. Connect upstream nodes first."
+
+    # If video data is available, use Gemini Vision
+    if video_data:
+        custom_prompt = config.customPrompt if config and config.customPrompt else None
+        vision_prompt = custom_prompt or """Create a detailed style guide from this video:
+## VOICE & TONE
+## VIDEO FORMAT (aspect ratio, length)
+## EDITING STYLE (cuts, transitions, text animations)
+## VISUAL AESTHETIC (colors, lighting, framing)
+## AUDIO GUIDELINES (music genre, tempo, voiceover)
+Be specific about what you see and hear."""
+
+        result = analyze_with_video(video_data, vision_prompt, language)
+        if result:
+            return result
 
     model = (config.model if config and config.model else "gemini")
     lang = _lang_instruction(language)
@@ -1336,6 +1461,14 @@ async def execute_workflow(
                 if dep_id in node_outputs
             )
 
+            # Find upstream video data (from connected video nodes)
+            upstream_video = None
+            for dep_id in dependencies:
+                dep_node = nodes_by_id.get(dep_id)
+                if dep_node and dep_node.videoData:
+                    upstream_video = dep_node.videoData
+                    break
+
             try:
                 node_config = node.config
                 lang = request.language or "English"
@@ -1344,11 +1477,11 @@ async def execute_workflow(
                 elif node.type == "brand":
                     output = process_brand_node(node, request.brand_context or "", node_config)
                 elif node.type == "analyze":
-                    output = process_analyze_node(input_content, node_config, lang)
+                    output = process_analyze_node(input_content, node_config, lang, upstream_video)
                 elif node.type == "extract":
-                    output = process_extract_node(input_content, node_config, lang)
+                    output = process_extract_node(input_content, node_config, lang, upstream_video)
                 elif node.type == "style":
-                    output = process_style_node(input_content, node_config, lang)
+                    output = process_style_node(input_content, node_config, lang, upstream_video)
                 elif node.type == "generate":
                     output = process_generate_node(input_content, node_config, lang)
                 elif node.type == "refine":

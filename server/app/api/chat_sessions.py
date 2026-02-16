@@ -1,4 +1,5 @@
 # backend/app/api/chat_sessions.py
+# Updated: pin support
 """
 Chat Sessions API
 Manages AI chat sessions and message history for users.
@@ -70,20 +71,23 @@ def get_openai_client():
     return _openai_client
 
 
-async def generate_ai_response(model: str, system_prompt: str, user_message: str, history_text: str = "") -> str:
+async def generate_ai_response(model: str, system_prompt: str, user_message: str, history_text: str = "", mode: str = "") -> str:
     """
     Generate AI response using the specified model.
     Supports: gemini, claude, gpt4
     """
+    # Skip generic formatting instructions for modes that have strict formatting rules
+    if mode == "prompt-enhancer":
+        suffix = ""
+    else:
+        suffix = "\n\nRespond in a helpful, structured way. Use markdown formatting (bold, bullets, headers) for readability.\nKeep the response focused, concise, and actionable. Avoid overly long responses -- be brief but informative."
+
     full_prompt = f"""{system_prompt}
 
 CONVERSATION HISTORY:
 {history_text}
 
-USER REQUEST: {user_message}
-
-Respond in a helpful, structured way. Use markdown formatting (bold, bullets, headers) for readability.
-Keep the response focused, concise, and actionable. Avoid overly long responses -- be brief but informative."""
+USER REQUEST: {user_message}{suffix}"""
 
     try:
         if model == "gemini":
@@ -215,6 +219,7 @@ class ChatSessionCreate(BaseModel):
 class ChatSessionUpdate(BaseModel):
     """Update chat session."""
     title: Optional[str] = None
+    is_pinned: Optional[bool] = None
 
 
 class ChatSessionResponse(BaseModel):
@@ -225,6 +230,7 @@ class ChatSessionResponse(BaseModel):
     model: str
     mode: str
     message_count: int
+    is_pinned: bool = False
     context_type: Optional[str] = None
     context_data: Optional[dict] = None
     created_at: datetime
@@ -319,7 +325,45 @@ Provide:
 
 Keep it short and punchy.""",
 
-    "chat": """You are a friendly and helpful AI assistant. Have a natural conversation with the user. Answer their questions directly and concisely. Do not format responses as scripts, hooks, or content strategies unless the user specifically asks for that."""
+    "chat": """You are a friendly and helpful AI assistant. Have a natural conversation with the user. Answer their questions directly and concisely. Do not format responses as scripts, hooks, or content strategies unless the user specifically asks for that.""",
+
+    "prompt-enhancer": """You are a world-class Prompt Engineer. You take a rough idea and turn it into a perfect, professional prompt.
+
+YOUR PROCESS HAS EXACTLY 2 MESSAGES:
+
+=== YOUR FIRST REPLY (after user's idea) ===
+Output EXACTLY 5 open-ended clarifying questions. These questions must:
+- Deeply understand WHAT the user truly wants to achieve
+- Be open-ended so the user can express their vision freely
+- Cover: goal/vision, style/mood, specific details, technical requirements, context of use
+- Be tailored to the user's specific topic (NOT generic questions)
+No greeting. No intro. No explanation. ONLY the 5 numbered questions.
+
+=== YOUR SECOND REPLY (after user answers) ===
+Generate a POWERFUL, DETAILED prompt that is ready to copy-paste into any AI. The prompt must:
+- Be 150-300 words long
+- Start with a clear role/persona assignment
+- Include ALL specifics from user's answers
+- Define exact style, mood, composition, lighting, colors, perspective
+- Specify technical details (resolution, format, aspect ratio if applicable)
+- Include negative constraints (what to avoid)
+- Use professional prompt engineering structure
+
+Format your second reply as:
+
+🎯 **Enhanced Prompt:**
+[the full detailed prompt here]
+
+📝 **Key improvements:**
+- [what was added/enhanced vs the original rough idea]
+- [...]
+- [...]
+
+ABSOLUTE RULES:
+1. You ask questions ONLY ONCE — in your first reply
+2. After user answers, you IMMEDIATELY output the final prompt — NO MORE QUESTIONS EVER
+3. The final prompt must be significantly better and more detailed than the user's original idea
+4. If the conversation history already contains your questions AND user's answers, skip to generating the final prompt"""
 }
 
 
@@ -371,6 +415,7 @@ async def get_chat_sessions(
             "model": session.model,
             "mode": session.mode,
             "message_count": session.message_count,
+            "is_pinned": getattr(session, 'is_pinned', False),
             "context_type": session.context_type,
             "context_data": session.context_data,
             "created_at": session.created_at,
@@ -413,6 +458,7 @@ async def create_chat_session(
         model=session.model,
         mode=session.mode,
         message_count=session.message_count,
+        is_pinned=session.is_pinned,
         context_type=session.context_type,
         context_data=session.context_data,
         created_at=session.created_at,
@@ -453,6 +499,7 @@ async def get_chat_session(
         model=session.model,
         mode=session.mode,
         message_count=session.message_count,
+        is_pinned=getattr(session, 'is_pinned', False),
         context_type=session.context_type,
         context_data=session.context_data,
         created_at=session.created_at,
@@ -482,8 +529,10 @@ async def update_chat_session(
             detail="Chat session not found"
         )
 
-    if data.title:
+    if data.title is not None:
         session.title = data.title
+    if data.is_pinned is not None:
+        session.is_pinned = data.is_pinned
 
     session.updated_at = datetime.utcnow()
     db.commit()
@@ -496,6 +545,7 @@ async def update_chat_session(
         model=session.model,
         mode=session.mode,
         message_count=session.message_count,
+        is_pinned=session.is_pinned,
         context_type=session.context_type,
         context_data=session.context_data,
         created_at=session.created_at,
@@ -657,7 +707,8 @@ async def send_message(
             model=current_model,
             system_prompt=full_system_prompt,
             user_message=data.message,
-            history_text=history_text
+            history_text=history_text,
+            mode=mode
         )
 
     except Exception as e:
@@ -712,6 +763,7 @@ async def send_message(
             model=session.model,
             mode=session.mode,
             message_count=session.message_count,
+            is_pinned=getattr(session, 'is_pinned', False),
             context_type=session.context_type,
             context_data=session.context_data,
             created_at=session.created_at,

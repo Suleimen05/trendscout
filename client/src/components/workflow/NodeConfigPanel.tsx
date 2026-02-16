@@ -124,7 +124,7 @@ const MarkdownComponents = {
     <ol className="list-decimal pl-5 mb-2.5 space-y-1 text-[13px]">{children}</ol>
   ),
   li: ({ children }: { children: React.ReactNode }) => (
-    <li className="leading-relaxed">{children}</li>
+    <li className="leading-relaxed [overflow-wrap:anywhere]">{children}</li>
   ),
   strong: ({ children }: { children: React.ReactNode }) => (
     <strong className="font-semibold text-foreground">{children}</strong>
@@ -133,7 +133,7 @@ const MarkdownComponents = {
     const isBlock = className?.includes('language-');
     if (isBlock) {
       return (
-        <pre className="bg-black/20 text-foreground/90 rounded-lg p-3 my-2.5 text-[13px] overflow-x-auto border border-border/50">
+        <pre className="bg-black/20 text-foreground/90 rounded-lg p-3 my-2.5 text-[13px] overflow-x-auto border border-border/50 max-w-full whitespace-pre-wrap [overflow-wrap:anywhere]">
           <code>{children}</code>
         </pre>
       );
@@ -585,8 +585,8 @@ export function NodeConfigPanel({ node, onClose, onUpdate, savedVideos = [], onA
                   )}
                 </Button>
               </div>
-              <div className="bg-secondary/80 border border-border rounded-xl p-4 max-h-[400px] overflow-y-auto overflow-x-hidden">
-                <div className="prose dark:prose-invert max-w-none text-[13px] text-foreground/80 leading-relaxed break-words">
+              <div className="bg-secondary/80 border border-border rounded-xl p-4 max-h-[400px] overflow-y-auto overflow-x-hidden w-full">
+                <div className="prose dark:prose-invert max-w-none text-[13px] text-foreground/80 leading-relaxed break-words [overflow-wrap:anywhere] min-w-0">
                   <ReactMarkdown remarkPlugins={[remarkGfm]} components={MarkdownComponents as any}>
                     {node.outputContent}
                   </ReactMarkdown>

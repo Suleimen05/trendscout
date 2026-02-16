@@ -113,6 +113,8 @@ interface WorkflowContextType {
   loadRunHistory: () => Promise<void>;
   removeSavedVideo: (id: number) => void;
   removeRunHistoryItem: (id: number) => void;
+  renameRun: (id: number, name: string) => Promise<void>;
+  pinRun: (id: number, pinned: boolean) => Promise<void>;
 }
 
 // =============================================================================
@@ -211,6 +213,44 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
 
   const removeRunHistoryItem = useCallback((id: number) => {
     setRunHistory(prev => prev.filter(r => r.id !== id));
+  }, []);
+
+  const renameRun = useCallback(async (id: number, name: string) => {
+    const prev = runHistory.find(r => r.id === id);
+    setRunHistory(list => list.map(r => r.id === id ? { ...r, workflow_name: name } : r));
+    try {
+      await apiService.updateWorkflowRun(id, { workflow_name: name });
+    } catch (error) {
+      console.error('Failed to rename run:', error);
+      if (prev) {
+        setRunHistory(list => list.map(r => r.id === id ? { ...r, workflow_name: prev.workflow_name } : r));
+      }
+    }
+  }, [runHistory]);
+
+  const pinRun = useCallback(async (id: number, pinned: boolean) => {
+    setRunHistory(list => {
+      const updated = list.map(r => r.id === id ? { ...r, is_pinned: pinned } : r);
+      // Sort: pinned first, then by started_at desc
+      return updated.sort((a: any, b: any) => {
+        if (a.is_pinned && !b.is_pinned) return -1;
+        if (!a.is_pinned && b.is_pinned) return 1;
+        return new Date(b.started_at).getTime() - new Date(a.started_at).getTime();
+      });
+    });
+    try {
+      await apiService.updateWorkflowRun(id, { is_pinned: pinned });
+    } catch (error) {
+      console.error('Failed to pin run:', error);
+      setRunHistory(list => {
+        const updated = list.map(r => r.id === id ? { ...r, is_pinned: !pinned } : r);
+        return updated.sort((a: any, b: any) => {
+          if (a.is_pinned && !b.is_pinned) return -1;
+          if (!a.is_pinned && b.is_pinned) return 1;
+          return new Date(b.started_at).getTime() - new Date(a.started_at).getTime();
+        });
+      });
+    }
   }, []);
 
   // ---------------------------------------------------------------------------
@@ -423,6 +463,8 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         loadRunHistory,
         removeSavedVideo,
         removeRunHistoryItem,
+        renameRun,
+        pinRun,
       }}
     >
       {children}

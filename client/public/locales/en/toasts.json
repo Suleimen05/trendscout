@@ -13,6 +13,7 @@
     "loadMessagesFailed": "Failed to load messages",
     "sessionDeleted": "Session deleted",
     "deleteSessionFailed": "Failed to delete session",
+    "renameSessionFailed": "Failed to rename session",
     "createChatFailed": "Failed to create chat session",
     "insufficientCredits": "Insufficient credits",
     "sendMessageFailed": "Error sending message"

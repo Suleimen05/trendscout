@@ -11,7 +11,8 @@
     "ideas": { "name": "Idea Generator", "description": "Generate content ideas" },
     "analysis": { "name": "Trend Analyst", "description": "Analyze content" },
     "improve": { "name": "Content Improver", "description": "Enhance existing content" },
-    "hook": { "name": "Hook Master", "description": "Create attention hooks" }
+    "hook": { "name": "Hook Master", "description": "Create attention hooks" },
+    "prompt-enhancer": { "name": "Prompt Enhancer", "description": "Enhance your prompt to perfection" }
   },
   "prompts": {
     "script": "Write a viral TikTok script about...",

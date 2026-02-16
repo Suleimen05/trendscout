@@ -544,6 +544,7 @@ class ChatSession(Base):
     model = Column(String(50), default="gemini", nullable=False)
     mode = Column(String(50), default="script", nullable=False)
     message_count = Column(Integer, default=0, nullable=False)
+    is_pinned = Column(Boolean, default=False, nullable=False)
 
     # Timestamps
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -917,6 +918,9 @@ class WorkflowRun(Base):
     credits_used = Column(Integer, default=0, nullable=False)
     execution_time_ms = Column(Integer, nullable=True)
     error_message = Column(Text, nullable=True)
+
+    # Pin
+    is_pinned = Column(Boolean, default=False, nullable=False)
 
     # Timestamps
     started_at = Column(DateTime, default=datetime.utcnow, nullable=False)

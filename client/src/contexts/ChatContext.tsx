@@ -31,6 +31,7 @@ interface ChatSession {
   model: string;
   mode: string;
   message_count: number;
+  is_pinned: boolean;
   created_at: string;
   updated_at: string;
   last_message?: string;
@@ -62,7 +63,10 @@ interface ChatContextType {
   createSession: (title?: string, model?: string) => Promise<string | null>;
   selectSession: (sessionId: string) => Promise<void>;
   deleteSession: (sessionId: string) => Promise<void>;
+  renameSession: (sessionId: string, title: string) => Promise<void>;
+  pinSession: (sessionId: string, pinned: boolean) => Promise<void>;
   sendMessage: (message: string, mode?: string, model?: string) => Promise<void>;
+  stopGeneration: () => void;
   loadCredits: () => Promise<void>;
   setCurrentSessionId: (id: string | null) => void;
   clearMessages: () => void;
@@ -91,6 +95,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
   // Track previous auth state to detect login/logout
   const prevAuthRef = useRef<boolean>(false);
+  // AbortController for cancelling AI generation
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // ---------------------------------------------------------------------------
   // Load all sessions from database
@@ -195,20 +201,83 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     async (sessionId: string) => {
       if (!token) return;
 
+      // Optimistic delete: remove from UI immediately
+      const deletedSession = sessions.find((s) => s.session_id === sessionId);
+      setSessions((prev) => prev.filter((s) => s.session_id !== sessionId));
+      if (currentSessionId === sessionId) {
+        setCurrentSessionId(null);
+        setMessages([]);
+      }
+
+      // Delete from backend in background
       try {
         await apiService.deleteChatSession(sessionId);
-        setSessions((prev) => prev.filter((s) => s.session_id !== sessionId));
-        toast.success(i18n.t('toasts:chat.sessionDeleted'));
-        if (currentSessionId === sessionId) {
-          setCurrentSessionId(null);
-          setMessages([]);
-        }
       } catch (error) {
         console.error('Failed to delete session:', error);
+        // Restore session on failure
+        if (deletedSession) {
+          setSessions((prev) => [deletedSession, ...prev]);
+        }
         toast.error(i18n.t('toasts:chat.deleteSessionFailed'));
       }
     },
-    [token, currentSessionId]
+    [token, currentSessionId, sessions]
+  );
+
+  // ---------------------------------------------------------------------------
+  // Rename session
+  // ---------------------------------------------------------------------------
+  const renameSession = useCallback(
+    async (sessionId: string, title: string) => {
+      if (!token) return;
+
+      // Optimistic update
+      const prev = sessions.find((s) => s.session_id === sessionId);
+      setSessions((list) =>
+        list.map((s) => (s.session_id === sessionId ? { ...s, title } : s))
+      );
+
+      try {
+        await apiService.updateChatSession(sessionId, { title });
+      } catch (error) {
+        console.error('Failed to rename session:', error);
+        // Revert
+        if (prev) {
+          setSessions((list) =>
+            list.map((s) =>
+              s.session_id === sessionId ? { ...s, title: prev.title } : s
+            )
+          );
+        }
+        toast.error(i18n.t('toasts:chat.renameSessionFailed'));
+      }
+    },
+    [token, sessions]
+  );
+
+  // ---------------------------------------------------------------------------
+  // Pin / unpin session
+  // ---------------------------------------------------------------------------
+  const pinSession = useCallback(
+    async (sessionId: string, pinned: boolean) => {
+      if (!token) return;
+
+      // Optimistic update
+      setSessions((list) =>
+        list.map((s) => (s.session_id === sessionId ? { ...s, is_pinned: pinned } : s))
+      );
+
+      try {
+        await apiService.updateChatSession(sessionId, { is_pinned: pinned });
+      } catch (error) {
+        console.error('Failed to pin session:', error);
+        // Revert
+        setSessions((list) =>
+          list.map((s) => (s.session_id === sessionId ? { ...s, is_pinned: !pinned } : s))
+        );
+      }
+    },
+    [token]
   );
 
   // ---------------------------------------------------------------------------
@@ -250,12 +319,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       setIsStreaming(true);
 
       try {
+        // Create AbortController for this request
+        const controller = new AbortController();
+        abortControllerRef.current = controller;
+
         const data = await apiService.sendChatMessage(sessionId!, {
           message,
           mode,
           model,
           language: i18n.language === 'ru' ? 'Russian' : 'English',
-        });
+        }, controller.signal);
 
         // Update user message with real ID from database
         setMessages((prev) =>
@@ -302,6 +375,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           )
         );
       } catch (error: any) {
+        // Handle abort/cancel
+        if (error?.code === 'ERR_CANCELED' || error?.name === 'CanceledError' || error?.name === 'AbortError') {
+          // User cancelled — just stop, don't show error
+          return;
+        }
+
         // Handle 402 Insufficient Credits
         if (error?.response?.status === 402) {
           const errorMsg =
@@ -339,6 +418,17 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     },
     [token, currentSessionId, isStreaming]
   );
+
+  // ---------------------------------------------------------------------------
+  // Stop generation
+  // ---------------------------------------------------------------------------
+  const stopGeneration = useCallback(() => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setIsStreaming(false);
+  }, []);
 
   // ---------------------------------------------------------------------------
   // Clear messages
@@ -396,7 +486,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         createSession,
         selectSession,
         deleteSession,
+        renameSession,
+        pinSession,
         sendMessage,
+        stopGeneration,
         loadCredits,
         setCurrentSessionId,
         clearMessages,

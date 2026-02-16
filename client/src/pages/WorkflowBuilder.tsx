@@ -35,7 +35,9 @@ import {
   PenTool,
   TrendingUp,
   Save,
-  // MoreVertical,
+  MoreVertical,
+  Pencil,
+  Pin,
   Settings2,
   History,
   Clock,
@@ -53,6 +55,21 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
@@ -124,6 +141,7 @@ const getContentModes = (t: TFunction) => [
   { id: 'analysis', name: t('modes.analysis.name'), icon: TrendingUp, description: t('modes.analysis.description'), color: 'from-zinc-600 to-zinc-700' },
   { id: 'improve', name: t('modes.improve.name'), icon: Zap, description: t('modes.improve.description'), color: 'from-zinc-600 to-zinc-700' },
   { id: 'hook', name: t('modes.hook.name'), icon: Sparkles, description: t('modes.hook.description'), color: 'from-zinc-600 to-zinc-700' },
+  { id: 'prompt-enhancer', name: t('modes.prompt-enhancer.name'), icon: Wand2, description: t('modes.prompt-enhancer.description'), color: 'from-zinc-600 to-zinc-700' },
 ];
 
 
@@ -290,7 +308,10 @@ export function WorkflowBuilder() {
     createSession,
     selectSession,
     deleteSession: deleteChatSession,
+    renameSession: renameChatSession,
+    pinSession: pinChatSession,
     sendMessage: sendChatMessage,
+    stopGeneration,
   } = useChat();
 
   // Use workflow context for persistence + preloaded data
@@ -312,6 +333,8 @@ export function WorkflowBuilder() {
     loadRunHistory,
     removeSavedVideo,
     removeRunHistoryItem,
+    renameRun,
+    pinRun,
   } = useWorkflow();
 
   // Memoized translated data
@@ -356,6 +379,12 @@ export function WorkflowBuilder() {
   const [showModelMenu, setShowModelMenu] = useState(false);
   // showModeMenu removed (unused)
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [renamingSessionId, setRenamingSessionId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState('');
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteRunConfirmId, setDeleteRunConfirmId] = useState<number | null>(null);
+  const [renamingRunId, setRenamingRunId] = useState<number | null>(null);
+  const [renameRunValue, setRenameRunValue] = useState('');
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [lightboxZoom, setLightboxZoom] = useState(1);
 
@@ -1258,9 +1287,6 @@ export function WorkflowBuilder() {
           e.stopPropagation();
           setSelectedNode(node.id);
           setSelectedConnection(null);
-        }}
-        onDoubleClick={(e) => {
-          e.stopPropagation();
           setConfigNode(node);
         }}
       >
@@ -1519,7 +1545,7 @@ export function WorkflowBuilder() {
                 </div>
               )}
 
-              {openPanel !== 'chat' && <ScrollArea className="flex-1">
+              {openPanel !== 'chat' && <div className="flex-1 overflow-y-auto overflow-x-hidden">
                 <div className="p-2.5">
                   {openPanel === 'nodes' && (
                     <div className="space-y-3">
@@ -1785,22 +1811,51 @@ export function WorkflowBuilder() {
                                 key={run.id}
                                 onClick={() => handleLoadRunOnCanvas(run)}
                                 className={cn(
-                                  "flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all",
+                                  "group/run flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all",
                                   selectedRun?.id === run.id
                                     ? "border-blue-500 bg-blue-500/10"
                                     : "border-border bg-secondary/50 hover:border-border/80"
                                 )}
                               >
-                                <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0", statusStyle.bg, statusStyle.text)}>
-                                  {statusStyle.icon}
+                                <div className={cn(
+                                  "w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0",
+                                  run.is_pinned ? "bg-blue-500/10 text-blue-500" : statusStyle.bg + " " + statusStyle.text
+                                )}>
+                                  {run.is_pinned ? <Pin className="h-4 w-4" /> : statusStyle.icon}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-1.5">
-                                    <span className="text-xs font-medium truncate">{run.workflow_name}</span>
-                                    {run.run_number > 1 && (
-                                      <span className="text-[11px] text-muted-foreground">#{run.run_number}</span>
-                                    )}
-                                  </div>
+                                  {renamingRunId === run.id ? (
+                                    <input
+                                      autoFocus
+                                      value={renameRunValue}
+                                      onChange={(e) => setRenameRunValue(e.target.value)}
+                                      onBlur={() => {
+                                        if (renameRunValue.trim() && renameRunValue !== run.workflow_name) {
+                                          renameRun(run.id, renameRunValue.trim());
+                                        }
+                                        setRenamingRunId(null);
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                          if (renameRunValue.trim() && renameRunValue !== run.workflow_name) {
+                                            renameRun(run.id, renameRunValue.trim());
+                                          }
+                                          setRenamingRunId(null);
+                                        } else if (e.key === 'Escape') {
+                                          setRenamingRunId(null);
+                                        }
+                                      }}
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="w-full text-xs font-medium bg-background border border-border rounded px-1.5 py-0.5 outline-none focus:border-primary"
+                                    />
+                                  ) : (
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-xs font-medium truncate">{run.workflow_name}</span>
+                                      {run.run_number > 1 && (
+                                        <span className="text-[11px] text-muted-foreground">#{run.run_number}</span>
+                                      )}
+                                    </div>
+                                  )}
                                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                                     <span className="flex items-center gap-0.5">
                                       <Clock className="h-2.5 w-2.5" />
@@ -1816,22 +1871,47 @@ export function WorkflowBuilder() {
                                     )}
                                   </div>
                                 </div>
-                                <button
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    try {
-                                      await apiService.deleteWorkflowRun(run.id);
-                                      removeRunHistoryItem(run.id);
-                                      if (selectedRun?.id === run.id) setSelectedRun(null);
-                                      toast.success(t('toasts.runDeleted'));
-                                    } catch (err) {
-                                      toast.error(t('toasts.failedDeleteRun'));
-                                    }
-                                  }}
-                                  className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </button>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                    <button className="p-1 rounded opacity-0 group-hover/run:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 hover:bg-secondary text-muted-foreground transition-all">
+                                      <MoreVertical className="h-3.5 w-3.5" />
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" side="bottom" className="w-44">
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        pinRun(run.id, !run.is_pinned);
+                                      }}
+                                    >
+                                      <Pin className="h-4 w-4" />
+                                      {run.is_pinned
+                                        ? (i18n.language === 'ru' ? 'Открепить' : 'Unpin')
+                                        : (i18n.language === 'ru' ? 'Закрепить' : 'Pin')}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setRenamingRunId(run.id);
+                                        setRenameRunValue(run.workflow_name);
+                                      }}
+                                    >
+                                      <Pencil className="h-4 w-4" />
+                                      {i18n.language === 'ru' ? 'Переименовать' : 'Rename'}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      variant="destructive"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setDeleteRunConfirmId(run.id);
+                                      }}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                      {i18n.language === 'ru' ? 'Удалить' : 'Delete'}
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </div>
                             );
                           })}
@@ -1900,7 +1980,7 @@ export function WorkflowBuilder() {
                           </div>
                         ) : (
                           <div className="space-y-1.5">
-                            {chatSessions.map(session => {
+                            {[...chatSessions].sort((a, b) => (b.is_pinned ? 1 : 0) - (a.is_pinned ? 1 : 0)).map(session => {
                               const isActive = currentSessionId === session.session_id;
                               const sessionDate = new Date(session.updated_at || session.created_at);
                               const now = new Date();
@@ -1918,34 +1998,92 @@ export function WorkflowBuilder() {
                                   key={session.session_id}
                                   onClick={() => { selectSession(session.session_id); setOpenPanel('chat'); }}
                                   className={cn(
-                                    "flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all",
+                                    "group/session flex items-center gap-2 p-2.5 rounded-lg border cursor-pointer transition-all",
                                     isActive
                                       ? "border-blue-500/50 bg-blue-500/10"
                                       : "border-border bg-secondary/30 hover:border-border/80"
                                   )}
                                 >
                                   <div className="w-5 flex items-center justify-center flex-shrink-0 text-muted-foreground">
-                                    <MessageSquare className="h-3.5 w-3.5" />
+                                    {session.is_pinned ? <Pin className="h-3.5 w-3.5 text-blue-400" /> : <MessageSquare className="h-3.5 w-3.5" />}
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                    <div className="text-xs font-medium truncate">
-                                      {session.title || t('sidebar.untitledChat')}
-                                    </div>
+                                    {renamingSessionId === session.session_id ? (
+                                      <input
+                                        autoFocus
+                                        value={renameValue}
+                                        onChange={(e) => setRenameValue(e.target.value)}
+                                        onBlur={() => {
+                                          if (renameValue.trim() && renameValue.trim() !== session.title) {
+                                            renameChatSession(session.session_id, renameValue.trim());
+                                          }
+                                          setRenamingSessionId(null);
+                                        }}
+                                        onKeyDown={(e) => {
+                                          if (e.key === 'Enter') {
+                                            if (renameValue.trim() && renameValue.trim() !== session.title) {
+                                              renameChatSession(session.session_id, renameValue.trim());
+                                            }
+                                            setRenamingSessionId(null);
+                                          } else if (e.key === 'Escape') {
+                                            setRenamingSessionId(null);
+                                          }
+                                        }}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="w-full text-xs font-medium bg-background border border-blue-500/50 rounded px-1.5 py-0.5 outline-none"
+                                      />
+                                    ) : (
+                                      <div className="text-xs font-medium line-clamp-2 break-words">
+                                        {session.title || t('sidebar.untitledChat')}
+                                      </div>
+                                    )}
                                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                                       <span>{t('sidebar.msgsCount', { count: session.message_count })}</span>
                                       <span>·</span>
                                       <span>{timeAgo}</span>
                                     </div>
                                   </div>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      deleteChatSession(session.session_id);
-                                    }}
-                                    className="p-1 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </button>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                                      <button className="p-1 rounded opacity-0 group-hover/session:opacity-100 focus:opacity-100 data-[state=open]:opacity-100 hover:bg-secondary text-muted-foreground transition-all">
+                                        <MoreVertical className="h-3.5 w-3.5" />
+                                      </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" side="bottom" className="w-40">
+                                      <DropdownMenuItem
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          pinChatSession(session.session_id, !session.is_pinned);
+                                        }}
+                                      >
+                                        <Pin className="h-4 w-4" />
+                                        {session.is_pinned
+                                          ? (i18n.language === 'ru' ? 'Открепить' : 'Unpin')
+                                          : (i18n.language === 'ru' ? 'Закрепить' : 'Pin')}
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setRenameValue(session.title || '');
+                                          setRenamingSessionId(session.session_id);
+                                        }}
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                        {i18n.language === 'ru' ? 'Переименовать' : 'Rename'}
+                                      </DropdownMenuItem>
+                                      <DropdownMenuSeparator />
+                                      <DropdownMenuItem
+                                        variant="destructive"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setDeleteConfirmId(session.session_id);
+                                        }}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                        {i18n.language === 'ru' ? 'Удалить' : 'Delete'}
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
                                 </div>
                               );
                             })}
@@ -1956,7 +2094,7 @@ export function WorkflowBuilder() {
                     </div>
                   )}
                 </div>
-              </ScrollArea>}
+              </div>}
 
               {/* Chat Panel Content */}
               {openPanel === 'chat' && (
@@ -1983,9 +2121,9 @@ export function WorkflowBuilder() {
                     })}
                   </div>
 
-                  {/* Messages Area */}
-                  <ScrollArea className="flex-1 overflow-hidden">
-                    <div className="p-3 space-y-2">
+                  {/* Messages Area — native overflow instead of Radix ScrollArea to fix width constraint */}
+                  <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                    <div className="p-3 space-y-2 max-w-full">
                       {messages.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-10 text-center">
                           <div className="w-10 h-10 rounded-xl bg-secondary flex items-center justify-center mb-3">
@@ -2084,7 +2222,7 @@ export function WorkflowBuilder() {
                       )}
                       <div ref={messagesEndRef} />
                     </div>
-                  </ScrollArea>
+                  </div>
 
                   {/* Chat Input */}
                   <div className="p-2.5 border-t border-border">
@@ -2105,7 +2243,7 @@ export function WorkflowBuilder() {
                             }
                           }}
                           placeholder={t('chat.askMeTo', { action: selectedMode.description.toLowerCase() })}
-                          className="w-full p-2.5 pb-8 bg-transparent resize-none focus:outline-none text-sm placeholder:text-muted-foreground/50 text-foreground min-h-[40px] max-h-[100px]"
+                          className="w-full p-2.5 pb-10 bg-transparent resize-none focus:outline-none text-sm placeholder:text-muted-foreground/50 text-foreground min-h-[44px] max-h-[100px]"
                           rows={1}
                           disabled={isStreaming}
                         />
@@ -2155,19 +2293,29 @@ export function WorkflowBuilder() {
                               </div>
                             )}
                           </div>
-                          <Button
-                            onClick={() => handleSendMessage()}
-                            disabled={!inputValue.trim() || isStreaming}
-                            size="sm"
-                            className={cn(
-                              "rounded-lg px-2.5 h-6 text-xs transition-all",
-                              inputValue.trim()
-                                ? "bg-blue-500 hover:bg-blue-600 text-white"
-                                : "bg-secondary text-muted-foreground"
-                            )}
-                          >
-                            {isStreaming ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-                          </Button>
+                          {isStreaming ? (
+                            <Button
+                              onClick={stopGeneration}
+                              size="sm"
+                              className="rounded-lg px-2.5 h-6 text-xs bg-red-500 hover:bg-red-600 text-white transition-all"
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          ) : (
+                            <Button
+                              onClick={() => handleSendMessage()}
+                              disabled={!inputValue.trim()}
+                              size="sm"
+                              className={cn(
+                                "rounded-lg px-2.5 h-6 text-xs transition-all",
+                                inputValue.trim()
+                                  ? "bg-blue-500 hover:bg-blue-600 text-white"
+                                  : "bg-secondary text-muted-foreground"
+                              )}
+                            >
+                              <Send className="h-3 w-3" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -2287,8 +2435,6 @@ export function WorkflowBuilder() {
             ref={canvasRef}
             className={cn(
               "absolute w-[3000px] h-[3000px]",
-              "bg-[radial-gradient(circle,hsl(var(--border))_1px,transparent_1px)]",
-              "[background-size:24px_24px]",
               isPanning ? "cursor-grabbing" : "cursor-default"
             )}
             style={{
@@ -2307,15 +2453,19 @@ export function WorkflowBuilder() {
 
           {/* Empty state - always centered in viewport, outside canvas transform */}
           {nodes.length === 0 && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+            <div className="absolute inset-0 flex items-center justify-center z-10">
               <div className="text-center">
                 <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-secondary flex items-center justify-center">
                   <Wand2 className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <h3 className="text-lg font-semibold mb-2">{t('canvas.buildYourWorkflow')}</h3>
-                <p className="text-muted-foreground text-sm max-w-xs">
+                <p className="text-muted-foreground text-sm max-w-xs mb-4">
                   {t('canvas.dragNodesHint')}
                 </p>
+                <Button onClick={handleNewWorkflow} variant="outline" size="sm" className="h-9 px-4">
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  {t('toolbar.new')}
+                </Button>
               </div>
             </div>
           )}
@@ -3110,6 +3260,72 @@ export function WorkflowBuilder() {
           </div>
         </div>
       )}
+      {/* Delete Chat Confirmation Modal */}
+      <Dialog open={!!deleteConfirmId} onOpenChange={(open) => { if (!open) setDeleteConfirmId(null); }}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>{i18n.language === 'ru' ? 'Удалить чат?' : 'Delete chat?'}</DialogTitle>
+            <DialogDescription>
+              {i18n.language === 'ru'
+                ? 'Будут удалены все сообщения из этого чата. Это действие нельзя отменить.'
+                : 'All messages from this chat will be deleted. This action cannot be undone.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button variant="ghost" onClick={() => setDeleteConfirmId(null)}>
+              {i18n.language === 'ru' ? 'Отмена' : 'Cancel'}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (deleteConfirmId) {
+                  deleteChatSession(deleteConfirmId);
+                  setDeleteConfirmId(null);
+                }
+              }}
+            >
+              {i18n.language === 'ru' ? 'Удалить' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Run Confirmation Modal */}
+      <Dialog open={!!deleteRunConfirmId} onOpenChange={(open) => { if (!open) setDeleteRunConfirmId(null); }}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>{i18n.language === 'ru' ? 'Удалить запуск?' : 'Delete run?'}</DialogTitle>
+            <DialogDescription>
+              {i18n.language === 'ru'
+                ? 'Результаты этого запуска будут удалены. Это действие нельзя отменить.'
+                : 'The results of this run will be deleted. This action cannot be undone.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button variant="ghost" onClick={() => setDeleteRunConfirmId(null)}>
+              {i18n.language === 'ru' ? 'Отмена' : 'Cancel'}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={async () => {
+                if (deleteRunConfirmId) {
+                  try {
+                    await apiService.deleteWorkflowRun(deleteRunConfirmId);
+                    removeRunHistoryItem(deleteRunConfirmId);
+                    if (selectedRun?.id === deleteRunConfirmId) setSelectedRun(null);
+                    toast.success(t('toasts.runDeleted'));
+                  } catch {
+                    toast.error(t('toasts.failedDeleteRun'));
+                  }
+                  setDeleteRunConfirmId(null);
+                }
+              }}
+            >
+              {i18n.language === 'ru' ? 'Удалить' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DevAccessGate>
   );
 }

@@ -13,6 +13,7 @@
     "loadMessagesFailed": "Не удалось загрузить сообщения",
     "sessionDeleted": "Сессия удалена",
     "deleteSessionFailed": "Не удалось удалить сессию",
+    "renameSessionFailed": "Не удалось переименовать сессию",
     "createChatFailed": "Не удалось создать сессию чата",
     "insufficientCredits": "Недостаточно кредитов",
     "sendMessageFailed": "Ошибка отправки сообщения"

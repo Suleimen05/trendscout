@@ -705,7 +705,7 @@ class ApiService {
    * Rename chat session
    * PATCH /api/chat-sessions/:sessionId
    */
-  async updateChatSession(sessionId: string, data: { title: string }): Promise<any> {
+  async updateChatSession(sessionId: string, data: { title?: string; is_pinned?: boolean }): Promise<any> {
     const response = await apiClient.patch(`/chat-sessions/${sessionId}`, data);
     return response.data;
   }
@@ -733,9 +733,10 @@ class ApiService {
    */
   async sendChatMessage(
     sessionId: string,
-    data: { message: string; mode?: string; model?: string; language?: string }
+    data: { message: string; mode?: string; model?: string; language?: string },
+    signal?: AbortSignal
   ): Promise<any> {
-    const response = await apiClient.post(`/chat-sessions/${sessionId}/messages`, data);
+    const response = await apiClient.post(`/chat-sessions/${sessionId}/messages`, data, { signal });
     return response.data;
   }
 
@@ -896,6 +897,15 @@ class ApiService {
    */
   async getWorkflowRun(runId: number): Promise<any> {
     const response = await apiClient.get(`/workflows/history/${runId}`);
+    return response.data;
+  }
+
+  /**
+   * Update workflow run (rename / pin)
+   * PATCH /api/workflows/history/:runId
+   */
+  async updateWorkflowRun(runId: number, data: { workflow_name?: string; is_pinned?: boolean }): Promise<any> {
+    const response = await apiClient.patch(`/workflows/history/${runId}`, data);
     return response.data;
   }
 
